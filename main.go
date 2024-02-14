@@ -41,18 +41,15 @@ func main() {
 func ready(s *discordgo.Session, event *discordgo.Ready) {
 	commands := []*discordgo.ApplicationCommand{
 		{
-			Name:        "test",
-			Description: "A test command.",
-		},
-		{
-			Name:        "secondtest",
-			Description: "A second test command.",
+			Name:        "get",
+			Description: "A command to get messages saved to the bot.",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "query",
-					Description: "The query to search for.",
-					Required:    true,
+					Type:         discordgo.ApplicationCommandOptionString,
+					Name:         "tag",
+					Description:  "Your predefined tag for the saved message",
+					Required:     true,
+					Autocomplete: true,
 				},
 			},
 		},
@@ -69,25 +66,43 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 	}
 }
 
+func generateDynamicChoices(count int) []*discordgo.ApplicationCommandOptionChoice {
+	choices := []*discordgo.ApplicationCommandOptionChoice{}
+	for i := 1; i <= count; i++ {
+		choices = append(choices, &discordgo.ApplicationCommandOptionChoice{
+			Name:  fmt.Sprintf("Option %d", i),
+			Value: fmt.Sprintf("option_%d", i),
+		})
+	}
+	return choices
+}
+
+var commandUseCount int
+
 func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	if i.Type == discordgo.InteractionApplicationCommandAutocomplete {
+
+		commandUseCount++
+
+		choices := generateDynamicChoices(commandUseCount)
+
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionApplicationCommandAutocompleteResult,
+			Data: &discordgo.InteractionResponseData{
+				Choices: choices,
+			},
+		})
+	}
 	if i.Type == discordgo.InteractionApplicationCommand {
-		if i.ApplicationCommandData().Name == "test" {
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: "You tested me!",
-				},
-			})
-		}
-		if i.ApplicationCommandData().Name == "secondtest" {
+		if i.ApplicationCommandData().Name == "get" {
 			// Check if the command has options
 			if len(i.ApplicationCommandData().Options) > 0 {
 				// Loop through the options and handle them
 				for _, option := range i.ApplicationCommandData().Options {
 					switch option.Name {
-					case "query":
+					case "tag":
 						value := option.Value.(string)
-						response := fmt.Sprintf("You provided the query: %s", value)
+						response := fmt.Sprintf("You provided the tag: %s", value)
 						s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 							Type: discordgo.InteractionResponseChannelMessageWithSource,
 							Data: &discordgo.InteractionResponseData{
