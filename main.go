@@ -59,16 +59,12 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 	}
 
 	for _, guild := range event.Guilds {
-		_, err := s.ApplicationCommandCreate(s.State.User.ID, guild.ID, commands[0])
-		if err != nil {
-			fmt.Println("error creating command,", err)
-			continue // Continue to the next guild
-		}
-
-		_, err = s.ApplicationCommandCreate(s.State.User.ID, guild.ID, commands[1])
-		if err != nil {
-			fmt.Println("error creating command,", err)
-			continue // Continue to the next guild
+		for _, command := range commands {
+			_, err := s.ApplicationCommandCreate(s.State.User.ID, guild.ID, command)
+			if err != nil {
+				fmt.Println("error creating command,", err)
+				continue // Continue to the next guild
+			}
 		}
 	}
 }
