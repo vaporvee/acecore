@@ -6,6 +6,8 @@ import (
 	"os"
 )
 
+//DATA WILL ONLY BE USED AS JSON FILE FOR TESTING. SYSTEM WILL BE REPLACED
+
 type Tags struct {
 	Tags map[string]string `json:"tags"`
 }
@@ -54,7 +56,7 @@ func modifyTag(tags *Tags, tagKey string, newTagValue string) {
 }
 
 func debugTags() {
-	tags, err := readTags("tags.json")
+	tags, err := readTags("data.json")
 	if err != nil {
 		log.Fatalf("Failed to read tags: %v", err)
 	}
@@ -63,7 +65,7 @@ func debugTags() {
 	removeTag(tags, "test_command")
 	modifyTag(tags, "another_test_command", "updated command description")
 
-	err = writeTags("tags.json", tags)
+	err = writeTags("data.json", tags)
 	if err != nil {
 		log.Fatalf("Failed to write tags: %v", err)
 	}
