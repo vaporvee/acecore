@@ -10,8 +10,13 @@ import (
 	"github.com/joho/godotenv"
 )
 
+type Command struct {
+	Definition discordgo.ApplicationCommand
+}
+
 func main() {
 	godotenv.Load()
+	debugTags()
 	discord, err := discordgo.New("Bot " + os.Getenv("BOT_TOKEN"))
 	if err != nil {
 		fmt.Println("error creating Discord session,", err)
@@ -40,19 +45,7 @@ func main() {
 
 func ready(s *discordgo.Session, event *discordgo.Ready) {
 	commands := []*discordgo.ApplicationCommand{
-		{
-			Name:        "get",
-			Description: "A command to get messages saved to the bot.",
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Type:         discordgo.ApplicationCommandOptionString,
-					Name:         "tag",
-					Description:  "Your predefined tag for the saved message",
-					Required:     true,
-					Autocomplete: true,
-				},
-			},
-		},
+		&tag_command.Definition,
 	}
 
 	for _, guild := range event.Guilds {
@@ -80,39 +73,8 @@ func generateDynamicChoices(count int) []*discordgo.ApplicationCommandOptionChoi
 var commandUseCount int
 
 func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	if i.Type == discordgo.InteractionApplicationCommandAutocomplete {
-
-		commandUseCount++
-
-		choices := generateDynamicChoices(commandUseCount)
-
-		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionApplicationCommandAutocompleteResult,
-			Data: &discordgo.InteractionResponseData{
-				Choices: choices,
-			},
-		})
-	}
-	if i.Type == discordgo.InteractionApplicationCommand {
-		if i.ApplicationCommandData().Name == "get" {
-			// Check if the command has options
-			if len(i.ApplicationCommandData().Options) > 0 {
-				// Loop through the options and handle them
-				for _, option := range i.ApplicationCommandData().Options {
-					switch option.Name {
-					case "tag":
-						value := option.Value.(string)
-						response := fmt.Sprintf("You provided the tag: %s", value)
-						s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-							Type: discordgo.InteractionResponseChannelMessageWithSource,
-							Data: &discordgo.InteractionResponseData{
-								Content: response,
-							},
-						})
-					}
-				}
-			}
-		}
+	if i.ApplicationCommandData().Name == "get" {
+		tag_command.Interaction(s, i)
 	}
 }
 

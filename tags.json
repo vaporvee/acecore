@@ -1,0 +1,8 @@
+{
+  "tags": {
+    "another_another_test_command": "updated command description",
+    "another_test_command": "updated command description",
+    "new_command": "a new command description",
+    "new_tag": "A newly added tag."
+  }
+}
