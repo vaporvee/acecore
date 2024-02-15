@@ -60,19 +60,6 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 	}
 }
 
-func generateDynamicChoices(count int) []*discordgo.ApplicationCommandOptionChoice {
-	choices := []*discordgo.ApplicationCommandOptionChoice{}
-	for i := 1; i <= count; i++ {
-		choices = append(choices, &discordgo.ApplicationCommandOptionChoice{
-			Name:  fmt.Sprintf("Option %d", i),
-			Value: fmt.Sprintf("option_%d", i),
-		})
-	}
-	return choices
-}
-
-var commandUseCount int
-
 func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	switch i.ApplicationCommandData().Name {
 	case "tag":

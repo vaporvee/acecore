@@ -63,8 +63,7 @@ var short_get_tag_command Command = Command{
 
 func GetTagCommand(s *discordgo.Session, i *discordgo.InteractionCreate, option *discordgo.ApplicationCommandInteractionDataOption) {
 	if i.Type == discordgo.InteractionApplicationCommandAutocomplete {
-		commandUseCount++
-		choices := generateDynamicChoices(commandUseCount)
+		choices := generateDynamicChoices()
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionApplicationCommandAutocompleteResult,
 			Data: &discordgo.InteractionResponseData{
@@ -84,6 +83,18 @@ func GetTagCommand(s *discordgo.Session, i *discordgo.InteractionCreate, option 
 	}
 }
 
+func generateDynamicChoices() []*discordgo.ApplicationCommandOptionChoice {
+	choices := []*discordgo.ApplicationCommandOptionChoice{}
+	keys := tags.getTagKeys()
+	for i := 0; i <= len(keys)-1; i++ {
+		choices = append(choices, &discordgo.ApplicationCommandOptionChoice{
+			Name:  keys[i],
+			Value: tags.Tags[keys[i]],
+		})
+	}
+	return choices
+}
+
 func (tag_command Command) Interaction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	switch i.ApplicationCommandData().Options[0].Name {
 	case "get":
@@ -95,7 +106,7 @@ func (tag_command Command) Interaction(s *discordgo.Session, i *discordgo.Intera
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: "Tag added!",
-				Flags:   1 << 6, // ephemeral message
+				Flags:   discordgo.MessageFlagsEphemeral,
 			},
 		})
 	}
