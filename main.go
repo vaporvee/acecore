@@ -73,7 +73,7 @@ func generateDynamicChoices(count int) []*discordgo.ApplicationCommandOptionChoi
 var commandUseCount int
 
 func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	if i.ApplicationCommandData().Name == "get" {
+	if i.ApplicationCommandData().Name == "tag" {
 		tag_command.Interaction(s, i)
 	}
 }
