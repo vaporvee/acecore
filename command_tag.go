@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/bwmarrin/discordgo"
+	"github.com/iancoleman/strcase"
 )
 
 var tag_command Command = Command{
@@ -20,6 +21,25 @@ var tag_command Command = Command{
 						Description:  "Your predefined tag for the saved message",
 						Required:     true,
 						Autocomplete: true,
+					},
+				},
+			},
+			{
+				Name:        "add",
+				Description: "A command to add messages saved to the bot.",
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "tag",
+						Description: "Your tag for the saved message",
+						Required:    true,
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "content",
+						Description: "Your content for the saved message",
+						Required:    true,
 					},
 				},
 			},
@@ -68,6 +88,16 @@ func (tag_command Command) Interaction(s *discordgo.Session, i *discordgo.Intera
 	switch i.ApplicationCommandData().Options[0].Name {
 	case "get":
 		GetTagCommand(s, i, i.ApplicationCommandData().Options[0].Options[0])
+	case "add":
+		option := i.ApplicationCommandData().Options[0]
+		addTag(&tags, strcase.ToSnake(option.Options[0].StringValue()) /*TODO: tag regex*/, option.Options[1].StringValue())
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "Tag added!",
+				Flags:   1 << 6, // ephemeral message
+			},
+		})
 	}
 }
 
