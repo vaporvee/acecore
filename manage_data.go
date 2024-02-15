@@ -62,8 +62,6 @@ func debugTags() {
 	}
 
 	addTag(tags, "new_command", "a new command description")
-	removeTag(tags, "test_command")
-	modifyTag(tags, "another_test_command", "updated command description")
 
 	err = writeTags("data.json", tags)
 	if err != nil {

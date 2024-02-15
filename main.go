@@ -46,6 +46,7 @@ func main() {
 func ready(s *discordgo.Session, event *discordgo.Ready) {
 	commands := []*discordgo.ApplicationCommand{
 		&tag_command.Definition,
+		&short_get_tag_command.Definition,
 	}
 
 	for _, guild := range event.Guilds {
@@ -73,8 +74,11 @@ func generateDynamicChoices(count int) []*discordgo.ApplicationCommandOptionChoi
 var commandUseCount int
 
 func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	if i.ApplicationCommandData().Name == "tag" {
+	switch i.ApplicationCommandData().Name {
+	case "tag":
 		tag_command.Interaction(s, i)
+	case "g":
+		short_get_tag_command.tInteraction(s, i)
 	}
 }
 
