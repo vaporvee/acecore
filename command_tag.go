@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/bwmarrin/discordgo"
@@ -45,6 +46,20 @@ var tag_command Command = Command{
 					},
 				},
 			},
+			{
+				Name:        "remove",
+				Description: "A command to remove messages saved to the bot.",
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:         discordgo.ApplicationCommandOptionString,
+						Name:         "tag",
+						Description:  "The tag you want to remove",
+						Required:     true,
+						Autocomplete: true,
+					},
+				},
+			},
 		},
 	}}
 
@@ -64,24 +79,25 @@ var short_get_tag_command Command = Command{
 	}}
 
 func GetTagCommand(s *discordgo.Session, i *discordgo.InteractionCreate, option *discordgo.ApplicationCommandInteractionDataOption) {
-	if i.Type == discordgo.InteractionApplicationCommandAutocomplete {
-		choices := generateDynamicChoices(i.GuildID)
+	AutocompleteTag(s, i)
+	if i.Type == discordgo.InteractionApplicationCommand {
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionApplicationCommandAutocompleteResult,
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Choices: choices,
+				Content: option.Value.(string),
 			},
 		})
 	}
-	if i.Type == discordgo.InteractionApplicationCommand {
-		if option.Name == "tag" {
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: option.Value.(string),
-				},
-			})
-		}
+}
+
+func AutocompleteTag(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	if i.Type == discordgo.InteractionApplicationCommandAutocomplete {
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionApplicationCommandAutocompleteResult,
+			Data: &discordgo.InteractionResponseData{
+				Choices: generateDynamicChoices(i.GuildID),
+			},
+		})
 	}
 }
 
@@ -101,13 +117,14 @@ func generateDynamicChoices(guildID string) []*discordgo.ApplicationCommandOptio
 		}
 		choices = append(choices, &discordgo.ApplicationCommandOptionChoice{
 			Name:  key,
-			Value: tagContent,
+			Value: tagContent, //TODO: use IDs instead as PK
 		})
 	}
 
 	return choices
 }
 
+// Yeeeahh the codebase sucks rn
 func (tag_command Command) Interaction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	switch i.ApplicationCommandData().Options[0].Name {
 	case "get":
@@ -119,6 +136,19 @@ func (tag_command Command) Interaction(s *discordgo.Session, i *discordgo.Intera
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: "Tag added!",
+				Flags:   discordgo.MessageFlagsEphemeral,
+			},
+		})
+	case "remove":
+		AutocompleteTag(s, i)
+		if i.Type == discordgo.InteractionApplicationCommand {
+			fmt.Println("Trying to remove " + i.ApplicationCommandData().Options[0].Options[0].StringValue()) // so now it returns the content so wee reeeeaally need to start using UUIDs
+			removeTag(i.GuildID, i.ApplicationCommandData().Options[0].Options[0].StringValue())
+		}
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "Tag removed!",
 				Flags:   discordgo.MessageFlagsEphemeral,
 			},
 		})

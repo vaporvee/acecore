@@ -25,14 +25,14 @@ func addTag(guildID, tagName, tagContent string) bool {
 	return exists
 }
 
-func removeTag(guildID, tagName string) {
+func removeTag(guildID, tagContent string) {
 	var exists bool
-	err := db.QueryRow("SELECT EXISTS (SELECT  1 FROM tags WHERE guild_id = $1 AND tag_name = $2)", guildID, tagName).Scan(&exists)
+	err := db.QueryRow("SELECT EXISTS (SELECT  1 FROM tags WHERE guild_id = $1 AND tag_content = $2)", guildID, tagContent).Scan(&exists) // that is so dumb next commit i will make the tag IDs
 	if err != nil {
 		log.Println(err)
 	}
 	if exists {
-		_, err = db.Exec("DELETE FROM tags WHERE guild_id = $1 AND tag_name = $2", guildID, tagName)
+		_, err = db.Exec("DELETE FROM tags WHERE guild_id = $1 AND tag_content = $2", guildID, tagContent)
 		if err != nil {
 			log.Println(err)
 		}

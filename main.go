@@ -15,6 +15,8 @@ import (
 	_ "github.com/lib/pq"
 )
 
+//TODO: make the codebase less garbage
+
 type Command struct {
 	Definition discordgo.ApplicationCommand
 }
