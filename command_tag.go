@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/iancoleman/strcase"
 )
@@ -63,7 +65,7 @@ var short_get_tag_command Command = Command{
 
 func GetTagCommand(s *discordgo.Session, i *discordgo.InteractionCreate, option *discordgo.ApplicationCommandInteractionDataOption) {
 	if i.Type == discordgo.InteractionApplicationCommandAutocomplete {
-		choices := generateDynamicChoices()
+		choices := generateDynamicChoices(i.GuildID)
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionApplicationCommandAutocompleteResult,
 			Data: &discordgo.InteractionResponseData{
@@ -83,15 +85,26 @@ func GetTagCommand(s *discordgo.Session, i *discordgo.InteractionCreate, option 
 	}
 }
 
-func generateDynamicChoices() []*discordgo.ApplicationCommandOptionChoice {
+func generateDynamicChoices(guildID string) []*discordgo.ApplicationCommandOptionChoice {
 	choices := []*discordgo.ApplicationCommandOptionChoice{}
-	keys := tags.getTagKeys()
-	for i := 0; i <= len(keys)-1; i++ {
+	keys, err := getTagKeys(guildID)
+	if err != nil {
+		log.Println("Error getting tag keys:", err)
+		return choices // Return empty choices if there's an error
+	}
+
+	for _, key := range keys {
+		tagContent, err := getTag(guildID, key) // Assuming you have a getTag function
+		if err != nil {
+			log.Println("Error getting tag content:", err)
+			continue // Skip this tag if there's an error
+		}
 		choices = append(choices, &discordgo.ApplicationCommandOptionChoice{
-			Name:  keys[i],
-			Value: tags.Tags[keys[i]],
+			Name:  key,
+			Value: tagContent,
 		})
 	}
+
 	return choices
 }
 
@@ -101,7 +114,7 @@ func (tag_command Command) Interaction(s *discordgo.Session, i *discordgo.Intera
 		GetTagCommand(s, i, i.ApplicationCommandData().Options[0].Options[0])
 	case "add":
 		option := i.ApplicationCommandData().Options[0]
-		addTag(&tags, strcase.ToSnake(option.Options[0].StringValue()) /*TODO: tag regex*/, option.Options[1].StringValue())
+		addTag(i.GuildID, strcase.ToSnake(option.Options[0].StringValue()) /*TODO: tag regex*/, option.Options[1].StringValue())
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{

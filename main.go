@@ -2,21 +2,35 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"database/sql"
+	"net/url"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 )
 
 type Command struct {
 	Definition discordgo.ApplicationCommand
 }
 
+var db *sql.DB
+
 func main() {
 	godotenv.Load()
-	debugTags()
+
+	var err error
+	connStr := "postgresql://" + os.Getenv("DB_USER") + ":" + url.QueryEscape(os.Getenv("DB_PASSWORD")) + "@" + os.Getenv("DB_SERVER") + ":" + string(os.Getenv("DB_PORT")) + "/" + os.Getenv("DB_NAME") + "?sslmode=disable"
+	db, err = sql.Open("postgres", connStr)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	discord, err := discordgo.New("Bot " + os.Getenv("BOT_TOKEN"))
 	if err != nil {
 		fmt.Println("error creating Discord session,", err)

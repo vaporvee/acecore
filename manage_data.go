@@ -1,69 +1,69 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
-	"os"
 )
 
-//DATA WILL ONLY BE USED AS JSON FILE FOR TESTING. SYSTEM WILL BE REPLACED
-
-type Tags struct {
-	Tags map[string]string `json:"tags"`
-}
-
-var tags Tags
-var filename string = "data.json"
-
-func readTags() {
-	bytes, err := os.ReadFile(filename)
+func addTag(guildID, tagName, tagContent string) bool {
+	var exists bool
+	err := db.QueryRow("SELECT EXISTS (SELECT  1 FROM tags WHERE guild_id = $1 AND tag_name = $2)", guildID, tagName).Scan(&exists)
 	if err != nil {
-		log.Fatalf("Failed to read tags: %v", err)
+		log.Println(err)
 	}
-	err = json.Unmarshal(bytes, &tags)
+	// If the tag exists it updates it but TODO: needs to return a discord message to use the modify command with autocomplete
+	if exists {
+		_, err = db.Exec("UPDATE tags SET tag_content = $1 WHERE guild_id = $2 AND tag_name = $3", tagContent, guildID, tagName)
+		if err != nil {
+			log.Println(err)
+		}
+	} else {
+		_, err = db.Exec("INSERT INTO tags (guild_id, tag_name, tag_content) VALUES ($1, $2, $3)", guildID, tagName, tagContent)
+		if err != nil {
+			log.Println(err)
+		}
+	}
+	return exists
+}
+
+func removeTag(guildID, tagName string) {
+	var exists bool
+	err := db.QueryRow("SELECT EXISTS (SELECT  1 FROM tags WHERE guild_id = $1 AND tag_name = $2)", guildID, tagName).Scan(&exists)
 	if err != nil {
-		log.Fatalf("Failed to read tags: %v", err)
+		log.Println(err)
+	}
+	if exists {
+		_, err = db.Exec("DELETE FROM tags WHERE guild_id = $1 AND tag_name = $2", guildID, tagName)
+		if err != nil {
+			log.Println(err)
+		}
 	}
 }
 
-func writeTags() {
-	jsonBytes, err := json.MarshalIndent(&tags, "", "  ")
+func getTagKeys(guildID string) ([]string, error) {
+	var keys []string
+	rows, err := db.Query("SELECT tag_name FROM tags WHERE guild_id = $1", guildID)
 	if err != nil {
-		log.Fatalf("Failed to write tags: %v", err)
+		return nil, err
 	}
-	err = os.WriteFile(filename, jsonBytes, 0644)
-	if err != nil {
-		log.Fatalf("Failed to write tags: %v", err)
+	defer rows.Close()
+
+	for rows.Next() {
+		var key string
+		if err := rows.Scan(&key); err != nil {
+			return nil, err
+		}
+		keys = append(keys, key)
 	}
-}
 
-func addTag(tags *Tags, tagKey string, tagValue string) {
-	readTags()
-	tags.Tags[tagKey] = tagValue
-	writeTags()
-}
-
-func removeTag(tags *Tags, tagKey string) {
-	readTags()
-	delete(tags.Tags, tagKey)
-	writeTags()
-}
-
-func (tags Tags) getTagKeys() []string {
-	readTags()
-	keys := make([]string, 0, len(tags.Tags))
-	for k := range tags.Tags {
-		keys = append(keys, k)
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
-	return keys
+
+	return keys, nil
 }
 
-func modifyTag(tags *Tags, tagKey string, newTagValue string) {
-	if _, exists := tags.Tags[tagKey]; exists {
-		tags.Tags[tagKey] = newTagValue
-	}
-}
-
-func debugTags() {
-	addTag(&tags, "new_command", "a new command description")
+func getTag(guildID, tagName string) (string, error) {
+	var tagContent string
+	err := db.QueryRow("SELECT tag_content FROM tags WHERE guild_id = $1 AND tag_name = $2", guildID, tagName).Scan(&tagContent)
+	return tagContent, err
 }
