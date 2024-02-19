@@ -49,7 +49,7 @@ func main() {
 	}
 	fmt.Printf("Bot is now running as \"%s\"!", discord.State.User.Username)
 	sc := make(chan os.Signal, 1)
-	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
+	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
 	fmt.Println("\nShutting down...")
 	defer removeCommandFromAllGuilds(discord)

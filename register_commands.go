@@ -2,13 +2,17 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 )
 
 type Command struct {
-	Definition discordgo.ApplicationCommand
-	Interact   func(s *discordgo.Session, i *discordgo.InteractionCreate)
+	Definition   discordgo.ApplicationCommand
+	Interact     func(s *discordgo.Session, i *discordgo.InteractionCreate)
+	Autocomplete func(s *discordgo.Session, i *discordgo.InteractionCreate)
+	ModalSubmit  func(s *discordgo.Session, i *discordgo.InteractionCreate)
+	ModalID      string
 }
 
 func ready(s *discordgo.Session, event *discordgo.Ready) {
@@ -29,11 +33,22 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 }
 
 func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	switch i.ApplicationCommandData().Name {
-	case "tag":
-		tag_command.Interact(s, i)
-	case "g":
-		short_get_tag_command.Interact(s, i)
+	var commands []Command = []Command{tag_command, short_get_tag_command}
+	for _, command := range commands {
+		switch i.Type {
+		case discordgo.InteractionApplicationCommand:
+			if i.ApplicationCommandData().Name == command.Definition.Name {
+				command.Interact(s, i)
+			}
+		case discordgo.InteractionApplicationCommandAutocomplete:
+			if i.ApplicationCommandData().Name == command.Definition.Name {
+				command.Autocomplete(s, i)
+			}
+		case discordgo.InteractionModalSubmit:
+			if strings.HasPrefix(i.ModalSubmitData().CustomID, command.ModalID) {
+				command.ModalSubmit(s, i)
+			}
+		}
 	}
 }
 

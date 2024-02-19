@@ -10,7 +10,7 @@ func initTables() {
 	createTableQuery := `CREATE TABLE IF NOT EXISTS tags (
 		tag_id TEXT NOT NULL,
 		tag_name TEXT NOT NULL,
-		tag_content TEXT,
+		tag_content TEXT NOT NULL,
 		guild_id TEXT NOT NULL,
 		PRIMARY KEY (tag_id,guild_id)
 	);`
@@ -43,7 +43,6 @@ func addTag(guildID, tagName, tagContent string) bool {
 
 	return exists
 }
-
 func removeTag(guildID string, tagID string) {
 	var exists bool
 	err := db.QueryRow("SELECT EXISTS (SELECT  1 FROM tags WHERE guild_id = $1 AND tag_id = $2)", guildID, tagID).Scan(&exists)
@@ -57,7 +56,6 @@ func removeTag(guildID string, tagID string) {
 		}
 	}
 }
-
 func getTagIDs(guildID string) ([]string, error) {
 	var IDs []string
 	rows, err := db.Query("SELECT tag_id FROM tags WHERE guild_id = $1", guildID)
@@ -80,7 +78,6 @@ func getTagIDs(guildID string) ([]string, error) {
 
 	return IDs, nil
 }
-
 func getTagName(guildID string, tagID string) string {
 	var tagName string
 	db.QueryRow("SELECT tag_name FROM tags WHERE guild_id = $1 AND tag_id = $2", guildID, tagID).Scan(&tagName)
