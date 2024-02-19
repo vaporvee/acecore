@@ -37,15 +37,15 @@ func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	for _, command := range commands {
 		switch i.Type {
 		case discordgo.InteractionApplicationCommand:
-			if i.ApplicationCommandData().Name == command.Definition.Name {
+			if command.Interact != nil && i.ApplicationCommandData().Name == command.Definition.Name {
 				command.Interact(s, i)
 			}
 		case discordgo.InteractionApplicationCommandAutocomplete:
-			if i.ApplicationCommandData().Name == command.Definition.Name {
+			if command.Autocomplete != nil && i.ApplicationCommandData().Name == command.Definition.Name {
 				command.Autocomplete(s, i)
 			}
-		case discordgo.InteractionModalSubmit:
-			if strings.HasPrefix(i.ModalSubmitData().CustomID, command.ModalID) {
+		case discordgo.InteractionModalSubmit: //g has no modal so it crashes
+			if command.ModalSubmit != nil && strings.HasPrefix(i.ModalSubmitData().CustomID, command.ModalID) {
 				command.ModalSubmit(s, i)
 			}
 		}
