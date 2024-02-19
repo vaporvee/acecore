@@ -89,6 +89,5 @@ func getTagName(guildID string, tagID string) string {
 func getTagContent(guildID string, tagID string) string {
 	var tagContent string
 	db.QueryRow("SELECT tag_content FROM tags WHERE guild_id = $1 AND tag_id = $2", guildID, tagID).Scan(&tagContent)
-
-	return getTagName(guildID, tagID) + ":\n " + tagContent
+	return tagContent
 }
