@@ -84,7 +84,7 @@ func GetTagCommand(s *discordgo.Session, i *discordgo.InteractionCreate, option 
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Content: option.Value.(string),
+				Content: getTagContent(i.GuildID, option.Value.(string)),
 			},
 		})
 	}
@@ -103,24 +103,18 @@ func AutocompleteTag(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 func generateDynamicChoices(guildID string) []*discordgo.ApplicationCommandOptionChoice {
 	choices := []*discordgo.ApplicationCommandOptionChoice{}
-	keys, err := getTagKeys(guildID)
+	IDs, err := getTagIDs(guildID)
 	if err != nil {
 		log.Println("Error getting tag keys:", err)
-		return choices // Return empty choices if there's an error
+		return choices
 	}
-
-	for _, key := range keys {
-		tagContent, err := getTag(guildID, key) // Assuming you have a getTag function
-		if err != nil {
-			log.Println("Error getting tag content:", err)
-			continue // Skip this tag if there's an error
-		}
+	for _, id := range IDs {
+		id_name := getTagName(guildID, id)
 		choices = append(choices, &discordgo.ApplicationCommandOptionChoice{
-			Name:  key,
-			Value: tagContent, //TODO: use IDs instead as PK
+			Name:  id_name,
+			Value: id,
 		})
 	}
-
 	return choices
 }
 
