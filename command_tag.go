@@ -61,7 +61,37 @@ var tag_command Command = Command{
 				},
 			},
 		},
-	}}
+	},
+	Interact: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		switch i.ApplicationCommandData().Options[0].Name {
+		case "get":
+			GetTagCommand(s, i, i.ApplicationCommandData().Options[0].Options[0])
+		case "add":
+			option := i.ApplicationCommandData().Options[0]
+			addTag(i.GuildID, strcase.ToSnake(option.Options[0].StringValue()) /*TODO: tag regex*/, option.Options[1].StringValue())
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: "Tag added!",
+					Flags:   discordgo.MessageFlagsEphemeral,
+				},
+			})
+		case "remove":
+			AutocompleteTag(s, i)
+			if i.Type == discordgo.InteractionApplicationCommand {
+				fmt.Println("Trying to remove " + i.ApplicationCommandData().Options[0].Options[0].StringValue()) // so now it returns the content so wee reeeeaally need to start using UUIDs
+				removeTag(i.GuildID, i.ApplicationCommandData().Options[0].Options[0].StringValue())
+			}
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: "Tag removed!",
+					Flags:   discordgo.MessageFlagsEphemeral,
+				},
+			})
+		}
+	},
+}
 
 var short_get_tag_command Command = Command{
 	Definition: discordgo.ApplicationCommand{
@@ -76,7 +106,11 @@ var short_get_tag_command Command = Command{
 				Autocomplete: true,
 			},
 		},
-	}}
+	},
+	Interact: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		GetTagCommand(s, i, i.ApplicationCommandData().Options[0])
+	},
+}
 
 func GetTagCommand(s *discordgo.Session, i *discordgo.InteractionCreate, option *discordgo.ApplicationCommandInteractionDataOption) {
 	AutocompleteTag(s, i)
@@ -116,39 +150,4 @@ func generateDynamicChoices(guildID string) []*discordgo.ApplicationCommandOptio
 		})
 	}
 	return choices
-}
-
-// Yeeeahh the codebase sucks rn
-func (tag_command Command) Interaction(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	switch i.ApplicationCommandData().Options[0].Name {
-	case "get":
-		GetTagCommand(s, i, i.ApplicationCommandData().Options[0].Options[0])
-	case "add":
-		option := i.ApplicationCommandData().Options[0]
-		addTag(i.GuildID, strcase.ToSnake(option.Options[0].StringValue()) /*TODO: tag regex*/, option.Options[1].StringValue())
-		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: "Tag added!",
-				Flags:   discordgo.MessageFlagsEphemeral,
-			},
-		})
-	case "remove":
-		AutocompleteTag(s, i)
-		if i.Type == discordgo.InteractionApplicationCommand {
-			fmt.Println("Trying to remove " + i.ApplicationCommandData().Options[0].Options[0].StringValue()) // so now it returns the content so wee reeeeaally need to start using UUIDs
-			removeTag(i.GuildID, i.ApplicationCommandData().Options[0].Options[0].StringValue())
-		}
-		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: "Tag removed!",
-				Flags:   discordgo.MessageFlagsEphemeral,
-			},
-		})
-	}
-}
-
-func (short_get_tag_command Command) tInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	GetTagCommand(s, i, i.ApplicationCommandData().Options[0])
 }
