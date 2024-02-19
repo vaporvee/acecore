@@ -129,13 +129,13 @@ func AutocompleteTag(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionApplicationCommandAutocompleteResult,
 			Data: &discordgo.InteractionResponseData{
-				Choices: generateDynamicChoices(i.GuildID),
+				Choices: generateTagChoices(i.GuildID),
 			},
 		})
 	}
 }
 
-func generateDynamicChoices(guildID string) []*discordgo.ApplicationCommandOptionChoice {
+func generateTagChoices(guildID string) []*discordgo.ApplicationCommandOptionChoice {
 	choices := []*discordgo.ApplicationCommandOptionChoice{}
 	IDs, err := getTagIDs(guildID)
 	if err != nil {

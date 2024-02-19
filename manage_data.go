@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func initTable() {
+func initTables() {
 	createTableQuery := `CREATE TABLE IF NOT EXISTS tags (
 		tag_id TEXT NOT NULL,
 		tag_name TEXT NOT NULL,
