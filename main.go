@@ -15,7 +15,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-//TODO: make the codebase less garbage
+//TODO: add more error handlings
 
 var db *sql.DB
 
