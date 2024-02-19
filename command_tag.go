@@ -4,10 +4,8 @@ import (
 	"log"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/iancoleman/strcase"
 )
 
-var tagAddName string
 var tag_command Command = Command{
 	Definition: discordgo.ApplicationCommand{
 		Name:        "tag",
@@ -31,14 +29,6 @@ var tag_command Command = Command{
 				Name:        "add",
 				Description: "A command to add messages saved to the bot.",
 				Type:        discordgo.ApplicationCommandOptionSubCommand,
-				Options: []*discordgo.ApplicationCommandOption{
-					{
-						Type:        discordgo.ApplicationCommandOptionString,
-						Name:        "tag",
-						Description: "Your tag for the saved message",
-						Required:    true,
-					},
-				},
 			},
 			{
 				Name:        "remove",
@@ -61,13 +51,24 @@ var tag_command Command = Command{
 		case "get":
 			GetTagCommand(s, i, i.ApplicationCommandData().Options[0].Options[0])
 		case "add":
-			tagAddName = strcase.ToSnake(i.ApplicationCommandData().Options[0].Options[0].StringValue())
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseModal,
 				Data: &discordgo.InteractionResponseData{
 					CustomID: "tag_add_modal" + i.Interaction.Member.User.ID,
 					Title:    "Add a custom tag command",
 					Components: []discordgo.MessageComponent{
+						discordgo.ActionsRow{
+							Components: []discordgo.MessageComponent{
+								discordgo.TextInput{
+									CustomID:  "tag_add_modal_name",
+									Label:     "Name",
+									Style:     discordgo.TextInputShort,
+									Required:  true,
+									MaxLength: 20,
+									Value:     "",
+								},
+							},
+						},
 						discordgo.ActionsRow{
 							Components: []discordgo.MessageComponent{
 								discordgo.TextInput{
@@ -97,25 +98,16 @@ var tag_command Command = Command{
 	},
 	ModalID: "tag_add_modal",
 	ModalSubmit: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		if tagAddName == "" {
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: "Tag name got missing! Please try again...",
-					Flags:   discordgo.MessageFlagsEphemeral,
-				},
-			})
-		} else {
-			tagContent := i.ModalSubmitData().Components[0].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value
-			addTag(i.GuildID, tagAddName, tagContent)
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: "Tag \"" + tagAddName + "\" added!",
-					Flags:   discordgo.MessageFlagsEphemeral,
-				},
-			})
-		}
+		tagName := i.ModalSubmitData().Components[0].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value
+		tagContent := i.ModalSubmitData().Components[1].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value
+		addTag(i.GuildID, tagName, tagContent)
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "Tag \"" + tagName + "\" added!",
+				Flags:   discordgo.MessageFlagsEphemeral,
+			},
+		})
 	},
 	Autocomplete: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		AutocompleteTag(s, i)
