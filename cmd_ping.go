@@ -41,8 +41,8 @@ var ping_command Command = Command{
 			Data: &discordgo.InteractionResponseData{
 				Embeds: []*discordgo.MessageEmbed{
 					{
-						Title:       "Bot ping",
-						Description: fmt.Sprintf("**%.2fms**", ping.Seconds()*1000),
+						Title:       s.State.User.Username + " ping",
+						Description: fmt.Sprintf("# %.2fms", ping.Seconds()*1000),
 						Type:        discordgo.EmbedTypeArticle,
 						Color:       hexToDecimal(color[ping_color]),
 					},
