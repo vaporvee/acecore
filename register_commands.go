@@ -19,6 +19,7 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 	commands := []*discordgo.ApplicationCommand{
 		&tag_command.Definition,
 		&short_get_tag_command.Definition,
+		&dadjoke_command.Definition,
 	}
 
 	for _, guild := range event.Guilds {
@@ -33,7 +34,7 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 }
 
 func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	var commands []Command = []Command{tag_command, short_get_tag_command}
+	var commands []Command = []Command{tag_command, short_get_tag_command, dadjoke_command}
 	for _, command := range commands {
 		switch i.Type {
 		case discordgo.InteractionApplicationCommand:
