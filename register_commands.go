@@ -15,16 +15,12 @@ type Command struct {
 	ModalID      string
 }
 
-func ready(s *discordgo.Session, event *discordgo.Ready) {
-	commands := []*discordgo.ApplicationCommand{
-		&tag_command.Definition,
-		&short_get_tag_command.Definition,
-		&dadjoke_command.Definition,
-	}
+var commands []Command = []Command{tag_command, short_get_tag_command, dadjoke_command}
 
+func ready(s *discordgo.Session, event *discordgo.Ready) {
 	for _, guild := range event.Guilds {
 		for _, command := range commands {
-			_, err := s.ApplicationCommandCreate(s.State.User.ID, guild.ID, command)
+			_, err := s.ApplicationCommandCreate(s.State.User.ID, guild.ID, &command.Definition)
 			if err != nil {
 				fmt.Println("error creating command,", err)
 				continue // Continue to the next guild
@@ -34,7 +30,6 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 }
 
 func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	var commands []Command = []Command{tag_command, short_get_tag_command, dadjoke_command}
 	for _, command := range commands {
 		switch i.Type {
 		case discordgo.InteractionApplicationCommand:
