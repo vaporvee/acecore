@@ -40,7 +40,6 @@ func main() {
 	defer removeCommandFromAllGuilds(discord)
 	discord.AddHandler(ready)
 	discord.AddHandler(interactionCreate)
-
 	err = discord.Open()
 	if err != nil {
 		fmt.Println("error opening connection,", err)
