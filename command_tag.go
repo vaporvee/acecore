@@ -8,8 +8,9 @@ import (
 
 var tag_command Command = Command{
 	Definition: discordgo.ApplicationCommand{
-		Name:        "tag",
-		Description: "A command to show and edit saved presaved messages.",
+		Name:                     "tag",
+		DefaultMemberPermissions: int64Ptr(discordgo.PermissionManageServer),
+		Description:              "A command to show and edit saved presaved messages.",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Name:        "get",

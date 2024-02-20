@@ -68,3 +68,36 @@ func removeCommandFromAllGuilds(s *discordgo.Session) {
 		}
 	}
 }
+
+/*
+func hasManageServerPermissions(s *discordgo.Session, userID string, guildID string) bool {
+	member, err := s.GuildMember(guildID, userID)
+	if err != nil {
+		fmt.Printf("Error fetching guild member: %v\n", err)
+		return false
+	}
+
+	guild, err := s.Guild(guildID)
+	if err != nil {
+		fmt.Printf("Error fetching guild: %v\n", err)
+		return false
+	}
+
+	if guild.OwnerID == userID {
+		return true
+	}
+
+	for _, roleID := range member.Roles {
+		role, err := s.State.Role(guildID, roleID)
+		if err != nil {
+			fmt.Printf("Error fetching role: %v\n", err)
+			continue
+		}
+		if role.Permissions&discordgo.PermissionManageServer != 0 || role.Permissions&discordgo.PermissionAdministrator != 0 {
+			return true
+		}
+	}
+
+	return false
+}
+*/
