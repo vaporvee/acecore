@@ -16,12 +16,10 @@ var ping_command Command = Command{
 	Interact: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		start := time.Now()
 
-		// Create a new HTTP client with a timeout
 		client := http.Client{
 			Timeout: 5 * time.Second,
 		}
 
-		// Send a GET request to the Discord API
 		resp, err := client.Get("https://discord.com/api/v9/gateway/bot")
 		if err != nil {
 			fmt.Println("Error:", err)
@@ -29,7 +27,6 @@ var ping_command Command = Command{
 		}
 		defer resp.Body.Close()
 
-		// Calculate the ping
 		ping := time.Since(start)
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
