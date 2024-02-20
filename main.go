@@ -5,6 +5,8 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
+	"strings"
 	"syscall"
 
 	"database/sql"
@@ -56,4 +58,14 @@ func main() {
 
 func int64Ptr(i int64) *int64 {
 	return &i
+}
+
+func hexToDecimal(hexColor string) int {
+	// Remove the hash symbol if it's present
+	hexColor = strings.TrimPrefix(hexColor, "#")
+	decimal, err := strconv.ParseInt(hexColor, 16, 64)
+	if err != nil {
+		return 0
+	}
+	return int(decimal)
 }

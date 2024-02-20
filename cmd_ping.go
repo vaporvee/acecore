@@ -28,10 +28,25 @@ var ping_command Command = Command{
 		defer resp.Body.Close()
 
 		ping := time.Since(start)
+		var ping_color string
+		if ping.Milliseconds() < 200 {
+			ping_color = "green"
+		} else if ping.Milliseconds() < 400 {
+			ping_color = "yellow"
+		} else {
+			ping_color = "red"
+		}
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Content: fmt.Sprintf("Ping:  %.2fms", ping.Seconds()*1000),
+				Embeds: []*discordgo.MessageEmbed{
+					{
+						Title:       "Bot ping",
+						Description: fmt.Sprintf("**%.2fms**", ping.Seconds()*1000),
+						Type:        discordgo.EmbedTypeArticle,
+						Color:       hexToDecimal(color[ping_color]),
+					},
+				},
 			},
 		})
 	},
