@@ -29,7 +29,6 @@ func main() {
 		log.Fatal(err)
 	}
 	initTables()
-
 	discord, err := discordgo.New("Bot " + os.Getenv("BOT_TOKEN"))
 	if err != nil {
 		fmt.Println("error creating Discord session,", err)
