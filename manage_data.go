@@ -122,6 +122,42 @@ func hasSticky(guildID string, channelID string) bool {
 	return exists
 }
 
-func updateStickyMessageID(guildID string, channelID string, messageID string) {
+func getStickyMessageID(guildID string, channelID string) string {
+	var messageID string
+	exists := hasSticky(guildID, channelID)
+	if exists {
+		err := db.QueryRow("SELECT message_id FROM sticky WHERE guild_id = $1 AND channel_id = $2", guildID, channelID).Scan(&messageID)
+		if err != nil {
+			log.Println(err)
+		}
+	}
+	return messageID
+}
+func getStickyMessageContent(guildID string, channelID string) string {
+	var messageID string
+	exists := hasSticky(guildID, channelID)
+	if exists {
+		err := db.QueryRow("SELECT message_content FROM sticky WHERE guild_id = $1 AND channel_id = $2", guildID, channelID).Scan(&messageID)
+		if err != nil {
+			log.Println(err)
+		}
+	}
+	return messageID
+}
 
+func updateStickyMessageID(guildID string, channelID string, messageID string) {
+	exists := hasSticky(guildID, channelID)
+	if exists {
+		_, err := db.Exec("UPDATE sticky SET message_id = $1 WHERE guild_id = $2 AND channel_id = $3", messageID, guildID, channelID)
+		if err != nil {
+			log.Println(err)
+		}
+	}
+}
+
+func removeSticky(guildID string, channelID string) {
+	_, err := db.Exec("DELETE FROM sticky WHERE guild_id = $1 AND channel_id = $2", guildID, channelID)
+	if err != nil {
+		log.Println(err)
+	}
 }
