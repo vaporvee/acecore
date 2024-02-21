@@ -12,8 +12,16 @@ func initTables() {
 		tag_name TEXT NOT NULL,
 		tag_content TEXT NOT NULL,
 		guild_id TEXT NOT NULL,
-		PRIMARY KEY (tag_id,guild_id)
-	);`
+		PRIMARY KEY (tag_id, guild_id)
+	);
+	CREATE TABLE IF NOT EXISTS sticky (
+		message_id TEXT NOT NULL,
+		channel_id TEXT NOT NULL,
+		message_content TEXT NOT NULL,
+		guild_id TEXT NOT NULL,
+		PRIMARY KEY (channel_id, guild_id)
+	);
+	`
 
 	_, err := db.Exec(createTableQuery)
 	if err != nil {
@@ -87,4 +95,33 @@ func getTagContent(guildID string, tagID string) string {
 	var tagContent string
 	db.QueryRow("SELECT tag_content FROM tags WHERE guild_id = $1 AND tag_id = $2", guildID, tagID).Scan(&tagContent)
 	return tagContent
+}
+
+func addSticky(guildID string, channelID string, messageContent string, messageID string) bool {
+	exists := hasSticky(guildID, channelID)
+	if exists {
+		_, err := db.Exec("UPDATE sticky SET message_content = $1 WHERE guild_id = $2 AND channel_id = $3", messageContent, guildID, channelID)
+		if err != nil {
+			log.Println(err)
+		}
+	} else {
+		_, err := db.Exec("INSERT INTO sticky (guild_id, channel_id, message_id, message_content) VALUES ($1, $2, $3, $4)", guildID, channelID, messageID, messageContent)
+		if err != nil {
+			log.Println(err)
+		}
+	}
+	return exists
+}
+
+func hasSticky(guildID string, channelID string) bool {
+	var exists bool
+	err := db.QueryRow("SELECT EXISTS (SELECT  1 FROM sticky WHERE guild_id = $1 AND channel_id = $2)", guildID, channelID).Scan(&exists)
+	if err != nil {
+		log.Println(err)
+	}
+	return exists
+}
+
+func updateStickyMessageID(guildID string, channelID string, messageID string) {
+
 }
