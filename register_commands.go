@@ -20,6 +20,7 @@ type Command struct {
 var commands []Command = []Command{tag_command, short_get_tag_command, dadjoke_command, ping_command, ask_command, sticky_command, cat_command}
 
 func ready(s *discordgo.Session, event *discordgo.Ready) {
+	fmt.Print("\nStarting up... (May take longer when Discord rate limits the bot)")
 	removeOldCommandFromAllGuilds(s)
 	var existingCommandNames []string
 	for _, guild := range event.Guilds {
@@ -42,6 +43,7 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 			}
 		}
 	}
+	fmt.Print("\nSuccessfully started the Bot!")
 }
 
 func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
