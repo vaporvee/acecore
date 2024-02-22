@@ -39,7 +39,6 @@ func main() {
 		fmt.Println("Discord session created")
 	}
 	discord.Identify.Intents = discordgo.IntentsGuildMessages | discordgo.IntentsGuilds | discordgo.IntentMessageContent
-	defer removeCommandFromAllGuilds(discord)
 	discord.AddHandler(ready)
 	discord.AddHandler(interactionCreate)
 	discord.AddHandler(messageCreate)
@@ -53,7 +52,6 @@ func main() {
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
 	fmt.Println("\nShutting down...")
-	defer removeCommandFromAllGuilds(discord)
 	discord.Close()
 }
 

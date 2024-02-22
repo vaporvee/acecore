@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -15,18 +16,22 @@ type Command struct {
 	ModalID      string
 }
 
-var commands []Command = []Command{tag_command, short_get_tag_command, dadjoke_command, ping_command, ask_command, sticky_command}
+var commands []Command = []Command{tag_command, short_get_tag_command, dadjoke_command, ping_command, ask_command, sticky_command, cat_command}
 
 func ready(s *discordgo.Session, event *discordgo.Ready) {
+	fmt.Print("\nStarting up... (This may take a bit when Discord rate limits the bot)\n")
+	removeOldCommandFromAllGuilds(s)
 	for _, guild := range event.Guilds {
 		for _, command := range commands {
-			_, err := s.ApplicationCommandCreate(s.State.User.ID, guild.ID, &command.Definition)
+			cmd, err := s.ApplicationCommandCreate(s.State.User.ID, guild.ID, &command.Definition)
+			fmt.Printf("\nAdded command \"%s\"", cmd.Name)
 			if err != nil {
 				fmt.Println("error creating command,", err)
 				continue
 			}
 		}
 	}
+	fmt.Print("Successfully started the Discord bot!")
 }
 
 func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -48,18 +53,24 @@ func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 }
 
-func removeCommandFromAllGuilds(s *discordgo.Session) {
+func removeOldCommandFromAllGuilds(s *discordgo.Session) {
 	for _, guild := range s.State.Guilds {
 		existingCommands, err := s.ApplicationCommands(s.State.User.ID, guild.ID)
 		if err != nil {
 			fmt.Printf("error fetching existing commands for guild %s: %v\n", guild.Name, err)
 			continue
 		}
-
+		var commandIDs []string
+		for _, command := range commands {
+			commandIDs = append(commandIDs, command.Definition.Name)
+		}
 		for _, existingCommand := range existingCommands {
-			err := s.ApplicationCommandDelete(s.State.User.ID, guild.ID, existingCommand.ID)
-			if err != nil {
-				fmt.Printf("error deleting command %s for guild %s: %v\n", existingCommand.Name, guild.Name, err)
+			if !slices.Contains(commandIDs, existingCommand.Name) {
+				fmt.Printf("\nDeleting command \"%s\"", existingCommand.Name)
+				err := s.ApplicationCommandDelete(s.State.User.ID, guild.ID, existingCommand.ID)
+				if err != nil {
+					fmt.Printf("error deleting command %s for guild %s: %v\n", existingCommand.Name, guild.Name, err)
+				}
 			}
 		}
 	}
