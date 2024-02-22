@@ -34,7 +34,7 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 		for _, command := range commands {
 			if !slices.Contains(existingCommandNames, command.Definition.Name) || slices.Contains(os.Args, "--update") {
 				cmd, err := s.ApplicationCommandCreate(s.State.User.ID, guild.ID, &command.Definition)
-				fmt.Printf("\nDeleted command \"%s\"", cmd.Name)
+				fmt.Printf("\nAdded command \"%s\"", cmd.Name)
 				if err != nil {
 					fmt.Println("error creating command,", err)
 					continue
