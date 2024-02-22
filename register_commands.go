@@ -10,14 +10,16 @@ import (
 )
 
 type Command struct {
-	Definition   discordgo.ApplicationCommand
-	Interact     func(s *discordgo.Session, i *discordgo.InteractionCreate)
-	Autocomplete func(s *discordgo.Session, i *discordgo.InteractionCreate)
-	ModalSubmit  func(s *discordgo.Session, i *discordgo.InteractionCreate)
-	ModalID      string
+	Definition        discordgo.ApplicationCommand
+	Interact          func(s *discordgo.Session, i *discordgo.InteractionCreate)
+	ComponentInteract func(s *discordgo.Session, i *discordgo.InteractionCreate)
+	ComponentIDs      []string
+	Autocomplete      func(s *discordgo.Session, i *discordgo.InteractionCreate)
+	ModalSubmit       func(s *discordgo.Session, i *discordgo.InteractionCreate)
+	ModalID           string
 }
 
-var commands []Command = []Command{tag_command, short_get_tag_command, dadjoke_command, ping_command, ask_command, sticky_command, cat_command}
+var commands []Command = []Command{tag_command, short_get_tag_command, dadjoke_command, ping_command, ask_command, sticky_command, cat_command, form_command}
 
 func ready(s *discordgo.Session, event *discordgo.Ready) {
 	fmt.Print("\nStarting up... (May take longer when Discord rate limits the bot)")
@@ -33,7 +35,7 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 			continue
 		}
 		for _, command := range commands {
-			if !slices.Contains(existingCommandNames, command.Definition.Name) || slices.Contains(os.Args, "--update") {
+			if !slices.Contains(existingCommandNames, command.Definition.Name) || slices.Contains(os.Args, "--update="+command.Definition.Name) {
 				cmd, err := s.ApplicationCommandCreate(s.State.User.ID, guild.ID, &command.Definition)
 				fmt.Printf("\nAdded command \"%s\"", cmd.Name)
 				if err != nil {
@@ -60,6 +62,10 @@ func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		case discordgo.InteractionModalSubmit:
 			if command.ModalSubmit != nil && strings.HasPrefix(i.ModalSubmitData().CustomID, command.ModalID) {
 				command.ModalSubmit(s, i)
+			}
+		case discordgo.InteractionMessageComponent:
+			if command.ComponentInteract != nil && slices.Contains(command.ComponentIDs, i.MessageComponentData().CustomID) {
+				command.ComponentInteract(s, i)
 			}
 		}
 	}

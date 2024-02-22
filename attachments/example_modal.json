@@ -1,0 +1,20 @@
+[
+  {
+    "label": "This is a simple textline",
+    "is_paragraph": false,
+    "placeholder": "...and it is required!",
+    "value": "",
+    "required": true,
+    "min_length": 0,
+    "max_length": 20
+  },
+  {
+    "label": "This is a paragraph",
+    "is_paragraph": true,
+    "placeholder": "...and it is not required!",
+    "value": "We already have some input here",
+    "required": false,
+    "min_length": 0,
+    "max_length": 2000
+  }
+]
