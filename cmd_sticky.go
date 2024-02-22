@@ -75,8 +75,10 @@ var sticky_command Command = Command{
 	ModalSubmit: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		text := i.ModalSubmitData().Components[0].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value
 		message, err := s.ChannelMessageSendEmbed(i.ChannelID, &discordgo.MessageEmbed{
-			Type:        discordgo.EmbedTypeArticle,
-			Title:       ":pushpin: Sticky message",
+			Type: discordgo.EmbedTypeArticle,
+			Footer: &discordgo.MessageEmbedFooter{
+				Text: "📌 Sticky message",
+			},
 			Color:       hexToDecimal(color["primary"]),
 			Description: text,
 		})
