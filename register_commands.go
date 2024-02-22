@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"slices"
 	"strings"
 
@@ -19,19 +20,28 @@ type Command struct {
 var commands []Command = []Command{tag_command, short_get_tag_command, dadjoke_command, ping_command, ask_command, sticky_command, cat_command}
 
 func ready(s *discordgo.Session, event *discordgo.Ready) {
-	fmt.Print("\nStarting up... (This may take a bit when Discord rate limits the bot)\n")
 	removeOldCommandFromAllGuilds(s)
+	var existingCommandNames []string
 	for _, guild := range event.Guilds {
+		existingCommands, err := s.ApplicationCommands(s.State.User.ID, guild.ID)
+		for _, existingCommand := range existingCommands {
+			existingCommandNames = append(existingCommandNames, existingCommand.Name)
+		}
+		if err != nil {
+			fmt.Printf("error fetching existing commands for guild %s: %v\n", guild.Name, err)
+			continue
+		}
 		for _, command := range commands {
-			cmd, err := s.ApplicationCommandCreate(s.State.User.ID, guild.ID, &command.Definition)
-			fmt.Printf("\nAdded command \"%s\"", cmd.Name)
-			if err != nil {
-				fmt.Println("error creating command,", err)
-				continue
+			if !slices.Contains(existingCommandNames, command.Definition.Name) || slices.Contains(os.Args, "--update") {
+				cmd, err := s.ApplicationCommandCreate(s.State.User.ID, guild.ID, &command.Definition)
+				fmt.Printf("\nDeleted command \"%s\"", cmd.Name)
+				if err != nil {
+					fmt.Println("error creating command,", err)
+					continue
+				}
 			}
 		}
 	}
-	fmt.Print("Successfully started the Discord bot!")
 }
 
 func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
