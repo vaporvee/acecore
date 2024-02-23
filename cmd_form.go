@@ -21,7 +21,7 @@ var form_command Command = Command{
 			},
 			{
 				Type:        discordgo.ApplicationCommandOptionSubCommand,
-				Name:        "create",
+				Name:        "custom",
 				Description: "Create a new custom form right inside Discord",
 				Options: []*discordgo.ApplicationCommandOption{
 					{
@@ -41,6 +41,19 @@ var form_command Command = Command{
 						Name:        "results_channel",
 						Description: "The channel where the form results should be posted",
 						Required:    true,
+					},
+				},
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "add",
+				Description: "Adds existing forms to this channel",
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:         discordgo.ApplicationCommandOptionString,
+						Name:         "type",
+						Description:  "Which type of form you want to add",
+						Autocomplete: true,
 					},
 				},
 			},
@@ -79,57 +92,85 @@ var form_command Command = Command{
 					},
 				},
 			})
-		case "create":
+		case "custom":
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
-					Content: "Placeholder",
+					Content: "Feature not available yet use `/form add` instead",
 					Flags:   discordgo.MessageFlagsEphemeral,
+				},
+			})
+		case "add":
+			var optionName string = i.ApplicationCommandData().Options[0].Options[0].Name
+			var optionValue string = i.ApplicationCommandData().Options[0].Options[0].StringValue()
+			if optionName == "" { // handling optional empty
+				optionName = "General"
+			}
+			s.ChannelMessageSendComplex(i.ChannelID, &discordgo.MessageSend{
+				Embed: &discordgo.MessageEmbed{
+					Color:       hexToDecimal(color["primary"]),
+					Title:       optionName,
+					Description: "Press the bottom button to open a form popup.",
+				},
+				Components: []discordgo.MessageComponent{
+					discordgo.ActionsRow{
+						Components: []discordgo.MessageComponent{
+							discordgo.Button{
+								CustomID: "form:" + optionValue,
+								Label:    "Submit",
+								Emoji: discordgo.ComponentEmoji{
+									Name: "📥",
+								},
+							},
+						},
+					},
 				},
 			})
 		}
 	},
-	ComponentIDs: []string{"form_demo"},
+	ComponentIDs: getFormIDs(),
 	ComponentInteract: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseModal,
-			Data: &discordgo.InteractionResponseData{
-				CustomID: "form_demo_modal" + i.Interaction.Member.User.ID,
-				Title:    "Demo form",
-				Components: []discordgo.MessageComponent{
-					discordgo.ActionsRow{
-						Components: []discordgo.MessageComponent{
-							discordgo.TextInput{
-								CustomID:    "demo_short",
-								Label:       "This is a simple textline",
-								Style:       discordgo.TextInputShort,
-								Placeholder: "...and it is required!",
-								Value:       "",
-								Required:    true,
-								MaxLength:   20,
-								MinLength:   0,
+		if i.Interaction.MessageComponentData().CustomID == "form_demo" {
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseModal,
+				Data: &discordgo.InteractionResponseData{
+					CustomID: "form_demo" + i.Interaction.Member.User.ID,
+					Title:    "Demo form",
+					Components: []discordgo.MessageComponent{
+						discordgo.ActionsRow{
+							Components: []discordgo.MessageComponent{
+								discordgo.TextInput{
+									CustomID:    "demo_short",
+									Label:       "This is a simple textline",
+									Style:       discordgo.TextInputShort,
+									Placeholder: "...and it is required!",
+									Value:       "",
+									Required:    true,
+									MaxLength:   20,
+									MinLength:   0,
+								},
 							},
 						},
-					},
-					discordgo.ActionsRow{
-						Components: []discordgo.MessageComponent{
-							discordgo.TextInput{
-								CustomID:    "demo_paragraph",
-								Label:       "This is a paragraph",
-								Style:       discordgo.TextInputParagraph,
-								Placeholder: "...and it is not required!",
-								Value:       "We already have some input here",
-								Required:    false,
-								MaxLength:   2000,
-								MinLength:   0,
+						discordgo.ActionsRow{
+							Components: []discordgo.MessageComponent{
+								discordgo.TextInput{
+									CustomID:    "demo_paragraph",
+									Label:       "This is a paragraph",
+									Style:       discordgo.TextInputParagraph,
+									Placeholder: "...and it is not required!",
+									Value:       "We already have some input here",
+									Required:    false,
+									MaxLength:   2000,
+									MinLength:   0,
+								},
 							},
 						},
 					},
 				},
-			},
-		})
+			})
+		}
 	},
-	ModalID: "form_demo_modal",
+	ModalIDs: getFormIDs(),
 	ModalSubmit: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -139,4 +180,35 @@ var form_command Command = Command{
 			},
 		})
 	},
+	Autocomplete: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		choices := []*discordgo.ApplicationCommandOptionChoice{
+			{
+				Name:  "Feedback",
+				Value: "template_feedback",
+			},
+			{
+				Name:  "Support Ticket",
+				Value: "template_ticket",
+			},
+			{
+				Name:  "Submit URL",
+				Value: "template_url",
+			},
+			{
+				Name:  "General",
+				Value: "template_general",
+			},
+		}
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionApplicationCommandAutocompleteResult,
+			Data: &discordgo.InteractionResponseData{
+				Choices: choices,
+			},
+		})
+	},
+}
+
+func getFormIDs() []string {
+	//needs databank support
+	return []string{"form_demo"}
 }

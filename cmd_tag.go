@@ -97,7 +97,7 @@ var tag_command Command = Command{
 			})
 		}
 	},
-	ModalID: "tag_add_modal",
+	ModalIDs: []string{"tag_add_modal"},
 	ModalSubmit: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		tagName := i.ModalSubmitData().Components[0].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value
 		tagContent := i.ModalSubmitData().Components[1].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value

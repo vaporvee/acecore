@@ -16,7 +16,7 @@ type Command struct {
 	ComponentIDs      []string
 	Autocomplete      func(s *discordgo.Session, i *discordgo.InteractionCreate)
 	ModalSubmit       func(s *discordgo.Session, i *discordgo.InteractionCreate)
-	ModalID           string
+	ModalIDs          []string
 }
 
 var commands []Command = []Command{tag_command, short_get_tag_command, dadjoke_command, ping_command, ask_command, sticky_command, cat_command, form_command}
@@ -60,8 +60,16 @@ func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				command.Autocomplete(s, i)
 			}
 		case discordgo.InteractionModalSubmit:
-			if command.ModalSubmit != nil && strings.HasPrefix(i.ModalSubmitData().CustomID, command.ModalID) {
-				command.ModalSubmit(s, i)
+			var hasID bool = false
+			if command.ModalSubmit != nil {
+				for _, modalID := range command.ModalIDs {
+					if strings.HasPrefix(i.ModalSubmitData().CustomID, modalID) {
+						hasID = true
+					}
+				}
+				if hasID {
+					command.ModalSubmit(s, i)
+				}
 			}
 		case discordgo.InteractionMessageComponent:
 			if command.ComponentInteract != nil && slices.Contains(command.ComponentIDs, i.MessageComponentData().CustomID) {

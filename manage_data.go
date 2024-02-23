@@ -21,6 +21,20 @@ func initTables() {
 		guild_id TEXT NOT NULL,
 		PRIMARY KEY (channel_id, guild_id)
 	);
+	CREATE TABLE IF NOT EXISTS forms (
+		form_id TEXT NOT NULL,
+		title TEXT NOT NULL,
+		json TEXT NOT NULL,
+		guild_id TEXT NOT NULL,
+		PRIMARY KEY (form_id, guild_id)
+	);
+	CREATE TABLE IF NOT EXISTS formbuttons (
+		form_id TEXT NOT NULL,
+		message_id TEXT NOT NULL,
+		channel_id TEXT NOT NULL,
+		guild_id TEXT NOT NULL,
+		PRIMARY KEY (form_id, guild_id, channel_id)
+	);
 	`
 
 	_, err := db.Exec(createTableQuery)
