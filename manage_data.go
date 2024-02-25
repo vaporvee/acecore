@@ -21,22 +21,23 @@ func initTables() {
 		guild_id TEXT NOT NULL,
 		PRIMARY KEY (channel_id, guild_id)
 	);
-	CREATE TABLE IF NOT EXISTS forms (
+	CREATE TABLE IF NOT EXISTS custom_forms (
 		form_id TEXT NOT NULL,
 		title TEXT NOT NULL,
-		json TEXT NOT NULL,
+		json JSON NOT NULL,
 		guild_id TEXT NOT NULL,
 		PRIMARY KEY (form_id, guild_id)
 	);
-	CREATE TABLE IF NOT EXISTS formbuttons (
+	CREATE TABLE IF NOT EXISTS form_buttons (
 		form_manage_id TEXT NOT NULL,
 		form_id TEXT NOT NULL,
-		overwrite_title TEXT NOT NULL,
+		overwrite_title TEXT,
 		message_id TEXT NOT NULL,
 		channel_id TEXT NOT NULL,
 		guild_id TEXT NOT NULL,
 		result_channel_id TEXT NOT NULL,
-		accept_channel_id TEXT NOT NULL,
+		accept_channel_id TEXT,
+		mods_can_comment BOOL,
 		PRIMARY KEY (form_manage_id, form_id)
 	);
 	`
@@ -48,21 +49,17 @@ func initTables() {
 }
 
 func addTag(guildID, tagName, tagContent string) bool {
-	var exists bool
+	var exists bool = true
+	//TODO: add modify command
 	id := uuid.New()
-	err := db.QueryRow("SELECT EXISTS (SELECT  1 FROM tags WHERE guild_id = $1 AND tag_id = $2)", guildID, id).Scan(&exists)
-	if err != nil {
-		log.Println(err)
-	}
-	// TODO: add modify command
 	for exists {
 		id = uuid.New()
-		err = db.QueryRow("SELECT EXISTS (SELECT  1 FROM tags WHERE guild_id = $1 AND tag_id = $2)", guildID, id).Scan(&exists)
+		err := db.QueryRow("SELECT EXISTS (SELECT  1 FROM tags WHERE guild_id = $1 AND tag_id = $2)", guildID, id).Scan(&exists)
 		if err != nil {
 			log.Println(err)
 		}
 	}
-	_, err = db.Exec("INSERT INTO tags (guild_id, tag_name, tag_content, tag_id) VALUES ($1, $2, $3, $4)", guildID, tagName, tagContent, id)
+	_, err := db.Exec("INSERT INTO tags (guild_id, tag_name, tag_content, tag_id) VALUES ($1, $2, $3, $4)", guildID, tagName, tagContent, id)
 	if err != nil {
 		log.Println(err)
 	}
@@ -180,6 +177,46 @@ func removeSticky(guildID string, channelID string) {
 	}
 }
 
-func addTemplateForm(guildID string, channelID string, formID string, overwriteChannelID string, resultChannelID string, acceptChannelID string) {
+func getFormManageIdExists(guildID string, id uuid.UUID) bool {
+	var exists bool
+	err := db.QueryRow("SELECT EXISTS (SELECT 1 FROM form_buttons WHERE guild_id = $1 AND form_manage_id = $2)", guildID, id).Scan(&exists)
+	if err != nil {
+		log.Println(err)
+	}
+	return exists
+}
 
+func addFormButton(guildID string, channelID string, messageID string, formManageID string, formID string, resultChannelID string, overwriteTitle string, acceptChannelID string, modsCanComment bool) {
+	_, err := db.Exec("INSERT INTO form_buttons (guild_id, form_manage_id, channel_id, message_id, form_id, result_channel_id, overwrite_title, accept_channel_id, mods_can_comment) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)", guildID, formManageID, channelID, messageID, formID, resultChannelID, overwriteTitle, acceptChannelID, modsCanComment)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+func getFormManageIDs() []string {
+	if db == nil {
+		return nil
+	}
+	var IDs []string
+	rows, err := db.Query("SELECT form_manage_id FROM form_buttons")
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			log.Println(err)
+			return nil
+		}
+		IDs = append(IDs, id)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Println(err)
+		return nil
+	}
+	return IDs
 }

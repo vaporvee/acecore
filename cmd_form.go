@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/google/uuid"
 )
 
 var fileData []byte
@@ -50,10 +51,33 @@ var form_command Command = Command{
 				Description: "Adds existing forms to this channel",
 				Options: []*discordgo.ApplicationCommandOption{
 					{
+						Type:         discordgo.ApplicationCommandOptionChannel,
+						Name:         "result_channel",
+						Description:  "Where the form results should appear",
+						ChannelTypes: []discordgo.ChannelType{discordgo.ChannelTypeGuildText},
+						Required:     true,
+					},
+					{
 						Type:         discordgo.ApplicationCommandOptionString,
 						Name:         "type",
 						Description:  "Which type of form you want to add",
 						Autocomplete: true,
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "title",
+						Description: "The title the form should have",
+					},
+					{
+						Type:         discordgo.ApplicationCommandOptionChannel,
+						Name:         "accept_channel_id",
+						Description:  "Channel for results that need to be accepted by a moderator before sending it to the result channel",
+						ChannelTypes: []discordgo.ChannelType{discordgo.ChannelTypeGuildText},
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionBoolean,
+						Name:        "mods_can_comment",
+						Description: "Moderators can open a new channel on the form result, which then pings the user who submitted it",
 					},
 				},
 			},
@@ -101,14 +125,16 @@ var form_command Command = Command{
 				},
 			})
 		case "add":
-			var title string
-			var optionValue string
-			if len(i.ApplicationCommandData().Options[0].Options) == 0 {
-				optionValue = "template_general"
+			var title, formID, overwriteTitle, acceptChannelID string
+			var modsCanComment bool
+			options := i.ApplicationCommandData().Options[0]
+
+			if len(options.Options) <= 1 {
+				formID = "template_general"
 			} else {
-				optionValue = i.ApplicationCommandData().Options[0].Options[0].StringValue()
+				formID = options.Options[1].StringValue()
 			}
-			switch optionValue {
+			switch formID {
 			case "template_feedback":
 				title = "Submit Feedback"
 			case "template_ticket":
@@ -118,7 +144,26 @@ var form_command Command = Command{
 			case "template_general":
 				title = "Form"
 			}
-			s.ChannelMessageSendComplex(i.ChannelID, &discordgo.MessageSend{
+
+			var exists bool = true
+			formManageID := uuid.New()
+			for exists {
+				formManageID = uuid.New()
+				exists = getFormManageIdExists(i.GuildID, formManageID)
+			}
+
+			if !(len(options.Options) <= 2) {
+				overwriteTitle = options.Options[2].StringValue()
+				title = overwriteTitle
+			}
+			if !(len(options.Options) <= 3) {
+				acceptChannelID = options.Options[3].ChannelValue(s).ID
+			}
+			if !(len(options.Options) <= 4) {
+				modsCanComment = options.Options[4].BoolValue()
+			}
+
+			message, _ := s.ChannelMessageSendComplex(i.ChannelID, &discordgo.MessageSend{
 				Embed: &discordgo.MessageEmbed{
 					Color:       hexToDecimal(color["primary"]),
 					Title:       title,
@@ -128,7 +173,8 @@ var form_command Command = Command{
 					discordgo.ActionsRow{
 						Components: []discordgo.MessageComponent{
 							discordgo.Button{
-								CustomID: "form:", //add formID
+								CustomID: "form:" + formManageID.String(),
+								Style:    discordgo.SuccessButton,
 								Label:    "Submit",
 								Emoji: discordgo.ComponentEmoji{
 									Name: "📥",
@@ -138,6 +184,7 @@ var form_command Command = Command{
 					},
 				},
 			})
+			addFormButton(i.GuildID, i.ChannelID, message.ID, formManageID.String(), formID, options.Options[0].ChannelValue(s).ID, overwriteTitle, acceptChannelID, modsCanComment)
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
@@ -147,7 +194,7 @@ var form_command Command = Command{
 			})
 		}
 	},
-	ComponentIDs: getFormIDs(),
+	ComponentIDs: getFormButtonIDs(),
 	ComponentInteract: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if i.Interaction.MessageComponentData().CustomID == "form_demo" {
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -228,6 +275,15 @@ var form_command Command = Command{
 }
 
 func getFormIDs() []string {
-	//needs databank support
-	return []string{"form_demo"}
+	//needs custom IDs from databank
+	return []string{"form_demo", "template_feedback", "template_ticket", "template_url", "template_general"}
+}
+
+func getFormButtonIDs() []string {
+	var IDs []string = []string{"form_demo"}
+	var formButtonIDs []string = getFormManageIDs()
+	for _, buttonID := range formButtonIDs {
+		IDs = append(IDs, "form:"+buttonID)
+	}
+	return IDs
 }
