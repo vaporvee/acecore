@@ -101,22 +101,34 @@ var form_command Command = Command{
 				},
 			})
 		case "add":
-			var optionName string = i.ApplicationCommandData().Options[0].Options[0].Name
-			var optionValue string = i.ApplicationCommandData().Options[0].Options[0].StringValue()
-			if optionName == "" { // handling optional empty
-				optionName = "General"
+			var title string
+			var optionValue string
+			if len(i.ApplicationCommandData().Options[0].Options) == 0 {
+				optionValue = "template_general"
+			} else {
+				optionValue = i.ApplicationCommandData().Options[0].Options[0].StringValue()
+			}
+			switch optionValue {
+			case "template_feedback":
+				title = "Submit Feedback"
+			case "template_ticket":
+				title = "Make a new ticket"
+			case "template_url":
+				title = "Add your URL"
+			case "template_general":
+				title = "Form"
 			}
 			s.ChannelMessageSendComplex(i.ChannelID, &discordgo.MessageSend{
 				Embed: &discordgo.MessageEmbed{
 					Color:       hexToDecimal(color["primary"]),
-					Title:       optionName,
+					Title:       title,
 					Description: "Press the bottom button to open a form popup.",
 				},
 				Components: []discordgo.MessageComponent{
 					discordgo.ActionsRow{
 						Components: []discordgo.MessageComponent{
 							discordgo.Button{
-								CustomID: "form:" + optionValue,
+								CustomID: "form:", //add formID
 								Label:    "Submit",
 								Emoji: discordgo.ComponentEmoji{
 									Name: "📥",
@@ -124,6 +136,13 @@ var form_command Command = Command{
 							},
 						},
 					},
+				},
+			})
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: "Successfully added form button!",
+					Flags:   discordgo.MessageFlagsEphemeral,
 				},
 			})
 		}

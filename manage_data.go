@@ -29,11 +29,15 @@ func initTables() {
 		PRIMARY KEY (form_id, guild_id)
 	);
 	CREATE TABLE IF NOT EXISTS formbuttons (
+		form_manage_id TEXT NOT NULL,
 		form_id TEXT NOT NULL,
+		overwrite_title TEXT NOT NULL,
 		message_id TEXT NOT NULL,
 		channel_id TEXT NOT NULL,
 		guild_id TEXT NOT NULL,
-		PRIMARY KEY (form_id, guild_id, channel_id)
+		result_channel_id TEXT NOT NULL,
+		accept_channel_id TEXT NOT NULL,
+		PRIMARY KEY (form_manage_id, form_id)
 	);
 	`
 
@@ -174,4 +178,8 @@ func removeSticky(guildID string, channelID string) {
 	if err != nil {
 		log.Println(err)
 	}
+}
+
+func addTemplateForm(guildID string, channelID string, formID string, overwriteChannelID string, resultChannelID string, acceptChannelID string) {
+
 }
