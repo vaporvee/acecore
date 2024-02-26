@@ -1,0 +1,15 @@
+{
+  "form_id": "template_url",
+  "title": "Submit URL",
+  "form": [
+    {
+      "label": "URL",
+      "is_paragraph": false,
+      "placeholder": "https://example.com",
+      "value": "",
+      "required": true,
+      "min_length": 0,
+      "max_length": 100
+    }
+  ]
+}

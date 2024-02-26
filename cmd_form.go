@@ -87,12 +87,12 @@ var form_command Command = Command{
 	Interact: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		switch i.ApplicationCommandData().Options[0].Name {
 		case "help":
-			fileData, _ = os.ReadFile("./attachments/example_modal.json")
+			fileData, _ = os.ReadFile("./form_templates/form_demo.json")
 			fileReader := bytes.NewReader(fileData)
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
-					Content: "Get the example file edit it and submit it via `/form create`.\nOr use the demo button to get an idea of how the example would look like.",
+					Content: "Get the example file edit it (make sure to have a unique \"form_id\") and submit it via `/form create`.\nOr use the demo button to get an idea of how the example would look like.",
 					Flags:   discordgo.MessageFlagsEphemeral,
 					Files: []*discordgo.File{
 						{
@@ -284,7 +284,7 @@ var form_command Command = Command{
 
 func getFormIDs() []string {
 	//needs custom IDs from databank
-	return []string{"form_demo", "template_feedback", "template_ticket", "template_url", "template_general"}
+	return []string{"form_demo", "template_ticket", "template_url", "template_general"}
 }
 
 func getFormButtonIDs() []string {

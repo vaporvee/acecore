@@ -1,0 +1,20 @@
+{
+  "form_id": "template_ticket",
+  "title": "Submit your Ticket",
+  "mods_can_comment": true,
+  "form": [
+    {
+      "label": "Title",
+      "is_paragraph": false,
+      "required": true,
+      "max_length": 20
+    },
+    {
+      "label": "Ticket information",
+      "is_paragraph": true,
+      "placeholder": "Fill in what you need or have issues with and a moderator will reply.",
+      "required": true,
+      "max_length": 2000
+    }
+  ]
+}
