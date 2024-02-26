@@ -19,7 +19,7 @@ type Command struct {
 	ModalIDs          []string
 }
 
-var commands []Command = []Command{tag_command, short_get_tag_command, dadjoke_command, ping_command, ask_command, sticky_command, cat_command, form_command}
+var commands []Command = []Command{form_command, tag_command, short_get_tag_command, dadjoke_command, ping_command, ask_command, sticky_command, cat_command}
 
 func ready(s *discordgo.Session, event *discordgo.Ready) {
 	fmt.Print("\nStarting up... (May take longer when Discord rate limits the bot)")
@@ -72,8 +72,13 @@ func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				}
 			}
 		case discordgo.InteractionMessageComponent:
-			if command.ComponentInteract != nil && slices.Contains(command.ComponentIDs, i.MessageComponentData().CustomID) {
-				command.ComponentInteract(s, i)
+			if command.ComponentInteract != nil {
+				if command.Definition.Name == "form" {
+					command.ComponentIDs = getFormButtonIDs()
+				} // FIXME: Makes it dynamic i don't know why it isn't otherwise
+				if slices.Contains(command.ComponentIDs, i.MessageComponentData().CustomID) {
+					command.ComponentInteract(s, i)
+				}
 			}
 		}
 	}

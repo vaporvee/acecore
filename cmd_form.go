@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"os"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/google/uuid"
@@ -146,7 +147,7 @@ var form_command Command = Command{
 			}
 
 			var exists bool = true
-			formManageID := uuid.New()
+			var formManageID uuid.UUID = uuid.New()
 			for exists {
 				formManageID = uuid.New()
 				exists = getFormManageIdExists(i.GuildID, formManageID)
@@ -162,7 +163,6 @@ var form_command Command = Command{
 			if !(len(options.Options) <= 4) {
 				modsCanComment = options.Options[4].BoolValue()
 			}
-
 			message, _ := s.ChannelMessageSendComplex(i.ChannelID, &discordgo.MessageSend{
 				Embed: &discordgo.MessageEmbed{
 					Color:       hexToDecimal(color["primary"]),
@@ -194,8 +194,16 @@ var form_command Command = Command{
 			})
 		}
 	},
-	ComponentIDs: getFormButtonIDs(),
 	ComponentInteract: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		if strings.HasPrefix(i.Interaction.MessageComponentData().CustomID, "form:") {
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: i.Interaction.MessageComponentData().CustomID,
+					Flags:   discordgo.MessageFlagsEphemeral,
+				},
+			})
+		}
 		if i.Interaction.MessageComponentData().CustomID == "form_demo" {
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseModal,

@@ -179,7 +179,7 @@ func removeSticky(guildID string, channelID string) {
 
 func getFormManageIdExists(guildID string, id uuid.UUID) bool {
 	var exists bool
-	err := db.QueryRow("SELECT EXISTS (SELECT 1 FROM form_buttons WHERE guild_id = $1 AND form_manage_id = $2)", guildID, id).Scan(&exists)
+	err := db.QueryRow("SELECT EXISTS (SELECT 1 FROM form_buttons WHERE form_manage_id = $1)", id).Scan(&exists)
 	if err != nil {
 		log.Println(err)
 	}
