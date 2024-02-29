@@ -22,15 +22,15 @@ func initTables() {
 		PRIMARY KEY (channel_id, guild_id)
 	);
 	CREATE TABLE IF NOT EXISTS custom_forms (
-		form_id TEXT NOT NULL,
+		form_type TEXT NOT NULL,
 		title TEXT NOT NULL,
 		json JSON NOT NULL,
 		guild_id TEXT NOT NULL,
-		PRIMARY KEY (form_id, guild_id)
+		PRIMARY KEY (form_type, guild_id)
 	);
-	CREATE TABLE IF NOT EXISTS form_buttons (
+	CREATE TABLE IF NOT EXISTS form_manage (
 		form_manage_id TEXT NOT NULL,
-		form_id TEXT NOT NULL,
+		form_type TEXT NOT NULL,
 		overwrite_title TEXT,
 		message_id TEXT NOT NULL,
 		channel_id TEXT NOT NULL,
@@ -38,7 +38,7 @@ func initTables() {
 		result_channel_id TEXT NOT NULL,
 		accept_channel_id TEXT,
 		mods_can_comment BOOL,
-		PRIMARY KEY (form_manage_id, form_id)
+		PRIMARY KEY (form_manage_id, form_type)
 	);
 	`
 
@@ -177,17 +177,17 @@ func removeSticky(guildID string, channelID string) {
 	}
 }
 
-func getFormManageIdExists(guildID string, id uuid.UUID) bool {
+func getFormManageIdExists(id uuid.UUID) bool {
 	var exists bool
-	err := db.QueryRow("SELECT EXISTS (SELECT 1 FROM form_buttons WHERE form_manage_id = $1)", id).Scan(&exists)
+	err := db.QueryRow("SELECT EXISTS (SELECT 1 FROM form_manage WHERE form_manage_id = $1)", id).Scan(&exists)
 	if err != nil {
 		log.Println(err)
 	}
 	return exists
 }
 
-func addFormButton(guildID string, channelID string, messageID string, formManageID string, formID string, resultChannelID string, overwriteTitle string, acceptChannelID string, modsCanComment bool) {
-	_, err := db.Exec("INSERT INTO form_buttons (guild_id, form_manage_id, channel_id, message_id, form_id, result_channel_id, overwrite_title, accept_channel_id, mods_can_comment) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)", guildID, formManageID, channelID, messageID, formID, resultChannelID, overwriteTitle, acceptChannelID, modsCanComment)
+func addFormButton(guildID string, channelID string, messageID string, formManageID string, formType string, resultChannelID string, overwriteTitle string, acceptChannelID string, modsCanComment bool) {
+	_, err := db.Exec("INSERT INTO form_manage (guild_id, form_manage_id, channel_id, message_id, form_type, result_channel_id, overwrite_title, accept_channel_id, mods_can_comment) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)", guildID, formManageID, channelID, messageID, formType, resultChannelID, overwriteTitle, acceptChannelID, modsCanComment)
 	if err != nil {
 		log.Println(err)
 	}
@@ -198,7 +198,7 @@ func getFormManageIDs() []string {
 		return nil
 	}
 	var IDs []string
-	rows, err := db.Query("SELECT form_manage_id FROM form_buttons")
+	rows, err := db.Query("SELECT form_manage_id FROM form_manage")
 	if err != nil {
 		log.Println(err)
 		return nil
@@ -219,4 +219,13 @@ func getFormManageIDs() []string {
 		return nil
 	}
 	return IDs
+}
+
+func getFormType(formManageID string) string {
+	var formType string
+	err := db.QueryRow("SELECT form_type FROM form_manage WHERE form_manage_id = $1", formManageID).Scan(&formType)
+	if err != nil {
+		log.Println(err)
+	}
+	return formType
 }

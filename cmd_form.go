@@ -71,7 +71,7 @@ var form_command Command = Command{
 					},
 					{
 						Type:         discordgo.ApplicationCommandOptionChannel,
-						Name:         "accept_channel_id",
+						Name:         "accept_channel",
 						Description:  "Channel for results that need to be accepted by a moderator before sending it to the result channel",
 						ChannelTypes: []discordgo.ChannelType{discordgo.ChannelTypeGuildText},
 					},
@@ -92,7 +92,7 @@ var form_command Command = Command{
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
-					Content: "Get the example file edit it (make sure to have a unique \"form_id\") and submit it via `/form create`.\nOr use the demo button to get an idea of how the example would look like.",
+					Content: "Get the example file edit it (make sure to have a unique \"form_type\") and submit it via `/form create`.\nOr use the demo button to get an idea of how the example would look like.",
 					Flags:   discordgo.MessageFlagsEphemeral,
 					Files: []*discordgo.File{
 						{
@@ -130,39 +130,40 @@ var form_command Command = Command{
 			var modsCanComment bool
 			options := i.ApplicationCommandData().Options[0]
 
-			if len(options.Options) <= 1 {
-				formID = "template_general"
-			} else {
-				formID = options.Options[1].StringValue()
+			for _, opt := range options.Options {
+				switch opt.Name {
+				case "type":
+					formID = options.Options[1].StringValue()
+				case "title":
+					overwriteTitle = opt.StringValue()
+					title = overwriteTitle
+				case "accept_channel":
+					acceptChannelID = opt.ChannelValue(s).ID
+				case "mods_can_comment":
+					modsCanComment = opt.BoolValue()
+				}
 			}
-			switch formID {
-			case "template_feedback":
-				title = "Submit Feedback"
-			case "template_ticket":
-				title = "Make a new ticket"
-			case "template_url":
-				title = "Add your URL"
-			case "template_general":
-				title = "Form"
+			if formID == "" {
+				formID = "template_general"
+			}
+
+			formTitles := map[string]string{
+				"template_feedback": "Submit Feedback",
+				"template_ticket":   "Make a new ticket",
+				"template_url":      "Add your URL",
+				"template_general":  "Form",
+			}
+			if val, ok := formTitles[formID]; ok {
+				title = val
 			}
 
 			var exists bool = true
 			var formManageID uuid.UUID = uuid.New()
 			for exists {
 				formManageID = uuid.New()
-				exists = getFormManageIdExists(i.GuildID, formManageID)
+				exists = getFormManageIdExists(formManageID)
 			}
 
-			if !(len(options.Options) <= 2) {
-				overwriteTitle = options.Options[2].StringValue()
-				title = overwriteTitle
-			}
-			if !(len(options.Options) <= 3) {
-				acceptChannelID = options.Options[3].ChannelValue(s).ID
-			}
-			if !(len(options.Options) <= 4) {
-				modsCanComment = options.Options[4].BoolValue()
-			}
 			message, _ := s.ChannelMessageSendComplex(i.ChannelID, &discordgo.MessageSend{
 				Embed: &discordgo.MessageEmbed{
 					Color:       hexToDecimal(color["primary"]),
@@ -199,7 +200,7 @@ var form_command Command = Command{
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
-					Content: i.Interaction.MessageComponentData().CustomID,
+					Content: getFormType(strings.TrimPrefix(i.Interaction.MessageComponentData().CustomID, "form:")),
 					Flags:   discordgo.MessageFlagsEphemeral,
 				},
 			})
@@ -244,7 +245,7 @@ var form_command Command = Command{
 			})
 		}
 	},
-	ModalIDs: getFormIDs(),
+	ModalIDs: getFormTypes(),
 	ModalSubmit: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -282,7 +283,7 @@ var form_command Command = Command{
 	},
 }
 
-func getFormIDs() []string {
+func getFormTypes() []string {
 	//needs custom IDs from databank
 	return []string{"form_demo", "template_ticket", "template_url", "template_general"}
 }

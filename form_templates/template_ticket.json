@@ -1,5 +1,5 @@
 {
-  "form_id": "template_ticket",
+  "form_type": "template_ticket",
   "title": "Submit your Ticket",
   "mods_can_comment": true,
   "form": [
