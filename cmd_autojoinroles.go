@@ -38,11 +38,17 @@ var autojoinroles_command Command = Command{
 		option := i.ApplicationCommandData().Options[0].Name
 		var content string
 		if len(i.ApplicationCommandData().Options[0].Options) == 1 {
-			role = i.ApplicationCommandData().Options[0].Options[0].RoleValue(s, i.GuildID).ID
-			if setAutoJoinRole(i.GuildID, option, role) {
-				content = "Updated auto join role for " + option + "s as <@&" + role + ">"
+			var givenRole *discordgo.Role = i.ApplicationCommandData().Options[0].Options[0].RoleValue(s, i.GuildID)
+			role = givenRole.ID
+			botrole, _ := getHighestRole(s, i.GuildID)
+			if givenRole.Position >= botrole.Position {
+				content = "<@&" + role + "> is not below the Bot's current highest role(<@&" + botrole.ID + ">). That makes it unable to manage it."
 			} else {
-				content = "Setup auto join role for " + option + "s as <@&" + role + ">"
+				if setAutoJoinRole(i.GuildID, option, role) {
+					content = "Updated auto join role for " + option + "s as <@&" + role + ">"
+				} else {
+					content = "Setup auto join role for " + option + "s as <@&" + role + ">"
+				}
 			}
 		} else if setAutoJoinRole(i.GuildID, option, role) {
 			content = "Deleted auto join role for " + option + "s"
