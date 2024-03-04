@@ -34,13 +34,18 @@ var autojoinroles_command Command = Command{
 		},
 	},
 	Interact: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		var role string
 		option := i.ApplicationCommandData().Options[0].Name
-		role := i.ApplicationCommandData().Options[0].Options[0].RoleValue(s, i.GuildID).ID
 		var content string
-		if setAutoJoinRole(i.GuildID, option, role) {
-			content = "Setup auto join role for " + option + "s as <@&" + role + ">"
-		} else {
-			content = "Updated auto join role for " + option + "s as <@&" + role + ">"
+		if len(i.ApplicationCommandData().Options[0].Options) == 1 {
+			role = i.ApplicationCommandData().Options[0].Options[0].RoleValue(s, i.GuildID).ID
+			if setAutoJoinRole(i.GuildID, option, role) {
+				content = "Updated auto join role for " + option + "s as <@&" + role + ">"
+			} else {
+				content = "Setup auto join role for " + option + "s as <@&" + role + ">"
+			}
+		} else if setAutoJoinRole(i.GuildID, option, role) {
+			content = "Deleted auto join role for " + option + "s"
 		}
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -49,6 +54,6 @@ var autojoinroles_command Command = Command{
 				Flags:   discordgo.MessageFlagsEphemeral,
 			},
 		})
-
+		purgeUnusedAutoJoinRoles(i.GuildID)
 	},
 }

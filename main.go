@@ -38,10 +38,11 @@ func main() {
 	} else {
 		fmt.Println("Discord session created")
 	}
-	discord.Identify.Intents = discordgo.IntentsGuildMessages | discordgo.IntentsGuilds | discordgo.IntentMessageContent
+	discord.Identify.Intents = discordgo.IntentsGuildMessages | discordgo.IntentsGuilds | discordgo.IntentMessageContent | discordgo.IntentGuildMembers
 	discord.AddHandler(ready)
 	discord.AddHandler(interactionCreate)
 	discord.AddHandler(messageCreate)
+	discord.AddHandler(guildMemberJoin)
 	err = discord.Open()
 	if err != nil {
 		fmt.Println("error opening connection,", err)
