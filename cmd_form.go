@@ -133,7 +133,7 @@ var form_command Command = Command{
 			for _, opt := range options.Options {
 				switch opt.Name {
 				case "type":
-					formID = options.Options[1].StringValue()
+					formID = opt.StringValue()
 				case "title":
 					overwriteTitle = opt.StringValue()
 					title = overwriteTitle

@@ -19,7 +19,7 @@ type Command struct {
 	ModalIDs          []string
 }
 
-var commands []Command = []Command{form_command, tag_command, short_get_tag_command, dadjoke_command, ping_command, ask_command, sticky_command, cat_command}
+var commands []Command = []Command{form_command, tag_command, short_get_tag_command, dadjoke_command, ping_command, ask_command, sticky_command, cat_command, autojoinroles_command}
 
 func ready(s *discordgo.Session, event *discordgo.Ready) {
 	fmt.Print("\nStarting up...")

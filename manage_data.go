@@ -40,6 +40,12 @@ func initTables() {
 		mods_can_comment BOOL,
 		PRIMARY KEY (form_manage_id, form_type)
 	);
+	CREATE TABLE IF NOT EXISTS autojoinroles (
+		guild_id TEXT NOT NULL,
+		bot_role TEXT,
+		user_role TEXT,
+		PRIMARY KEY (guild_id)
+	)
 	`
 
 	_, err := db.Exec(createTableQuery)
@@ -228,4 +234,24 @@ func getFormType(formManageID string) string {
 		log.Println(err)
 	}
 	return formType
+}
+
+func setAutoJoinRole(guildID string, option string, roleID string) bool {
+	var exists bool
+	err := db.QueryRow("SELECT EXISTS (SELECT  1 FROM autojoinroles WHERE guild_id = $1)", guildID).Scan(&exists)
+	if err != nil {
+		log.Println(err)
+	}
+	if exists {
+		_, err = db.Exec("UPDATE autojoinroles SET "+option+"_role = $1 WHERE guild_id = $2", roleID, guildID)
+		if err != nil {
+			log.Println(err)
+		}
+	} else {
+		_, err = db.Exec("INSERT INTO autojoinroles (guild_id, "+option+"_role) VALUES ($1, $2)", guildID, roleID)
+		if err != nil {
+			log.Println(err)
+		}
+	}
+	return exists
 }
