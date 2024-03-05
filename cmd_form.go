@@ -11,7 +11,7 @@ import (
 
 var fileData []byte
 
-var form_command Command = Command{
+var cmd_form Command = Command{
 	Definition: discordgo.ApplicationCommand{
 		Name:        "form",
 		Description: "Create custom forms right inside Discord",

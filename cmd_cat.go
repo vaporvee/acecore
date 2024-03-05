@@ -9,7 +9,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-var cat_command Command = Command{
+var cmd_cat Command = Command{
 	Definition: discordgo.ApplicationCommand{
 		Name:        "cat",
 		Description: "Random cat pictures",

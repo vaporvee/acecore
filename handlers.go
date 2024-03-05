@@ -20,7 +20,7 @@ type Command struct {
 	ModalIDs          []string
 }
 
-var commands []Command = []Command{form_command, tag_command, short_get_tag_command, dadjoke_command, ping_command, ask_command, sticky_command, cat_command, autojoinroles_command}
+var commands []Command = []Command{cmd_form, cmd_tag, cmd_tag_short, cmd_dadjoke, cmd_ping, cmd_ask, cmd_sticky, cmd_cat, cmd_autojoinroles, cmd_autopublish}
 
 func ready(s *discordgo.Session, event *discordgo.Ready) {
 	fmt.Print("\nStarting up...")
@@ -121,6 +121,12 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 				Description: getStickyMessageContent(m.GuildID, m.ChannelID),
 			})
 			updateStickyMessageID(m.GuildID, m.ChannelID, stickyMessage.ID)
+		}
+	}
+	channel, _ := s.Channel(m.ChannelID)
+	if channel.Type == discordgo.ChannelTypeGuildNews {
+		if isAutopublishEnabled(m.GuildID, m.ChannelID) {
+			s.ChannelMessageCrosspost(m.ChannelID, m.ID)
 		}
 	}
 }

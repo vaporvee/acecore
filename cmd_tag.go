@@ -6,7 +6,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-var tag_command Command = Command{
+var cmd_tag Command = Command{
 	Definition: discordgo.ApplicationCommand{
 		Name:                     "tag",
 		DefaultMemberPermissions: int64Ptr(discordgo.PermissionManageServer),
@@ -115,7 +115,7 @@ var tag_command Command = Command{
 	},
 }
 
-var short_get_tag_command Command = Command{
+var cmd_tag_short Command = Command{
 	Definition: discordgo.ApplicationCommand{
 		Name:        "g",
 		Description: "A short command to get presaved messages.",

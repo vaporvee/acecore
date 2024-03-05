@@ -2,7 +2,7 @@ package main
 
 import "github.com/bwmarrin/discordgo"
 
-var ask_command Command = Command{
+var cmd_ask Command = Command{
 	Definition: discordgo.ApplicationCommand{
 		Name:        "ask",
 		Description: "Ask anything and get a gif as response!",

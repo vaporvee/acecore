@@ -8,7 +8,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-var ping_command Command = Command{
+var cmd_ping Command = Command{
 	Definition: discordgo.ApplicationCommand{
 		Name:        "ping",
 		Description: "Returns the ping of the bot",

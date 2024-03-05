@@ -4,7 +4,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-var dadjoke_command Command = Command{
+var cmd_dadjoke Command = Command{
 	Definition: discordgo.ApplicationCommand{
 		Name:        "dadjoke",
 		Description: "Gives you a random joke that is as bad as your dad would tell them",

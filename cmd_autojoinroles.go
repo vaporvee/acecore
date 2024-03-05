@@ -2,7 +2,7 @@ package main
 
 import "github.com/bwmarrin/discordgo"
 
-var autojoinroles_command Command = Command{
+var cmd_autojoinroles Command = Command{
 	Definition: discordgo.ApplicationCommand{
 		Name:        "autojoinroles",
 		Description: "Give users a role when they join",

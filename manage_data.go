@@ -45,6 +45,11 @@ func initTables() {
 		bot_role TEXT,
 		user_role TEXT,
 		PRIMARY KEY (guild_id)
+	);
+	CREATE TABLE IF NOT EXISTS autopublish (
+		guild_id TEXT NOT NULL,
+		news_channel_id TEXT NOT NULL,
+		PRIMARY KEY (guild_id, news_channel_id)
 	)
 	`
 
@@ -281,4 +286,33 @@ func getAutoJoinRole(guildID string, isBot bool) string {
 		log.Println(err, guildID)
 	}
 	return role
+}
+
+func toggleAutoPublish(guildID string, newsChannelID string) bool {
+	var exists bool
+	err := db.QueryRow("SELECT EXISTS (SELECT 1 FROM autopublish WHERE guild_id = $1 AND news_channel_id = $2)", guildID, newsChannelID).Scan(&exists)
+	if err != nil {
+		log.Print(err)
+	}
+	if exists {
+		_, err := db.Exec("DELETE FROM autopublish WHERE guild_id = $1 AND news_channel_id = $2", guildID, newsChannelID)
+		if err != nil {
+			log.Print(err)
+		}
+	} else {
+		_, err := db.Exec("INSERT INTO autopublish (guild_id, news_channel_id) VALUES ($1, $2)", guildID, newsChannelID)
+		if err != nil {
+			log.Print(err)
+		}
+	}
+	return exists
+}
+
+func isAutopublishEnabled(guildID string, newsChannelID string) bool {
+	var enabled bool
+	err := db.QueryRow("SELECT EXISTS (SELECT 1 FROM autopublish WHERE guild_id = $1 AND news_channel_id = $2)", guildID, newsChannelID).Scan(&enabled)
+	if err != nil {
+		log.Print(err)
+	}
+	return enabled
 }
