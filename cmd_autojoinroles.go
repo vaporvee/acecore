@@ -53,13 +53,7 @@ var cmd_autojoinroles Command = Command{
 		} else if setAutoJoinRole(i.GuildID, option, role) {
 			content = "Deleted auto join role for " + option + "s"
 		}
-		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: content,
-				Flags:   discordgo.MessageFlagsEphemeral,
-			},
-		})
+		respondEphemeral(s, i.Interaction, content)
 		purgeUnusedAutoJoinRoles(i.GuildID)
 	},
 }

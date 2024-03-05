@@ -53,21 +53,9 @@ var cmd_sticky Command = Command{
 			if hasSticky(i.GuildID, i.ChannelID) {
 				s.ChannelMessageDelete(i.ChannelID, getStickyMessageID(i.GuildID, i.ChannelID))
 				removeSticky(i.GuildID, i.ChannelID)
-				s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Content: "The sticky message was removed from this channel!",
-						Flags:   discordgo.MessageFlagsEphemeral,
-					},
-				})
+				respondEphemeral(s, i.Interaction, "The sticky message was removed from this channel!")
 			} else {
-				s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Content: "This channel has no sticky message!",
-						Flags:   discordgo.MessageFlagsEphemeral,
-					},
-				})
+				respondEphemeral(s, i.Interaction, "This channel has no sticky message!")
 			}
 		}
 	},
@@ -86,21 +74,9 @@ var cmd_sticky Command = Command{
 			log.Println(err)
 		}
 		if addSticky(i.GuildID, i.ChannelID, text, message.ID) {
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: "Sticky message in this channel was updated!",
-					Flags:   discordgo.MessageFlagsEphemeral,
-				},
-			})
+			respondEphemeral(s, i.Interaction, "Sticky message in this channel was updated!")
 		} else {
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: "Message sticked to the channel!",
-					Flags:   discordgo.MessageFlagsEphemeral,
-				},
-			})
+			respondEphemeral(s, i.Interaction, "Message sticked to the channel!")
 		}
 	},
 }

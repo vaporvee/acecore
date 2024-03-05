@@ -11,30 +11,12 @@ var cmd_autopublish Command = Command{
 		channel, _ := s.State.Channel(i.ChannelID)
 		if channel.Type == discordgo.ChannelTypeGuildNews {
 			if toggleAutoPublish(i.GuildID, i.ChannelID) {
-				s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Content: "Autopublishing is now disabled on <#" + i.ChannelID + ">",
-						Flags:   discordgo.MessageFlagsEphemeral,
-					},
-				})
+				respondEphemeral(s, i.Interaction, "Autopublishing is now disabled on <#"+i.ChannelID+">")
 			} else {
-				s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Content: "Autopublishing is now enabled on <#" + i.ChannelID + ">",
-						Flags:   discordgo.MessageFlagsEphemeral,
-					},
-				})
+				respondEphemeral(s, i.Interaction, "Autopublishing is now enabled on <#"+i.ChannelID+">")
 			}
 		} else {
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: "This is not an announcement channel!",
-					Flags:   discordgo.MessageFlagsEphemeral,
-				},
-			})
+			respondEphemeral(s, i.Interaction, "This is not an announcement channel!")
 		}
 	},
 }

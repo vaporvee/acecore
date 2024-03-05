@@ -65,3 +65,13 @@ func hexToDecimal(hexColor string) int {
 	}
 	return int(decimal)
 }
+
+func respondEphemeral(s *discordgo.Session, interaction *discordgo.Interaction, content string) {
+	s.InteractionRespond(interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: content,
+			Flags:   discordgo.MessageFlagsEphemeral,
+		},
+	})
+}
