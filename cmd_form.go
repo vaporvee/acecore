@@ -118,7 +118,7 @@ var cmd_form Command = Command{
 				},
 			})
 		case "custom":
-			respondEphemeral(s, i.Interaction, "Feature not available yet use `/form add` instead")
+			respond(s, i.Interaction, "Feature not available yet use `/form add` instead", true)
 		case "add":
 			var title, formID, overwriteTitle, acceptChannelID string
 			var modsCanComment bool
@@ -180,12 +180,12 @@ var cmd_form Command = Command{
 				},
 			})
 			addFormButton(i.GuildID, i.ChannelID, message.ID, formManageID.String(), formID, options.Options[0].ChannelValue(s).ID, overwriteTitle, acceptChannelID, modsCanComment)
-			respondEphemeral(s, i.Interaction, "Successfully added form button!")
+			respond(s, i.Interaction, "Successfully added form button!", true)
 		}
 	},
 	ComponentInteract: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if strings.HasPrefix(i.Interaction.MessageComponentData().CustomID, "form:") {
-			respondEphemeral(s, i.Interaction, getFormType(strings.TrimPrefix(i.Interaction.MessageComponentData().CustomID, "form:")))
+			respond(s, i.Interaction, getFormType(strings.TrimPrefix(i.Interaction.MessageComponentData().CustomID, "form:")), true)
 		}
 		if i.Interaction.MessageComponentData().CustomID == "form_demo" {
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -229,7 +229,7 @@ var cmd_form Command = Command{
 	},
 	ModalIDs: getFormTypes(),
 	ModalSubmit: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		respondEphemeral(s, i.Interaction, "The form data would be send to a specified channel. 🤲")
+		respond(s, i.Interaction, "The form data would be send to a specified channel. 🤲", true)
 	},
 	Autocomplete: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		choices := []*discordgo.ApplicationCommandOptionChoice{

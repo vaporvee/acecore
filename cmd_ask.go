@@ -16,19 +16,11 @@ var cmd_ask Command = Command{
 		},
 	},
 	Interact: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Embeds: []*discordgo.MessageEmbed{
-					{
-						Type:  discordgo.EmbedTypeImage,
-						Color: hexToDecimal(color["primary"]),
-						Image: &discordgo.MessageEmbedImage{
-							URL: simpleGetFromAPI("image", "https://yesno.wtf/api").(string),
-						},
-					},
-				},
-			},
-		})
+		respondEmbed(s, i.Interaction, discordgo.MessageEmbed{
+			Type:  discordgo.EmbedTypeImage,
+			Color: hexToDecimal(color["primary"]),
+			Image: &discordgo.MessageEmbedImage{
+				URL: simpleGetFromAPI("image", "https://yesno.wtf/api").(string),
+			}}, false)
 	},
 }

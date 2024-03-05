@@ -53,9 +53,9 @@ var cmd_sticky Command = Command{
 			if hasSticky(i.GuildID, i.ChannelID) {
 				s.ChannelMessageDelete(i.ChannelID, getStickyMessageID(i.GuildID, i.ChannelID))
 				removeSticky(i.GuildID, i.ChannelID)
-				respondEphemeral(s, i.Interaction, "The sticky message was removed from this channel!")
+				respond(s, i.Interaction, "The sticky message was removed from this channel!", true)
 			} else {
-				respondEphemeral(s, i.Interaction, "This channel has no sticky message!")
+				respond(s, i.Interaction, "This channel has no sticky message!", true)
 			}
 		}
 	},
@@ -74,9 +74,9 @@ var cmd_sticky Command = Command{
 			log.Println(err)
 		}
 		if addSticky(i.GuildID, i.ChannelID, text, message.ID) {
-			respondEphemeral(s, i.Interaction, "Sticky message in this channel was updated!")
+			respond(s, i.Interaction, "Sticky message in this channel was updated!", true)
 		} else {
-			respondEphemeral(s, i.Interaction, "Message sticked to the channel!")
+			respond(s, i.Interaction, "Message sticked to the channel!", true)
 		}
 	},
 }

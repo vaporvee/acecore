@@ -15,20 +15,12 @@ var cmd_cat Command = Command{
 		Description: "Random cat pictures",
 	},
 	Interact: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Embeds: []*discordgo.MessageEmbed{
-					{
-						Type:  discordgo.EmbedTypeImage,
-						Color: hexToDecimal(color["primary"]),
-						Image: &discordgo.MessageEmbedImage{
-							URL: GetCatImageURL(),
-						},
-					},
-				},
-			},
-		})
+		respondEmbed(s, i.Interaction, discordgo.MessageEmbed{
+			Type:  discordgo.EmbedTypeImage,
+			Color: hexToDecimal(color["primary"]),
+			Image: &discordgo.MessageEmbedImage{
+				URL: GetCatImageURL(),
+			}}, false)
 	},
 }
 

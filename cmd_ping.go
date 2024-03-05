@@ -36,19 +36,10 @@ var cmd_ping Command = Command{
 		} else {
 			ping_color = "red"
 		}
-		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Flags: discordgo.MessageFlagsEphemeral,
-				Embeds: []*discordgo.MessageEmbed{
-					{
-						Title:       s.State.User.Username + " ping",
-						Description: fmt.Sprintf("# %.2fms", ping.Seconds()*1000),
-						Type:        discordgo.EmbedTypeArticle,
-						Color:       hexToDecimal(color[ping_color]),
-					},
-				},
-			},
-		})
+		respondEmbed(s, i.Interaction, discordgo.MessageEmbed{
+			Title:       s.State.User.Username + " ping",
+			Description: fmt.Sprintf("# %.2fms", ping.Seconds()*1000),
+			Type:        discordgo.EmbedTypeArticle,
+			Color:       hexToDecimal(color[ping_color])}, true)
 	},
 }

@@ -88,7 +88,7 @@ var cmd_tag Command = Command{
 			})
 		case "remove":
 			removeTag(i.GuildID, i.ApplicationCommandData().Options[0].Options[0].StringValue())
-			respondEphemeral(s, i.Interaction, "Tag removed!")
+			respond(s, i.Interaction, "Tag removed!", true)
 		}
 	},
 	ModalIDs: []string{"tag_add_modal"},
@@ -96,7 +96,7 @@ var cmd_tag Command = Command{
 		tagName := i.ModalSubmitData().Components[0].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value
 		tagContent := i.ModalSubmitData().Components[1].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value
 		addTag(i.GuildID, tagName, tagContent)
-		respondEphemeral(s, i.Interaction, "Tag \""+tagName+"\" added!")
+		respond(s, i.Interaction, "Tag \""+tagName+"\" added!", true)
 	},
 	Autocomplete: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		AutocompleteTag(s, i)
@@ -126,12 +126,7 @@ var cmd_tag_short Command = Command{
 }
 
 func GetTagCommand(s *discordgo.Session, i *discordgo.InteractionCreate, option *discordgo.ApplicationCommandInteractionDataOption) {
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: getTagContent(i.GuildID, option.Value.(string)),
-		},
-	})
+	respond(s, i.Interaction, getTagContent(i.GuildID, option.Value.(string)), false)
 }
 
 func AutocompleteTag(s *discordgo.Session, i *discordgo.InteractionCreate) {

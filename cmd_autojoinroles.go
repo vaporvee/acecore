@@ -53,7 +53,7 @@ var cmd_autojoinroles Command = Command{
 		} else if setAutoJoinRole(i.GuildID, option, role) {
 			content = "Deleted auto join role for " + option + "s"
 		}
-		respondEphemeral(s, i.Interaction, content)
+		respond(s, i.Interaction, content, true)
 		purgeUnusedAutoJoinRoles(i.GuildID)
 	},
 }
