@@ -16,6 +16,7 @@ type ModalJsonField struct {
 	IsParagraph bool   `json:"is_paragraph"`
 	Value       string `json:"value"`
 	Required    bool   `json:"required"`
+	Placeholder string `json:"placeholder"`
 	MinLength   int    `json:"min_length"`
 	MaxLength   int    `json:"max_length"`
 }
@@ -37,13 +38,14 @@ func jsonStringShowModal(interaction *discordgo.Interaction, manageID string, fo
 		components = append(components, discordgo.ActionsRow{
 			Components: []discordgo.MessageComponent{
 				discordgo.TextInput{
-					CustomID:  fmt.Sprint(index),
-					Label:     component.Label,
-					Style:     style,
-					Required:  component.Required,
-					MaxLength: component.MaxLength,
-					MinLength: component.MinLength,
-					Value:     component.Value,
+					CustomID:    fmt.Sprint(index),
+					Label:       component.Label,
+					Style:       style,
+					Placeholder: component.Placeholder,
+					Required:    component.Required,
+					MaxLength:   component.MaxLength,
+					MinLength:   component.MinLength,
+					Value:       component.Value,
 				},
 			},
 		})
