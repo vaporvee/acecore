@@ -12,7 +12,7 @@
     {
       "label": "Ticket information",
       "is_paragraph": true,
-      "placeholder": "Fill in what you need or have issues with and a moderator will reply.",
+      "placeholder": "Fill in for what you need help or have issues with and a moderator will reply.",
       "required": true,
       "max_length": 2000
     }

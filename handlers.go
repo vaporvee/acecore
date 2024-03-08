@@ -11,13 +11,15 @@ import (
 )
 
 type Command struct {
-	Definition        discordgo.ApplicationCommand
-	Interact          func(s *discordgo.Session, i *discordgo.InteractionCreate)
-	ComponentInteract func(s *discordgo.Session, i *discordgo.InteractionCreate)
-	ComponentIDs      []string
-	Autocomplete      func(s *discordgo.Session, i *discordgo.InteractionCreate)
-	ModalSubmit       func(s *discordgo.Session, i *discordgo.InteractionCreate)
-	ModalIDs          []string
+	Definition          discordgo.ApplicationCommand
+	Interact            func(s *discordgo.Session, i *discordgo.InteractionCreate)
+	ComponentInteract   func(s *discordgo.Session, i *discordgo.InteractionCreate)
+	Autocomplete        func(s *discordgo.Session, i *discordgo.InteractionCreate)
+	ModalSubmit         func(s *discordgo.Session, i *discordgo.InteractionCreate)
+	ComponentIDs        []string
+	ModalIDs            []string
+	DynamicComponentIDs func() []string
+	DynamicModalIDs     func() []string
 }
 
 var commands []Command = []Command{cmd_form, cmd_tag, cmd_tag_short, cmd_dadjoke, cmd_ping, cmd_ask, cmd_sticky, cmd_cat, cmd_autojoinroles, cmd_autopublish}
@@ -61,15 +63,21 @@ func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				command.Autocomplete(s, i)
 			}
 		case discordgo.InteractionModalSubmit:
-			var hasID bool = false
 			if command.ModalSubmit != nil {
-				for _, modalID := range command.ModalIDs {
-					if strings.HasPrefix(i.ModalSubmitData().CustomID, modalID) {
-						hasID = true
-					}
+				// FIXME: Makes it dynamic i don't know why it isn't otherwise
+				if command.Definition.Name == "form" {
+					command.ModalIDs = getFormButtonIDs()
 				}
-				if hasID {
-					command.ModalSubmit(s, i)
+				var hasID bool = false
+				if command.ModalSubmit != nil {
+					for _, modalID := range command.ModalIDs {
+						if strings.HasPrefix(i.ModalSubmitData().CustomID, modalID) {
+							hasID = true
+						}
+					}
+					if hasID {
+						command.ModalSubmit(s, i)
+					}
 				}
 			}
 		case discordgo.InteractionMessageComponent:

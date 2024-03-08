@@ -16,7 +16,7 @@ var cmd_ask Command = Command{
 		},
 	},
 	Interact: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		respondEmbed(s, i.Interaction, discordgo.MessageEmbed{
+		respondEmbed(i.Interaction, discordgo.MessageEmbed{
 			Type:  discordgo.EmbedTypeImage,
 			Color: hexToDecimal(color["primary"]),
 			Image: &discordgo.MessageEmbedImage{

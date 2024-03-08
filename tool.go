@@ -2,6 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"log"
+	"os"
 	"strconv"
 	"strings"
 
@@ -23,17 +26,66 @@ type ModalJson struct {
 	Form     []ModalJsonField `json:"form"`
 }
 
-func jsonStringShowModal(jsonString string, id string) {
-	var modal ModalJson
-	json.Unmarshal([]byte(jsonString), &modal)
+func jsonStringShowModal(interaction *discordgo.Interaction, manageID string, formID string) {
+	var modal ModalJson = getModalByFormID(formID)
+	var components []discordgo.MessageComponent
+	for index, component := range modal.Form {
+		var style discordgo.TextInputStyle = discordgo.TextInputShort
+		if component.IsParagraph {
+			style = discordgo.TextInputParagraph
+		}
+		components = append(components, discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{
+				discordgo.TextInput{
+					CustomID:  fmt.Sprint(index),
+					Label:     component.Label,
+					Style:     style,
+					Required:  component.Required,
+					MaxLength: component.MaxLength,
+					MinLength: component.MinLength,
+					Value:     component.Value,
+				},
+			},
+		})
+	}
+	err := bot.InteractionRespond(interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseModal,
+		Data: &discordgo.InteractionResponseData{
+			CustomID:   manageID + interaction.Member.User.ID,
+			Title:      modal.Title,
+			Components: components,
+		},
+	})
+	if err != nil {
+		log.Print(err)
+	}
 }
 
-func getHighestRole(s *discordgo.Session, guildID string) (*discordgo.Role, error) {
-	botMember, err := s.GuildMember(guildID, s.State.User.ID)
+func getModalByFormID(formID string) ModalJson {
+	var modal ModalJson
+	//TODO: add custom forms
+	entries, err := os.ReadDir("./form_templates")
+	if err != nil {
+		log.Print(err)
+	}
+	for _, entry := range entries {
+		if strings.HasPrefix(entry.Name(), formID) {
+			json_file, err := os.ReadFile("./form_templates/" + entry.Name())
+			if err != nil {
+				log.Print(err)
+			}
+			json.Unmarshal(json_file, &modal)
+		}
+	}
+	return modal
+}
+
+func getHighestRole(guildID string) (*discordgo.Role, error) {
+	botMember, err := bot.GuildMember(guildID, bot.State.User.ID)
 	if err != nil {
 		return nil, err
 	}
-	roles, err := s.GuildRoles(guildID)
+	roles, err := bot.GuildRoles(guildID)
 	if err != nil {
 		return nil, err
 	}
@@ -66,12 +118,12 @@ func hexToDecimal(hexColor string) int {
 	return int(decimal)
 }
 
-func respond(s *discordgo.Session, interaction *discordgo.Interaction, content string, ephemeral bool) {
+func respond(interaction *discordgo.Interaction, content string, ephemeral bool) {
 	var flag discordgo.MessageFlags
 	if ephemeral {
 		flag = discordgo.MessageFlagsEphemeral
 	}
-	s.InteractionRespond(interaction, &discordgo.InteractionResponse{
+	bot.InteractionRespond(interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: content,
@@ -80,12 +132,12 @@ func respond(s *discordgo.Session, interaction *discordgo.Interaction, content s
 	})
 }
 
-func respondEmbed(s *discordgo.Session, interaction *discordgo.Interaction, embed discordgo.MessageEmbed, ephemeral bool) {
+func respondEmbed(interaction *discordgo.Interaction, embed discordgo.MessageEmbed, ephemeral bool) {
 	var flag discordgo.MessageFlags
 	if ephemeral {
 		flag = discordgo.MessageFlagsEphemeral
 	}
-	s.InteractionRespond(interaction, &discordgo.InteractionResponse{
+	bot.InteractionRespond(interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Flags: flag,

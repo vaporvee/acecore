@@ -9,7 +9,7 @@ import (
 var cmd_tag Command = Command{
 	Definition: discordgo.ApplicationCommand{
 		Name:                     "tag",
-		DefaultMemberPermissions: int64Ptr(discordgo.PermissionManageServer),
+		DefaultMemberPermissions: int64Ptr(discordgo.PermissionManageMessages),
 		Description:              "A command to show and edit saved presaved messages.",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -50,7 +50,7 @@ var cmd_tag Command = Command{
 	Interact: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		switch i.ApplicationCommandData().Options[0].Name {
 		case "get":
-			GetTagCommand(s, i, i.ApplicationCommandData().Options[0].Options[0])
+			GetTagCommand(i, i.ApplicationCommandData().Options[0].Options[0])
 		case "add":
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseModal,
@@ -88,7 +88,7 @@ var cmd_tag Command = Command{
 			})
 		case "remove":
 			removeTag(i.GuildID, i.ApplicationCommandData().Options[0].Options[0].StringValue())
-			respond(s, i.Interaction, "Tag removed!", true)
+			respond(i.Interaction, "Tag removed!", true)
 		}
 	},
 	ModalIDs: []string{"tag_add_modal"},
@@ -96,10 +96,10 @@ var cmd_tag Command = Command{
 		tagName := i.ModalSubmitData().Components[0].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value
 		tagContent := i.ModalSubmitData().Components[1].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value
 		addTag(i.GuildID, tagName, tagContent)
-		respond(s, i.Interaction, "Tag \""+tagName+"\" added!", true)
+		respond(i.Interaction, "Tag \""+tagName+"\" added!", true)
 	},
 	Autocomplete: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		AutocompleteTag(s, i)
+		AutocompleteTag(i)
 	},
 }
 
@@ -118,19 +118,19 @@ var cmd_tag_short Command = Command{
 		},
 	},
 	Interact: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		GetTagCommand(s, i, i.ApplicationCommandData().Options[0])
+		GetTagCommand(i, i.ApplicationCommandData().Options[0])
 	},
 	Autocomplete: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		AutocompleteTag(s, i)
+		AutocompleteTag(i)
 	},
 }
 
-func GetTagCommand(s *discordgo.Session, i *discordgo.InteractionCreate, option *discordgo.ApplicationCommandInteractionDataOption) {
-	respond(s, i.Interaction, getTagContent(i.GuildID, option.Value.(string)), false)
+func GetTagCommand(i *discordgo.InteractionCreate, option *discordgo.ApplicationCommandInteractionDataOption) {
+	respond(i.Interaction, getTagContent(i.GuildID, option.Value.(string)), false)
 }
 
-func AutocompleteTag(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+func AutocompleteTag(i *discordgo.InteractionCreate) {
+	bot.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionApplicationCommandAutocompleteResult,
 		Data: &discordgo.InteractionResponseData{
 			Choices: generateTagChoices(i.GuildID),

@@ -18,6 +18,7 @@ import (
 //TODO: add more error handlings
 
 var db *sql.DB
+var bot *discordgo.Session
 
 func main() {
 	godotenv.Load()
@@ -29,27 +30,27 @@ func main() {
 		log.Fatal(err)
 	}
 	initTables()
-	discord, err := discordgo.New("Bot " + os.Getenv("BOT_TOKEN"))
+	bot, err = discordgo.New("Bot " + os.Getenv("BOT_TOKEN"))
 	if err != nil {
 		fmt.Println("error creating Discord session,", err)
 		return
 	} else {
 		fmt.Println("Discord session created")
 	}
-	discord.Identify.Intents = discordgo.IntentsGuildMessages | discordgo.IntentsGuilds | discordgo.IntentMessageContent | discordgo.IntentGuildMembers
-	discord.AddHandler(ready)
-	discord.AddHandler(interactionCreate)
-	discord.AddHandler(messageCreate)
-	discord.AddHandler(guildMemberJoin)
-	err = discord.Open()
+	bot.Identify.Intents = discordgo.IntentsGuildMessages | discordgo.IntentsGuilds | discordgo.IntentMessageContent | discordgo.IntentGuildMembers
+	bot.AddHandler(ready)
+	bot.AddHandler(interactionCreate)
+	bot.AddHandler(messageCreate)
+	bot.AddHandler(guildMemberJoin)
+	err = bot.Open()
 	if err != nil {
 		fmt.Println("error opening connection,", err)
 		return
 	}
-	fmt.Printf("\nBot is now running as \"%s\"!", discord.State.User.Username)
+	fmt.Printf("\nBot is now running as \"%s\"!", bot.State.User.Username)
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
 	fmt.Println("\nShutting down...")
-	discord.Close()
+	bot.Close()
 }

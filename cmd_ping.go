@@ -36,7 +36,7 @@ var cmd_ping Command = Command{
 		} else {
 			ping_color = "red"
 		}
-		respondEmbed(s, i.Interaction, discordgo.MessageEmbed{
+		respondEmbed(i.Interaction, discordgo.MessageEmbed{
 			Title:       s.State.User.Username + " ping",
 			Description: fmt.Sprintf("# %.2fms", ping.Seconds()*1000),
 			Type:        discordgo.EmbedTypeArticle,
