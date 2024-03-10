@@ -53,7 +53,7 @@ func jsonStringShowModal(interaction *discordgo.Interaction, manageID string, fo
 	err := bot.InteractionRespond(interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseModal,
 		Data: &discordgo.InteractionResponseData{
-			CustomID:   manageID + interaction.Member.User.ID,
+			CustomID:   manageID + ":" + interaction.Member.User.ID,
 			Title:      modal.Title,
 			Components: components,
 		},

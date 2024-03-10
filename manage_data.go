@@ -59,6 +59,13 @@ func initTables() {
 	}
 }
 
+type FormResult struct {
+	OverwriteTitle  string
+	ResultChannelID string
+	AcceptChannelID string
+	ModsCanComment  bool
+}
+
 func addTag(guildID, tagName, tagContent string) bool {
 	var exists bool = true
 	//TODO: add modify command
@@ -239,6 +246,27 @@ func getFormType(formManageID string) string {
 		log.Println(err)
 	}
 	return formType
+}
+
+func getFormResultValues(formManageID string) FormResult {
+	var result FormResult
+	err := db.QueryRow("SELECT overwrite_title from form_manage WHERE form_manage_id = $1", formManageID).Scan(&result.OverwriteTitle)
+	if err != nil {
+		log.Println(err)
+	}
+	err = db.QueryRow("SELECT result_channel_id from form_manage WHERE form_manage_id = $1", formManageID).Scan(&result.ResultChannelID)
+	if err != nil {
+		log.Println(err)
+	}
+	err = db.QueryRow("SELECT accept_channel_id from form_manage WHERE form_manage_id = $1", formManageID).Scan(&result.AcceptChannelID)
+	if err != nil {
+		log.Println(err)
+	}
+	err = db.QueryRow("SELECT mods_can_comment from form_manage WHERE form_manage_id = $1", formManageID).Scan(&result.ModsCanComment)
+	if err != nil {
+		log.Println(err)
+	}
+	return result
 }
 
 func setAutoJoinRole(guildID string, option string, roleID string) bool {

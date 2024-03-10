@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -143,10 +145,9 @@ var cmd_form Command = Command{
 			}
 
 			formTitles := map[string]string{
-				"template_feedback": "Submit Feedback",
-				"template_ticket":   "Make a new ticket",
-				"template_url":      "Add your URL",
-				"template_general":  "Form",
+				"template_ticket":  "Make a new ticket",
+				"template_url":     "Add your URL",
+				"template_general": "Form",
 			}
 			if val, ok := formTitles[formID]; ok {
 				title = val
@@ -189,13 +190,37 @@ var cmd_form Command = Command{
 	ComponentInteract: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if strings.HasPrefix(i.Interaction.MessageComponentData().CustomID, "form:") {
 			jsonStringShowModal(i.Interaction, i.Interaction.MessageComponentData().CustomID, getFormType(strings.TrimPrefix(i.Interaction.MessageComponentData().CustomID, "form:")))
-		}
-		if i.Interaction.MessageComponentData().CustomID == "form_demo" {
+		} else if i.Interaction.MessageComponentData().CustomID == "form_demo" {
 			jsonStringShowModal(i.Interaction, "form_demo", "form_demo")
 		}
 	},
 	ModalSubmit: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		respond(i.Interaction, "The form data would be send to a specified channel. 🤲", true)
+		if i.ModalSubmitData().CustomID != "form_demo" {
+			var form_manage_id string = strings.Split(i.ModalSubmitData().CustomID, ":")[1]
+			var result FormResult = getFormResultValues(getFormType(form_manage_id))
+			var fields []*discordgo.MessageEmbedField
+			var modal ModalJson = getModalByFormID(form_manage_id)
+			for index, component := range i.ModalSubmitData().Components {
+				fmt.Print(component.(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput))
+				var input *discordgo.TextInput = component.(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput)
+				log.Print(index)
+				fields = append(fields, &discordgo.MessageEmbedField{
+					Name:   modal.Form[index].Label,
+					Value:  input.Value,
+					Inline: input.Style == discordgo.TextInputShort,
+				})
+			}
+			if result.AcceptChannelID == "" {
+				s.ChannelMessageSendComplex(result.ResultChannelID, &discordgo.MessageSend{
+					Embed: &discordgo.MessageEmbed{
+						Fields: fields,
+					},
+				})
+				respond(i.Interaction, "Submited!", true)
+			} else {
+				respond(i.Interaction, "The form data would be send to a specified channel. 🤲", true)
+			}
+		}
 	},
 	Autocomplete: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		choices := []*discordgo.ApplicationCommandOptionChoice{
@@ -219,11 +244,6 @@ var cmd_form Command = Command{
 			},
 		})
 	},
-}
-
-func getFormTypes() []string {
-	//needs custom IDs from databank
-	return []string{"form_demo", "template_ticket", "template_url", "template_general"}
 }
 
 func getFormButtonIDs() []string {
