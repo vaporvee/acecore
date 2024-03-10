@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 
@@ -197,13 +196,12 @@ var cmd_form Command = Command{
 	ModalSubmit: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if i.ModalSubmitData().CustomID != "form_demo" {
 			var form_manage_id string = strings.Split(i.ModalSubmitData().CustomID, ":")[1]
-			var result FormResult = getFormResultValues(getFormType(form_manage_id))
+			var result FormResult = getFormResultValues(form_manage_id)
 			var fields []*discordgo.MessageEmbedField
-			var modal ModalJson = getModalByFormID(form_manage_id)
+			var modal ModalJson = getModalByFormID(getFormType(form_manage_id))
 			for index, component := range i.ModalSubmitData().Components {
 				fmt.Print(component.(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput))
 				var input *discordgo.TextInput = component.(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput)
-				log.Print(index)
 				fields = append(fields, &discordgo.MessageEmbedField{
 					Name:   modal.Form[index].Label,
 					Value:  input.Value,
