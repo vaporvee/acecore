@@ -173,7 +173,9 @@ var cmd_form Command = Command{
 								Style:    discordgo.SuccessButton,
 								Label:    "Submit",
 								Emoji: discordgo.ComponentEmoji{
-									Name: "📥",
+									Name:     "anim_rocket",
+									ID:       "1215740398706757743",
+									Animated: true,
 								},
 							},
 						},

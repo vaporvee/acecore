@@ -1,0 +1,12 @@
+{
+  "form_type": "template_general",
+  "title": "Add a Sticky message",
+  "form": [
+    {
+      "label": "Content",
+      "is_paragraph": true,
+      "required": true,
+      "max_length": 2000
+    }
+  ]
+}
