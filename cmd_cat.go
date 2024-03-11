@@ -31,19 +31,19 @@ type CatImage struct {
 func GetCatImageURL() string {
 	resp, err := http.Get("https://cataas.com/cat?json=true")
 	if err != nil {
-		log.Fatal("Error making GET request:", err)
+		log.Print("Error making GET request:", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatal("Error reading response body:", err)
+		log.Print("Error reading response body:", err)
 	}
 
 	var images CatImage
 	err = json.Unmarshal(body, &images)
 	if err != nil {
-		log.Fatal("Error unmarshalling JSON:", err)
+		log.Print("Error unmarshalling JSON:", err)
 	}
 
 	return "https://cataas.com/cat/" + images.ID
