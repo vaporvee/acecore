@@ -26,6 +26,7 @@ var commands []Command = []Command{cmd_form, cmd_tag, cmd_tag_short, cmd_dadjoke
 
 func ready(s *discordgo.Session, event *discordgo.Ready) {
 	fmt.Print("\nStarting up...")
+	findAndDeleteUnusedMessages()
 	removeOldCommandFromAllGuilds(s)
 	var existingCommandNames []string
 	for _, guild := range event.Guilds {
@@ -140,7 +141,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 func messageDelete(s *discordgo.Session, m *discordgo.MessageDelete) { //TODO: also clear on bot start when message doesn't exist
-	tryDeleteUnusedMessage(m.GuildID, m.ChannelID, m.ID)
+	tryDeleteUnusedMessage(m.ID)
 }
 
 func guildMemberJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {

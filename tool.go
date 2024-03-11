@@ -27,6 +27,11 @@ type ModalJson struct {
 	Form     []ModalJsonField `json:"form"`
 }
 
+type MessageIDs struct {
+	ID        string
+	ChannelID string
+}
+
 func jsonStringShowModal(interaction *discordgo.Interaction, manageID string, formID string, overwrite ...string) {
 	var modal ModalJson = getModalByFormID(formID)
 	var components []discordgo.MessageComponent
@@ -151,4 +156,20 @@ func respondEmbed(interaction *discordgo.Interaction, embed discordgo.MessageEmb
 			},
 		},
 	})
+}
+
+func checkMessageNotExists(channelID, messageID string) bool {
+	_, err := bot.ChannelMessage(channelID, messageID)
+	if err != nil {
+		return true
+	}
+	return false
+}
+
+func findAndDeleteUnusedMessages() {
+	for _, message := range getAllSavedMessages() {
+		if checkMessageNotExists(message.ChannelID, message.ID) {
+			tryDeleteUnusedMessage(message.ID)
+		}
+	}
 }

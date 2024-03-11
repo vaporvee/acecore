@@ -361,9 +361,31 @@ func isAutopublishEnabled(guildID string, newsChannelID string) bool {
 	return enabled
 }
 
-func tryDeleteUnusedMessage(guildID string, channelID string, messageID string) {
-	_, err := db.Exec("DELETE FROM form_manage WHERE guild_id = $1 AND channel_id = $2 AND message_id = $3", guildID, channelID, messageID)
+func tryDeleteUnusedMessage(messageID string) {
+	_, err := db.Exec("DELETE FROM form_manage WHERE message_id = $1", messageID)
 	if err != nil {
 		log.Println(err)
 	}
+}
+
+func getAllSavedMessages() []MessageIDs {
+	var savedMessages []MessageIDs
+	rows, err := db.Query("SELECT message_id, channel_id FROM form_manage")
+	if err != nil {
+		log.Print(err)
+		return nil
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var messageID, channelID string
+		if err := rows.Scan(&messageID, &channelID); err != nil {
+			log.Print(err)
+			continue
+		}
+		savedMessages = append(savedMessages, MessageIDs{ID: messageID, ChannelID: channelID})
+	}
+	if err := rows.Err(); err != nil {
+		log.Print(err)
+	}
+	return savedMessages
 }
