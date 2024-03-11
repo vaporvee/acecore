@@ -41,6 +41,7 @@ func main() {
 	bot.AddHandler(ready)
 	bot.AddHandler(interactionCreate)
 	bot.AddHandler(messageCreate)
+	bot.AddHandler(messageDelete)
 	bot.AddHandler(guildMemberJoin)
 	err = bot.Open()
 	if err != nil {

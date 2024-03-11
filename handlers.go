@@ -139,6 +139,10 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
+func messageDelete(s *discordgo.Session, m *discordgo.MessageDelete) { //TODO: also clear on bot start when message doesn't exist
+	tryDeleteUnusedMessage(m.GuildID, m.ChannelID, m.ID)
+}
+
 func guildMemberJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
 	err := s.GuildMemberRoleAdd(m.GuildID, m.User.ID, getAutoJoinRole(m.GuildID, m.User.Bot))
 	if err != nil {

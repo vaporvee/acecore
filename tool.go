@@ -27,7 +27,7 @@ type ModalJson struct {
 	Form     []ModalJsonField `json:"form"`
 }
 
-func jsonStringShowModal(interaction *discordgo.Interaction, manageID string, formID string) {
+func jsonStringShowModal(interaction *discordgo.Interaction, manageID string, formID string, overwrite ...string) {
 	var modal ModalJson = getModalByFormID(formID)
 	var components []discordgo.MessageComponent
 	for index, component := range modal.Form {
@@ -49,6 +49,9 @@ func jsonStringShowModal(interaction *discordgo.Interaction, manageID string, fo
 				},
 			},
 		})
+	}
+	if overwrite[0] != "" {
+		modal.Title = overwrite[0]
 	}
 	err := bot.InteractionRespond(interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseModal,

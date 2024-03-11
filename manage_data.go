@@ -250,23 +250,39 @@ func getFormType(formManageID string) string {
 
 func getFormResultValues(formManageID string) FormResult {
 	var result FormResult
-	err := db.QueryRow("SELECT overwrite_title from form_manage WHERE form_manage_id = $1", formManageID).Scan(&result.OverwriteTitle)
+	err := db.QueryRow("SELECT overwrite_title FROM form_manage WHERE form_manage_id = $1", formManageID).Scan(&result.OverwriteTitle)
 	if err != nil {
 		log.Println(err)
 	}
-	err = db.QueryRow("SELECT result_channel_id from form_manage WHERE form_manage_id = $1", formManageID).Scan(&result.ResultChannelID)
+	err = db.QueryRow("SELECT result_channel_id FROM form_manage WHERE form_manage_id = $1", formManageID).Scan(&result.ResultChannelID)
 	if err != nil {
 		log.Println(err)
 	}
-	err = db.QueryRow("SELECT accept_channel_id from form_manage WHERE form_manage_id = $1", formManageID).Scan(&result.AcceptChannelID)
+	err = db.QueryRow("SELECT accept_channel_id FROM form_manage WHERE form_manage_id = $1", formManageID).Scan(&result.AcceptChannelID)
 	if err != nil {
 		log.Println(err)
 	}
-	err = db.QueryRow("SELECT mods_can_comment from form_manage WHERE form_manage_id = $1", formManageID).Scan(&result.ModsCanComment)
+	err = db.QueryRow("SELECT mods_can_comment FROM form_manage WHERE form_manage_id = $1", formManageID).Scan(&result.ModsCanComment)
 	if err != nil {
 		log.Println(err)
 	}
 	return result
+}
+
+func getFormOverwriteTitle(formManageID string) string {
+	var overwriteTitle string
+	err := db.QueryRow("SELECT overwrite_title FROM form_manage WHERE form_manage_id = $1", formManageID).Scan(&overwriteTitle)
+	if err != nil {
+		log.Println(err)
+	}
+	return overwriteTitle
+}
+
+func removeForm(formManageID string) {
+	_, err := db.Exec("DELETE FROM form_manage WHERE form_manage_id = $1", formManageID)
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 func setAutoJoinRole(guildID string, option string, roleID string) bool {
@@ -343,4 +359,11 @@ func isAutopublishEnabled(guildID string, newsChannelID string) bool {
 		log.Print(err)
 	}
 	return enabled
+}
+
+func tryDeleteUnusedMessage(guildID string, channelID string, messageID string) {
+	_, err := db.Exec("DELETE FROM form_manage WHERE guild_id = $1 AND channel_id = $2 AND message_id = $3", guildID, channelID, messageID)
+	if err != nil {
+		log.Println(err)
+	}
 }

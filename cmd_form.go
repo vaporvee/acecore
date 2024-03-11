@@ -142,14 +142,15 @@ var cmd_form Command = Command{
 			if formID == "" {
 				formID = "template_general"
 			}
-
-			formTitles := map[string]string{
-				"template_ticket":  "Make a new ticket",
-				"template_url":     "Add your URL",
-				"template_general": "Form",
-			}
-			if val, ok := formTitles[formID]; ok {
-				title = val
+			if title == "" {
+				formTitles := map[string]string{
+					"template_ticket":  "Make a new ticket",
+					"template_url":     "Add your URL",
+					"template_general": "Form",
+				}
+				if val, ok := formTitles[formID]; ok {
+					title = val
+				}
 			}
 
 			var exists bool = true
@@ -188,7 +189,8 @@ var cmd_form Command = Command{
 	},
 	ComponentInteract: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		if strings.HasPrefix(i.Interaction.MessageComponentData().CustomID, "form:") {
-			jsonStringShowModal(i.Interaction, i.Interaction.MessageComponentData().CustomID, getFormType(strings.TrimPrefix(i.Interaction.MessageComponentData().CustomID, "form:")))
+			var formManageID string = strings.TrimPrefix(i.Interaction.MessageComponentData().CustomID, "form:")
+			jsonStringShowModal(i.Interaction, i.Interaction.MessageComponentData().CustomID, getFormType(formManageID), getFormOverwriteTitle(formManageID))
 		} else if i.Interaction.MessageComponentData().CustomID == "form_demo" {
 			jsonStringShowModal(i.Interaction, "form_demo", "form_demo")
 		}
