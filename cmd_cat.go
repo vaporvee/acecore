@@ -25,14 +25,11 @@ var cmd_cat Command = Command{
 }
 
 type CatImage struct {
-	ID     string `json:"id"`
-	URL    string `json:"url"`
-	Width  int    `json:"width"`
-	Height int    `json:"height"`
+	ID string `json:"_id"`
 }
 
 func GetCatImageURL() string {
-	resp, err := http.Get("https://api.thecatapi.com/v1/images/search?format=json")
+	resp, err := http.Get("https://cataas.com/cat?json=true")
 	if err != nil {
 		log.Fatal("Error making GET request:", err)
 	}
@@ -43,15 +40,11 @@ func GetCatImageURL() string {
 		log.Fatal("Error reading response body:", err)
 	}
 
-	var images []CatImage
+	var images CatImage
 	err = json.Unmarshal(body, &images)
 	if err != nil {
 		log.Fatal("Error unmarshalling JSON:", err)
 	}
 
-	if len(images) == 0 {
-		log.Fatal("No images found")
-	}
-
-	return images[0].URL
+	return "https://cataas.com/cat/" + images.ID
 }
