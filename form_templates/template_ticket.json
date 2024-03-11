@@ -14,7 +14,7 @@
       "is_paragraph": true,
       "placeholder": "Fill in for what you need help or have issues with and a moderator will reply.",
       "required": true,
-      "max_length": 2000
+      "max_length": 1024
     }
   ]
 }

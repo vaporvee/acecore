@@ -278,13 +278,6 @@ func getFormOverwriteTitle(formManageID string) string {
 	return overwriteTitle
 }
 
-func removeForm(formManageID string) {
-	_, err := db.Exec("DELETE FROM form_manage WHERE form_manage_id = $1", formManageID)
-	if err != nil {
-		log.Println(err)
-	}
-}
-
 func setAutoJoinRole(guildID string, option string, roleID string) bool {
 	var role_exists bool
 	var autojoinroles_exists bool

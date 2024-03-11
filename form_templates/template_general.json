@@ -12,7 +12,7 @@
       "label": "Text",
       "is_paragraph": true,
       "required": true,
-      "max_length": 2000
+      "max_length": 1024
     }
   ]
 }

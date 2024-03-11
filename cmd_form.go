@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -29,21 +29,9 @@ var cmd_form Command = Command{
 				Description: "Create a new custom form right inside Discord",
 				Options: []*discordgo.ApplicationCommandOption{
 					{
-						Type:        discordgo.ApplicationCommandOptionString,
-						Name:        "title",
-						Description: "The title inside the form window",
-						Required:    true,
-					},
-					{
 						Type:        discordgo.ApplicationCommandOptionAttachment,
 						Name:        "json",
 						Description: "Your edited form file",
-						Required:    true,
-					},
-					{
-						Type:        discordgo.ApplicationCommandOptionChannel,
-						Name:        "results_channel",
-						Description: "The channel where the form results should be posted",
 						Required:    true,
 					},
 				},
@@ -201,8 +189,11 @@ var cmd_form Command = Command{
 			var result FormResult = getFormResultValues(form_manage_id)
 			var fields []*discordgo.MessageEmbedField
 			var modal ModalJson = getModalByFormID(getFormType(form_manage_id))
+			var overwrite_title string = getFormOverwriteTitle(form_manage_id)
+			if overwrite_title != "" {
+				modal.Title = overwrite_title
+			}
 			for index, component := range i.ModalSubmitData().Components {
-				fmt.Print(component.(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput))
 				var input *discordgo.TextInput = component.(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput)
 				fields = append(fields, &discordgo.MessageEmbedField{
 					Name:   modal.Form[index].Label,
@@ -211,12 +202,27 @@ var cmd_form Command = Command{
 				})
 			}
 			if result.AcceptChannelID == "" {
-				s.ChannelMessageSendComplex(result.ResultChannelID, &discordgo.MessageSend{
+				channel, _ := s.Channel(i.ChannelID)
+				_, err := s.ChannelMessageSendComplex(result.ResultChannelID, &discordgo.MessageSend{
 					Embed: &discordgo.MessageEmbed{
-						Fields: fields,
+						Author: &discordgo.MessageEmbedAuthor{
+							Name:    i.Member.User.Username,
+							IconURL: i.Member.AvatarURL("256"),
+						},
+						Title:       "\"" + modal.Title + "\"",
+						Color:       hexToDecimal(color["primary"]),
+						Description: "This is the submitted result",
+						Fields:      fields,
+						Footer: &discordgo.MessageEmbedFooter{
+							Text: "From #" + channel.Name,
+						},
 					},
 				})
-				respond(i.Interaction, "Submited!", true)
+				if err != nil {
+					log.Println(err)
+				} else {
+					respond(i.Interaction, "Submited!", true)
+				}
 			} else {
 				respond(i.Interaction, "The form data would be send to a specified channel. 🤲", true)
 			}

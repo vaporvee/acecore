@@ -158,17 +158,10 @@ func respondEmbed(interaction *discordgo.Interaction, embed discordgo.MessageEmb
 	})
 }
 
-func checkMessageNotExists(channelID, messageID string) bool {
-	_, err := bot.ChannelMessage(channelID, messageID)
-	if err != nil {
-		return true
-	}
-	return false
-}
-
 func findAndDeleteUnusedMessages() {
 	for _, message := range getAllSavedMessages() {
-		if checkMessageNotExists(message.ChannelID, message.ID) {
+		_, err := bot.ChannelMessage(message.ChannelID, message.ID)
+		if err != nil {
 			tryDeleteUnusedMessage(message.ID)
 		}
 	}

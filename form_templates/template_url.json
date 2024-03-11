@@ -5,7 +5,7 @@
     {
       "label": "URL",
       "is_paragraph": false,
-      "placeholder": "https://example.com",
+      "placeholder": "https://",
       "value": "",
       "required": true,
       "min_length": 0,
