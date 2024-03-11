@@ -59,7 +59,7 @@ var cmd_form Command = Command{
 						Name:        "title",
 						Description: "The title the form should have",
 					},
-					{
+					/*{
 						Type:         discordgo.ApplicationCommandOptionChannel,
 						Name:         "accept_channel",
 						Description:  "Channel for results that need to be accepted by a moderator before sending it to the result channel",
@@ -69,7 +69,7 @@ var cmd_form Command = Command{
 						Type:        discordgo.ApplicationCommandOptionBoolean,
 						Name:        "mods_can_comment",
 						Description: "Moderators can open a new channel on the form result, which then pings the user who submitted it",
-					},
+					},*/
 				},
 			},
 		},
@@ -82,7 +82,7 @@ var cmd_form Command = Command{
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
-					Content: "Get the example file edit it (make sure to have a unique \"form_type\") and submit it via `/form create`.\nOr use the demo button to get an idea of how the example would look like.",
+					Content: "NOT SUPPORTED YET!(use `/form add` instead)\n\nGet the example file edit it (make sure to have a unique \"form_type\") and submit it via `/form create`.\nOr use the demo button to get an idea of how the example would look like.",
 					Flags:   discordgo.MessageFlagsEphemeral,
 					Files: []*discordgo.File{
 						{
@@ -230,10 +230,10 @@ var cmd_form Command = Command{
 	},
 	Autocomplete: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		choices := []*discordgo.ApplicationCommandOptionChoice{
-			{
+			/*{
 				Name:  "Support Ticket",
 				Value: "template_ticket",
-			},
+			},*/
 			{
 				Name:  "Submit URL",
 				Value: "template_url",
