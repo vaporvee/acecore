@@ -52,6 +52,15 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 	fmt.Print("\nSuccessfully started the Bot!")
 }
 
+func guildCreate(s *discordgo.Session, event *discordgo.GuildCreate) {
+	for _, command := range commands {
+		_, err := s.ApplicationCommandCreate(s.State.User.ID, event.Guild.ID, &command.Definition)
+		if err != nil {
+			log.Printf("error creating command for guild %s: %v\n", event.Guild.Name, err)
+		}
+	}
+}
+
 func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	for _, command := range commands {
 		switch i.Type {
