@@ -27,7 +27,28 @@ var cmd_sticky Command = Command{
 	Interact: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		switch i.ApplicationCommandData().Options[0].Name {
 		case "add":
-			jsonStringShowModal(i.Interaction, "sticky_modal", "sticky_modal")
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseModal,
+				Data: &discordgo.InteractionResponseData{
+					CustomID: "sticky_modal",
+					Title:    "Sticky message",
+					Components: []discordgo.MessageComponent{
+						discordgo.ActionsRow{
+							Components: []discordgo.MessageComponent{
+								discordgo.TextInput{
+									CustomID:    "sticky_modal_text",
+									Label:       "Text",
+									Style:       discordgo.TextInputParagraph,
+									Placeholder: "The message you want to stick to the bottom of this channel",
+									Required:    true,
+									MaxLength:   2000,
+									Value:       "",
+								},
+							},
+						},
+					},
+				},
+			})
 		case "remove":
 			if hasSticky(i.GuildID, i.ChannelID) {
 				s.ChannelMessageDelete(i.ChannelID, getStickyMessageID(i.GuildID, i.ChannelID))

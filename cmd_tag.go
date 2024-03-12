@@ -9,7 +9,7 @@ import (
 var cmd_tag Command = Command{
 	Definition: discordgo.ApplicationCommand{
 		Name:                     "tag",
-		DefaultMemberPermissions: int64Ptr(discordgo.PermissionManageMessages),
+		DefaultMemberPermissions: int64Ptr(discordgo.PermissionManageServer),
 		Description:              "A command to show and edit saved presaved messages.",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -50,9 +50,42 @@ var cmd_tag Command = Command{
 	Interact: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		switch i.ApplicationCommandData().Options[0].Name {
 		case "get":
-			GetTagCommand(i, i.ApplicationCommandData().Options[0].Options[0])
+			GetTagCommand(s, i, i.ApplicationCommandData().Options[0].Options[0])
 		case "add":
-			jsonStringShowModal(i.Interaction, "tag_add_modal", "template_general")
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseModal,
+				Data: &discordgo.InteractionResponseData{
+					CustomID: "tag_add_modal" + i.Interaction.Member.User.ID,
+					Title:    "Add a custom tag command",
+					Components: []discordgo.MessageComponent{
+						discordgo.ActionsRow{
+							Components: []discordgo.MessageComponent{
+								discordgo.TextInput{
+									CustomID:  "tag_add_modal_name",
+									Label:     "Name",
+									Style:     discordgo.TextInputShort,
+									Required:  true,
+									MaxLength: 20,
+									Value:     "",
+								},
+							},
+						},
+						discordgo.ActionsRow{
+							Components: []discordgo.MessageComponent{
+								discordgo.TextInput{
+									CustomID:    "tag_add_modal_content",
+									Label:       "Content",
+									Placeholder: "Content that gets returned when the tag will be run",
+									Style:       discordgo.TextInputParagraph,
+									Required:    true,
+									MaxLength:   2000,
+									Value:       "",
+								},
+							},
+						},
+					},
+				},
+			})
 		case "remove":
 			removeTag(i.GuildID, i.ApplicationCommandData().Options[0].Options[0].StringValue())
 			respond(i.Interaction, "Tag removed!", true)
@@ -66,7 +99,7 @@ var cmd_tag Command = Command{
 		respond(i.Interaction, "Tag \""+tagName+"\" added!", true)
 	},
 	Autocomplete: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		AutocompleteTag(i)
+		AutocompleteTag(s, i)
 	},
 }
 
@@ -85,19 +118,19 @@ var cmd_tag_short Command = Command{
 		},
 	},
 	Interact: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		GetTagCommand(i, i.ApplicationCommandData().Options[0])
+		GetTagCommand(s, i, i.ApplicationCommandData().Options[0])
 	},
 	Autocomplete: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		AutocompleteTag(i)
+		AutocompleteTag(s, i)
 	},
 }
 
-func GetTagCommand(i *discordgo.InteractionCreate, option *discordgo.ApplicationCommandInteractionDataOption) {
+func GetTagCommand(s *discordgo.Session, i *discordgo.InteractionCreate, option *discordgo.ApplicationCommandInteractionDataOption) {
 	respond(i.Interaction, getTagContent(i.GuildID, option.Value.(string)), false)
 }
 
-func AutocompleteTag(i *discordgo.InteractionCreate) {
-	bot.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+func AutocompleteTag(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionApplicationCommandAutocompleteResult,
 		Data: &discordgo.InteractionResponseData{
 			Choices: generateTagChoices(i.GuildID),
