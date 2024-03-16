@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 func initTables() {
@@ -74,12 +75,12 @@ func addTag(guildID, tagName, tagContent string) bool {
 		id = uuid.New()
 		err := db.QueryRow("SELECT EXISTS (SELECT  1 FROM tags WHERE guild_id = $1 AND tag_id = $2)", guildID, id).Scan(&exists)
 		if err != nil {
-			log.Println(err)
+			logrus.Error(err)
 		}
 	}
 	_, err := db.Exec("INSERT INTO tags (guild_id, tag_name, tag_content, tag_id) VALUES ($1, $2, $3, $4)", guildID, tagName, tagContent, id)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 	}
 
 	return exists
@@ -88,12 +89,12 @@ func removeTag(guildID string, tagID string) {
 	var exists bool
 	err := db.QueryRow("SELECT EXISTS (SELECT  1 FROM tags WHERE guild_id = $1 AND tag_id = $2)", guildID, tagID).Scan(&exists)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 	}
 	if exists {
 		_, err = db.Exec("DELETE FROM tags WHERE guild_id = $1 AND tag_id = $2", guildID, tagID)
 		if err != nil {
-			log.Println(err)
+			logrus.Error(err)
 		}
 	}
 }
@@ -135,12 +136,12 @@ func addSticky(guildID string, channelID string, messageContent string, messageI
 	if exists {
 		_, err := db.Exec("UPDATE sticky SET message_content = $1 WHERE guild_id = $2 AND channel_id = $3", messageContent, guildID, channelID)
 		if err != nil {
-			log.Println(err)
+			logrus.Error(err)
 		}
 	} else {
 		_, err := db.Exec("INSERT INTO sticky (guild_id, channel_id, message_id, message_content) VALUES ($1, $2, $3, $4)", guildID, channelID, messageID, messageContent)
 		if err != nil {
-			log.Println(err)
+			logrus.Error(err)
 		}
 	}
 	return exists
@@ -150,7 +151,7 @@ func hasSticky(guildID string, channelID string) bool {
 	var exists bool
 	err := db.QueryRow("SELECT EXISTS (SELECT  1 FROM sticky WHERE guild_id = $1 AND channel_id = $2)", guildID, channelID).Scan(&exists)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 	}
 	return exists
 }
@@ -161,7 +162,7 @@ func getStickyMessageID(guildID string, channelID string) string {
 	if exists {
 		err := db.QueryRow("SELECT message_id FROM sticky WHERE guild_id = $1 AND channel_id = $2", guildID, channelID).Scan(&messageID)
 		if err != nil {
-			log.Println(err)
+			logrus.Error(err)
 		}
 	}
 	return messageID
@@ -172,7 +173,7 @@ func getStickyMessageContent(guildID string, channelID string) string {
 	if exists {
 		err := db.QueryRow("SELECT message_content FROM sticky WHERE guild_id = $1 AND channel_id = $2", guildID, channelID).Scan(&messageID)
 		if err != nil {
-			log.Println(err)
+			logrus.Error(err)
 		}
 	}
 	return messageID
@@ -183,7 +184,7 @@ func updateStickyMessageID(guildID string, channelID string, messageID string) {
 	if exists {
 		_, err := db.Exec("UPDATE sticky SET message_id = $1 WHERE guild_id = $2 AND channel_id = $3", messageID, guildID, channelID)
 		if err != nil {
-			log.Println(err)
+			logrus.Error(err)
 		}
 	}
 }
@@ -191,7 +192,7 @@ func updateStickyMessageID(guildID string, channelID string, messageID string) {
 func removeSticky(guildID string, channelID string) {
 	_, err := db.Exec("DELETE FROM sticky WHERE guild_id = $1 AND channel_id = $2", guildID, channelID)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 	}
 }
 
@@ -199,7 +200,7 @@ func getFormManageIdExists(id uuid.UUID) bool {
 	var exists bool
 	err := db.QueryRow("SELECT EXISTS (SELECT 1 FROM form_manage WHERE form_manage_id = $1)", id).Scan(&exists)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 	}
 	return exists
 }
@@ -207,7 +208,7 @@ func getFormManageIdExists(id uuid.UUID) bool {
 func addFormButton(guildID string, channelID string, messageID string, formManageID string, formType string, resultChannelID string, overwriteTitle string, acceptChannelID string, modsCanComment bool) {
 	_, err := db.Exec("INSERT INTO form_manage (guild_id, form_manage_id, channel_id, message_id, form_type, result_channel_id, overwrite_title, accept_channel_id, mods_can_comment) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)", guildID, formManageID, channelID, messageID, formType, resultChannelID, overwriteTitle, acceptChannelID, modsCanComment)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 	}
 }
 
@@ -218,7 +219,7 @@ func getFormManageIDs() []string {
 	var IDs []string
 	rows, err := db.Query("SELECT form_manage_id FROM form_manage")
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 		return nil
 	}
 	defer rows.Close()
@@ -226,14 +227,14 @@ func getFormManageIDs() []string {
 	for rows.Next() {
 		var id string
 		if err := rows.Scan(&id); err != nil {
-			log.Println(err)
+			logrus.Error(err)
 			return nil
 		}
 		IDs = append(IDs, id)
 	}
 
 	if err := rows.Err(); err != nil {
-		log.Println(err)
+		logrus.Error(err)
 		return nil
 	}
 	return IDs
@@ -243,7 +244,7 @@ func getFormType(formManageID string) string {
 	var formType string
 	err := db.QueryRow("SELECT form_type FROM form_manage WHERE form_manage_id = $1", formManageID).Scan(&formType)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 	}
 	return formType
 }
@@ -252,19 +253,19 @@ func getFormResultValues(formManageID string) FormResult {
 	var result FormResult
 	err := db.QueryRow("SELECT overwrite_title FROM form_manage WHERE form_manage_id = $1", formManageID).Scan(&result.OverwriteTitle)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 	}
 	err = db.QueryRow("SELECT result_channel_id FROM form_manage WHERE form_manage_id = $1", formManageID).Scan(&result.ResultChannelID)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 	}
 	err = db.QueryRow("SELECT accept_channel_id FROM form_manage WHERE form_manage_id = $1", formManageID).Scan(&result.AcceptChannelID)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 	}
 	err = db.QueryRow("SELECT mods_can_comment FROM form_manage WHERE form_manage_id = $1", formManageID).Scan(&result.ModsCanComment)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 	}
 	return result
 }
@@ -273,7 +274,7 @@ func getFormOverwriteTitle(formManageID string) string {
 	var overwriteTitle string
 	err := db.QueryRow("SELECT overwrite_title FROM form_manage WHERE form_manage_id = $1", formManageID).Scan(&overwriteTitle)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 	}
 	return overwriteTitle
 }
@@ -283,21 +284,21 @@ func setAutoJoinRole(guildID string, option string, roleID string) bool {
 	var autojoinroles_exists bool
 	err := db.QueryRow("SELECT EXISTS (SELECT  1 FROM autojoinroles WHERE guild_id = $1)", guildID).Scan(&autojoinroles_exists)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 	}
 	err = db.QueryRow("SELECT EXISTS (SELECT  1 FROM autojoinroles WHERE guild_id = $1 AND "+option+"_role IS NOT NULL AND "+option+"_role != '')", guildID).Scan(&role_exists)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 	}
 	if autojoinroles_exists {
 		_, err = db.Exec("UPDATE autojoinroles SET "+option+"_role = $1 WHERE guild_id = $2", roleID, guildID)
 		if err != nil {
-			log.Println(err)
+			logrus.Error(err)
 		}
 	} else {
 		_, err = db.Exec("INSERT INTO autojoinroles (guild_id, "+option+"_role) VALUES ($1, $2)", guildID, roleID)
 		if err != nil {
-			log.Println(err)
+			logrus.Error(err)
 		}
 	}
 	return role_exists
@@ -306,7 +307,7 @@ func setAutoJoinRole(guildID string, option string, roleID string) bool {
 func purgeUnusedAutoJoinRoles(guildID string) {
 	_, err := db.Exec("DELETE FROM autojoinroles WHERE guild_id = $1 AND user_role = '' OR user_role IS NULL AND bot_role = '' OR bot_role IS NULL", guildID)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 	}
 }
 
@@ -320,7 +321,7 @@ func getAutoJoinRole(guildID string, isBot bool) string {
 	}
 	err := db.QueryRow("SELECT "+isBotString+"_role FROM autojoinroles WHERE guild_id = $1", guildID).Scan(&role)
 	if err != nil {
-		log.Println(err, guildID)
+		logrus.Error(err, guildID)
 	}
 	return role
 }
@@ -329,17 +330,17 @@ func toggleAutoPublish(guildID string, newsChannelID string) bool {
 	var exists bool
 	err := db.QueryRow("SELECT EXISTS (SELECT 1 FROM autopublish WHERE guild_id = $1 AND news_channel_id = $2)", guildID, newsChannelID).Scan(&exists)
 	if err != nil {
-		log.Print(err)
+		logrus.Error(err)
 	}
 	if exists {
 		_, err := db.Exec("DELETE FROM autopublish WHERE guild_id = $1 AND news_channel_id = $2", guildID, newsChannelID)
 		if err != nil {
-			log.Print(err)
+			logrus.Error(err)
 		}
 	} else {
 		_, err := db.Exec("INSERT INTO autopublish (guild_id, news_channel_id) VALUES ($1, $2)", guildID, newsChannelID)
 		if err != nil {
-			log.Print(err)
+			logrus.Error(err)
 		}
 	}
 	return exists
@@ -349,7 +350,7 @@ func isAutopublishEnabled(guildID string, newsChannelID string) bool {
 	var enabled bool
 	err := db.QueryRow("SELECT EXISTS (SELECT 1 FROM autopublish WHERE guild_id = $1 AND news_channel_id = $2)", guildID, newsChannelID).Scan(&enabled)
 	if err != nil {
-		log.Print(err)
+		logrus.Error(err)
 	}
 	return enabled
 }
@@ -357,7 +358,7 @@ func isAutopublishEnabled(guildID string, newsChannelID string) bool {
 func tryDeleteUnusedMessage(messageID string) {
 	_, err := db.Exec("DELETE FROM form_manage WHERE message_id = $1", messageID)
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 	}
 }
 
@@ -365,20 +366,20 @@ func getAllSavedMessages() []MessageIDs {
 	var savedMessages []MessageIDs
 	rows, err := db.Query("SELECT message_id, channel_id FROM form_manage")
 	if err != nil {
-		log.Print(err)
+		logrus.Error(err)
 		return nil
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var messageID, channelID string
 		if err := rows.Scan(&messageID, &channelID); err != nil {
-			log.Print(err)
+			logrus.Error(err)
 			continue
 		}
 		savedMessages = append(savedMessages, MessageIDs{ID: messageID, ChannelID: channelID})
 	}
 	if err := rows.Err(); err != nil {
-		log.Print(err)
+		logrus.Error(err)
 	}
 	return savedMessages
 }

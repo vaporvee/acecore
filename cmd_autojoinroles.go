@@ -1,6 +1,9 @@
 package main
 
-import "github.com/bwmarrin/discordgo"
+import (
+	"github.com/bwmarrin/discordgo"
+	"github.com/sirupsen/logrus"
+)
 
 var cmd_autojoinroles Command = Command{
 	Definition: discordgo.ApplicationCommand{
@@ -40,7 +43,10 @@ var cmd_autojoinroles Command = Command{
 		if len(i.ApplicationCommandData().Options[0].Options) == 1 {
 			var givenRole *discordgo.Role = i.ApplicationCommandData().Options[0].Options[0].RoleValue(s, i.GuildID)
 			role = givenRole.ID
-			botrole, _ := getHighestRole(i.GuildID)
+			botrole, err := getHighestRole(i.GuildID)
+			if err != nil {
+				logrus.Error(err)
+			}
 			if givenRole.Position >= botrole.Position {
 				content = "<@&" + role + "> is not below the Bot's current highest role(<@&" + botrole.ID + ">). That makes it unable to manage it."
 			} else {
@@ -53,7 +59,10 @@ var cmd_autojoinroles Command = Command{
 		} else if setAutoJoinRole(i.GuildID, option, role) {
 			content = "Deleted auto join role for " + option + "s"
 		}
-		respond(i.Interaction, content, true)
+		err := respond(i.Interaction, content, true)
+		if err != nil {
+			logrus.Error(err)
+		}
 		purgeUnusedAutoJoinRoles(i.GuildID)
 	},
 }

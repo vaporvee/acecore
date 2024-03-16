@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/sirupsen/logrus"
 )
 
 var cmd_cat Command = Command{
@@ -16,12 +17,17 @@ var cmd_cat Command = Command{
 	Interact: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		cat, err := GetCatImageURL()
 		if err == nil {
-			respondEmbed(i.Interaction, discordgo.MessageEmbed{
+			err := respondEmbed(i.Interaction, discordgo.MessageEmbed{
 				Type:  discordgo.EmbedTypeImage,
 				Color: hexToDecimal(color["primary"]),
 				Image: &discordgo.MessageEmbedImage{
 					URL: cat,
 				}}, false)
+			if err != nil {
+				logrus.Error(err)
+			}
+		} else {
+			logrus.Error(err)
 		}
 	},
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/bwmarrin/discordgo"
+	"github.com/sirupsen/logrus"
 )
 
 var cmd_dadjoke Command = Command{
@@ -10,6 +11,9 @@ var cmd_dadjoke Command = Command{
 		Description: "Gives you a random joke that is as bad as your dad would tell them",
 	},
 	Interact: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		respond(i.Interaction, simpleGetFromAPI("joke", "https://icanhazdadjoke.com/").(string), false)
+		err := respond(i.Interaction, simpleGetFromAPI("joke", "https://icanhazdadjoke.com/").(string), false)
+		if err != nil {
+			logrus.Error(err)
+		}
 	},
 }

@@ -1,13 +1,12 @@
 package main
 
 import (
-	"fmt"
-	"log"
 	"os"
 	"slices"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/sirupsen/logrus"
 )
 
 type Command struct {
@@ -25,7 +24,7 @@ type Command struct {
 var commands []Command = []Command{cmd_form, cmd_tag, cmd_tag_short, cmd_dadjoke, cmd_ping, cmd_ask, cmd_sticky, cmd_cat, cmd_autojoinroles, cmd_autopublish}
 
 func ready(s *discordgo.Session, event *discordgo.Ready) {
-	fmt.Print("\nStarting up...")
+	logrus.Info("\nStarting up...")
 	findAndDeleteUnusedMessages()
 	removeOldCommandFromAllGuilds(s)
 	var existingCommandNames []string
@@ -35,28 +34,28 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 			existingCommandNames = append(existingCommandNames, existingCommand.Name)
 		}
 		if err != nil {
-			fmt.Printf("error fetching existing commands for guild %s: %v\n", guild.Name, err)
+			logrus.Errorf("error fetching existing commands for guild %s: %v\n", guild.Name, err)
 			continue
 		}
 		for _, command := range commands {
 			if !slices.Contains(existingCommandNames, command.Definition.Name) || slices.Contains(os.Args, "--update="+command.Definition.Name) {
 				cmd, err := s.ApplicationCommandCreate(s.State.User.ID, guild.ID, &command.Definition)
-				fmt.Printf("\nAdded command \"%s\"", cmd.Name)
+				logrus.Infof("\nAdded command \"%s\"", cmd.Name)
 				if err != nil {
-					fmt.Println("error creating command,", err)
+					logrus.Error("error creating command,", err)
 					continue
 				}
 			}
 		}
 	}
-	fmt.Print("\nSuccessfully started the Bot!")
+	logrus.Info("\nSuccessfully started the Bot!")
 }
 
 func guildCreate(s *discordgo.Session, event *discordgo.GuildCreate) {
 	for _, command := range commands {
 		_, err := s.ApplicationCommandCreate(s.State.User.ID, event.Guild.ID, &command.Definition)
 		if err != nil {
-			log.Printf("error creating command for guild %s: %v\n", event.Guild.Name, err)
+			logrus.Errorf("error creating command for guild %s: %v\n", event.Guild.Name, err)
 		}
 	}
 }
@@ -107,7 +106,7 @@ func removeOldCommandFromAllGuilds(s *discordgo.Session) {
 	for _, guild := range s.State.Guilds {
 		existingCommands, err := s.ApplicationCommands(s.State.User.ID, guild.ID)
 		if err != nil {
-			fmt.Printf("error fetching existing commands for guild %s: %v\n", guild.Name, err)
+			logrus.Errorf("error fetching existing commands for guild %s: %v\n", guild.Name, err)
 			continue
 		}
 		var commandIDs []string
@@ -116,10 +115,10 @@ func removeOldCommandFromAllGuilds(s *discordgo.Session) {
 		}
 		for _, existingCommand := range existingCommands {
 			if !slices.Contains(commandIDs, existingCommand.Name) {
-				fmt.Printf("\nDeleting command \"%s\"", existingCommand.Name)
+				logrus.Infof("\nDeleting command \"%s\"", existingCommand.Name)
 				err := s.ApplicationCommandDelete(s.State.User.ID, guild.ID, existingCommand.ID)
 				if err != nil {
-					fmt.Printf("error deleting command %s for guild %s: %v\n", existingCommand.Name, guild.Name, err)
+					logrus.Errorf("error deleting command %s for guild %s: %v\n", existingCommand.Name, guild.Name, err)
 				}
 			}
 		}
@@ -129,7 +128,7 @@ func removeOldCommandFromAllGuilds(s *discordgo.Session) {
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if len(m.Embeds) == 0 || m.Embeds[0].Footer == nil || m.Embeds[0].Footer.Text != "📌 Sticky message" {
 		if hasSticky(m.GuildID, m.ChannelID) {
-			s.ChannelMessageDelete(m.ChannelID, getStickyMessageID(m.GuildID, m.ChannelID))
+			err := s.ChannelMessageDelete(m.ChannelID, getStickyMessageID(m.GuildID, m.ChannelID))
 			stickyMessage, _ := s.ChannelMessageSendEmbed(m.ChannelID, &discordgo.MessageEmbed{
 				Type: discordgo.EmbedTypeArticle,
 				Footer: &discordgo.MessageEmbedFooter{
@@ -138,13 +137,19 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 				Color:       hexToDecimal(color["primary"]),
 				Description: getStickyMessageContent(m.GuildID, m.ChannelID),
 			})
+			if err != nil {
+				logrus.Error(err)
+			}
 			updateStickyMessageID(m.GuildID, m.ChannelID, stickyMessage.ID)
 		}
 	}
 	channel, _ := s.Channel(m.ChannelID)
 	if channel.Type == discordgo.ChannelTypeGuildNews {
 		if isAutopublishEnabled(m.GuildID, m.ChannelID) {
-			s.ChannelMessageCrosspost(m.ChannelID, m.ID)
+			_, err := s.ChannelMessageCrosspost(m.ChannelID, m.ID)
+			if err != nil {
+				logrus.Error(err)
+			}
 		}
 	}
 }
@@ -156,6 +161,6 @@ func messageDelete(s *discordgo.Session, m *discordgo.MessageDelete) { //TODO: a
 func guildMemberJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
 	err := s.GuildMemberRoleAdd(m.GuildID, m.User.ID, getAutoJoinRole(m.GuildID, m.User.Bot))
 	if err != nil {
-		log.Println(err)
+		logrus.Error(err)
 	}
 }

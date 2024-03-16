@@ -1,0 +1,5 @@
+{"file":"/home/vaporvee/acecore/main.go:40","func":"main.main","level":"info","msg":"Discord session created","time":"2024-03-16T23:52:49+01:00"}
+{"file":"/home/vaporvee/acecore/main.go:54","func":"main.main","level":"info","msg":"\nBot is now running as \"acecore [DEV]\"!","time":"2024-03-16T23:52:49+01:00"}
+{"file":"/home/vaporvee/acecore/handlers.go:27","func":"main.ready","level":"info","msg":"\nStarting up...","time":"2024-03-16T23:52:49+01:00"}
+{"file":"/home/vaporvee/acecore/handlers.go:51","func":"main.ready","level":"info","msg":"\nSuccessfully started the Bot!","time":"2024-03-16T23:52:50+01:00"}
+{"file":"/home/vaporvee/acecore/main.go:58","func":"main.main","level":"info","msg":"\nShutting down...","time":"2024-03-16T23:53:10+01:00"}

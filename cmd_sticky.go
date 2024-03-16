@@ -1,9 +1,8 @@
 package main
 
 import (
-	"log"
-
 	"github.com/bwmarrin/discordgo"
+	"github.com/sirupsen/logrus"
 )
 
 var cmd_sticky Command = Command{
@@ -27,7 +26,7 @@ var cmd_sticky Command = Command{
 	Interact: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		switch i.ApplicationCommandData().Options[0].Name {
 		case "add":
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseModal,
 				Data: &discordgo.InteractionResponseData{
 					CustomID: "sticky_modal",
@@ -49,13 +48,25 @@ var cmd_sticky Command = Command{
 					},
 				},
 			})
+			if err != nil {
+				logrus.Error(err)
+			}
 		case "remove":
 			if hasSticky(i.GuildID, i.ChannelID) {
-				s.ChannelMessageDelete(i.ChannelID, getStickyMessageID(i.GuildID, i.ChannelID))
+				err := s.ChannelMessageDelete(i.ChannelID, getStickyMessageID(i.GuildID, i.ChannelID))
+				if err != nil {
+					logrus.Error(err)
+				}
 				removeSticky(i.GuildID, i.ChannelID)
-				respond(i.Interaction, "The sticky message was removed from this channel!", true)
+				err = respond(i.Interaction, "The sticky message was removed from this channel!", true)
+				if err != nil {
+					logrus.Error(err)
+				}
 			} else {
-				respond(i.Interaction, "This channel has no sticky message!", true)
+				err := respond(i.Interaction, "This channel has no sticky message!", true)
+				if err != nil {
+					logrus.Error(err)
+				}
 			}
 		}
 	},
@@ -71,12 +82,18 @@ var cmd_sticky Command = Command{
 			Description: text,
 		})
 		if err != nil {
-			log.Println(err)
+			logrus.Error(err)
 		}
 		if addSticky(i.GuildID, i.ChannelID, text, message.ID) {
-			respond(i.Interaction, "Sticky message in this channel was updated!", true)
+			err := respond(i.Interaction, "Sticky message in this channel was updated!", true)
+			if err != nil {
+				logrus.Error(err)
+			}
 		} else {
-			respond(i.Interaction, "Message sticked to the channel!", true)
+			err := respond(i.Interaction, "Message sticked to the channel!", true)
+			if err != nil {
+				logrus.Error(err)
+			}
 		}
 	},
 }

@@ -2,12 +2,12 @@ package main
 
 import (
 	"bytes"
-	"log"
 	"os"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 var fileData []byte
@@ -79,7 +79,7 @@ var cmd_form Command = Command{
 		case "help":
 			fileData, _ = os.ReadFile("./form_templates/form_demo.json")
 			fileReader := bytes.NewReader(fileData)
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
 					Content: "NOT SUPPORTED YET!(use `/form add` instead)\n\nGet the example file edit it (make sure to have a unique \"form_type\") and submit it via `/form create`.\nOr use the demo button to get an idea of how the example would look like.",
@@ -107,13 +107,18 @@ var cmd_form Command = Command{
 					},
 				},
 			})
+			if err != nil {
+				logrus.Error(err)
+			}
 		case "custom":
-			respond(i.Interaction, "Feature not available yet use `/form add` instead", true)
+			err := respond(i.Interaction, "Feature not available yet use `/form add` instead", true)
+			if err != nil {
+				logrus.Error(err)
+			}
 		case "add":
 			var title, formID, overwriteTitle, acceptChannelID string
 			var modsCanComment bool
 			options := i.ApplicationCommandData().Options[0]
-
 			for _, opt := range options.Options {
 				switch opt.Name {
 				case "type":
@@ -140,7 +145,6 @@ var cmd_form Command = Command{
 					title = val
 				}
 			}
-
 			var exists bool = true
 			var formManageID uuid.UUID = uuid.New()
 			for exists {
@@ -148,7 +152,7 @@ var cmd_form Command = Command{
 				exists = getFormManageIdExists(formManageID)
 			}
 
-			message, _ := s.ChannelMessageSendComplex(i.ChannelID, &discordgo.MessageSend{
+			message, err := s.ChannelMessageSendComplex(i.ChannelID, &discordgo.MessageSend{
 				Embed: &discordgo.MessageEmbed{
 					Color:       hexToDecimal(color["primary"]),
 					Title:       title,
@@ -171,8 +175,14 @@ var cmd_form Command = Command{
 					},
 				},
 			})
+			if err != nil {
+				logrus.Error(err)
+			}
 			addFormButton(i.GuildID, i.ChannelID, message.ID, formManageID.String(), formID, options.Options[0].ChannelValue(s).ID, overwriteTitle, acceptChannelID, modsCanComment)
-			respond(i.Interaction, "Successfully added form button!", true)
+			err = respond(i.Interaction, "Successfully added form button!", true)
+			if err != nil {
+				logrus.Error(err)
+			}
 		}
 	},
 	ComponentInteract: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -219,12 +229,18 @@ var cmd_form Command = Command{
 					},
 				})
 				if err != nil {
-					log.Println(err)
+					logrus.Error(err)
 				} else {
-					respond(i.Interaction, "Submited!", true)
+					err = respond(i.Interaction, "Submited!", true)
+					if err != nil {
+						logrus.Error(err)
+					}
 				}
 			} else {
-				respond(i.Interaction, "The form data would be send to a specified channel. 🤲", true)
+				err := respond(i.Interaction, "The form data would be send to a specified channel. 🤲", true)
+				if err != nil {
+					logrus.Error(err)
+				}
 			}
 		}
 	},
@@ -243,12 +259,15 @@ var cmd_form Command = Command{
 				Value: "template_general",
 			},
 		}
-		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionApplicationCommandAutocompleteResult,
 			Data: &discordgo.InteractionResponseData{
 				Choices: choices,
 			},
 		})
+		if err != nil {
+			logrus.Error(err)
+		}
 	},
 }
 

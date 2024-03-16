@@ -1,9 +1,8 @@
 package main
 
 import (
-	"log"
-
 	"github.com/bwmarrin/discordgo"
+	"github.com/sirupsen/logrus"
 )
 
 var cmd_tag Command = Command{
@@ -50,9 +49,9 @@ var cmd_tag Command = Command{
 	Interact: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		switch i.ApplicationCommandData().Options[0].Name {
 		case "get":
-			GetTagCommand(s, i, i.ApplicationCommandData().Options[0].Options[0])
+			GetTagCommand(i, i.ApplicationCommandData().Options[0].Options[0])
 		case "add":
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseModal,
 				Data: &discordgo.InteractionResponseData{
 					CustomID: "tag_add_modal" + i.Interaction.Member.User.ID,
@@ -86,9 +85,15 @@ var cmd_tag Command = Command{
 					},
 				},
 			})
+			if err != nil {
+				logrus.Error(err)
+			}
 		case "remove":
 			removeTag(i.GuildID, i.ApplicationCommandData().Options[0].Options[0].StringValue())
-			respond(i.Interaction, "Tag removed!", true)
+			err := respond(i.Interaction, "Tag removed!", true)
+			if err != nil {
+				logrus.Error(err)
+			}
 		}
 	},
 	ModalIDs: []string{"tag_add_modal"},
@@ -96,10 +101,13 @@ var cmd_tag Command = Command{
 		tagName := i.ModalSubmitData().Components[0].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value
 		tagContent := i.ModalSubmitData().Components[1].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value
 		addTag(i.GuildID, tagName, tagContent)
-		respond(i.Interaction, "Tag \""+tagName+"\" added!", true)
+		err := respond(i.Interaction, "Tag \""+tagName+"\" added!", true)
+		if err != nil {
+			logrus.Error(err)
+		}
 	},
 	Autocomplete: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		AutocompleteTag(s, i)
+		AutocompleteTag(i)
 	},
 }
 
@@ -118,31 +126,37 @@ var cmd_tag_short Command = Command{
 		},
 	},
 	Interact: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		GetTagCommand(s, i, i.ApplicationCommandData().Options[0])
+		GetTagCommand(i, i.ApplicationCommandData().Options[0])
 	},
 	Autocomplete: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		AutocompleteTag(s, i)
+		AutocompleteTag(i)
 	},
 }
 
-func GetTagCommand(s *discordgo.Session, i *discordgo.InteractionCreate, option *discordgo.ApplicationCommandInteractionDataOption) {
-	respond(i.Interaction, getTagContent(i.GuildID, option.Value.(string)), false)
+func GetTagCommand(i *discordgo.InteractionCreate, option *discordgo.ApplicationCommandInteractionDataOption) {
+	err := respond(i.Interaction, getTagContent(i.GuildID, option.Value.(string)), false)
+	if err != nil {
+		logrus.Error(err)
+	}
 }
 
-func AutocompleteTag(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+func AutocompleteTag(i *discordgo.InteractionCreate) {
+	err := bot.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionApplicationCommandAutocompleteResult,
 		Data: &discordgo.InteractionResponseData{
 			Choices: generateTagChoices(i.GuildID),
 		},
 	})
+	if err != nil {
+		logrus.Error(err)
+	}
 }
 
 func generateTagChoices(guildID string) []*discordgo.ApplicationCommandOptionChoice {
 	choices := []*discordgo.ApplicationCommandOptionChoice{}
 	IDs, err := getTagIDs(guildID)
 	if err != nil {
-		log.Println("Error getting tag keys:", err)
+		logrus.Error(err)
 		return choices
 	}
 	for _, id := range IDs {

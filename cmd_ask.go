@@ -1,6 +1,9 @@
 package main
 
-import "github.com/bwmarrin/discordgo"
+import (
+	"github.com/bwmarrin/discordgo"
+	"github.com/sirupsen/logrus"
+)
 
 var cmd_ask Command = Command{
 	Definition: discordgo.ApplicationCommand{
@@ -16,11 +19,14 @@ var cmd_ask Command = Command{
 		},
 	},
 	Interact: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		respondEmbed(i.Interaction, discordgo.MessageEmbed{
+		err := respondEmbed(i.Interaction, discordgo.MessageEmbed{
 			Type:  discordgo.EmbedTypeImage,
 			Color: hexToDecimal(color["primary"]),
 			Image: &discordgo.MessageEmbedImage{
 				URL: simpleGetFromAPI("image", "https://yesno.wtf/api").(string),
 			}}, false)
+		if err != nil {
+			logrus.Error("Failed to respond with embed: ", err)
+		}
 	},
 }

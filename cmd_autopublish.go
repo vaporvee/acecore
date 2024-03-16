@@ -1,6 +1,9 @@
 package main
 
-import "github.com/bwmarrin/discordgo"
+import (
+	"github.com/bwmarrin/discordgo"
+	"github.com/sirupsen/logrus"
+)
 
 var cmd_autopublish Command = Command{
 	Definition: discordgo.ApplicationCommand{
@@ -11,12 +14,21 @@ var cmd_autopublish Command = Command{
 		channel, _ := s.State.Channel(i.ChannelID)
 		if channel.Type == discordgo.ChannelTypeGuildNews {
 			if toggleAutoPublish(i.GuildID, i.ChannelID) {
-				respond(i.Interaction, "Autopublishing is now disabled on <#"+i.ChannelID+">", true)
+				err := respond(i.Interaction, "Autopublishing is now disabled on <#"+i.ChannelID+">", true)
+				if err != nil {
+					logrus.Error(err)
+				}
 			} else {
-				respond(i.Interaction, "Autopublishing is now enabled on <#"+i.ChannelID+">", true)
+				err := respond(i.Interaction, "Autopublishing is now enabled on <#"+i.ChannelID+">", true)
+				if err != nil {
+					logrus.Error(err)
+				}
 			}
 		} else {
-			respond(i.Interaction, "This is not an announcement channel!", true)
+			err := respond(i.Interaction, "This is not an announcement channel!", true)
+			if err != nil {
+				logrus.Error(err)
+			}
 		}
 	},
 }

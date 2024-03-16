@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/sirupsen/logrus"
 )
 
 var cmd_ping Command = Command{
@@ -22,7 +23,7 @@ var cmd_ping Command = Command{
 
 		resp, err := client.Get("https://discord.com/api/v9/gateway/bot")
 		if err != nil {
-			fmt.Println("Error:", err)
+			logrus.Error(err)
 			return
 		}
 		defer resp.Body.Close()
@@ -36,10 +37,13 @@ var cmd_ping Command = Command{
 		} else {
 			ping_color = "red"
 		}
-		respondEmbed(i.Interaction, discordgo.MessageEmbed{
+		err = respondEmbed(i.Interaction, discordgo.MessageEmbed{
 			Title:       s.State.User.Username + " ping",
 			Description: fmt.Sprintf("# %.2fms", ping.Seconds()*1000),
 			Type:        discordgo.EmbedTypeArticle,
 			Color:       hexToDecimal(color[ping_color])}, true)
+		if err != nil {
+			logrus.Error(err)
+		}
 	},
 }

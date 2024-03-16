@@ -1,14 +1,16 @@
 package main
 
 import (
+	"embed"
 	"encoding/json"
 	"fmt"
-	"log"
-	"os"
+	"io"
+	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/sirupsen/logrus"
 )
 
 type ModalJsonField struct {
@@ -58,33 +60,47 @@ func jsonStringShowModal(interaction *discordgo.Interaction, manageID string, fo
 	if overwrite[0] != "" {
 		modal.Title = overwrite[0]
 	}
-	err := bot.InteractionRespond(interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseModal,
-		Data: &discordgo.InteractionResponseData{
-			CustomID:   manageID + ":" + interaction.Member.User.ID,
-			Title:      modal.Title,
-			Components: components,
-		},
-	})
+	var err error
+	if components != nil {
+		err = bot.InteractionRespond(interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseModal,
+			Data: &discordgo.InteractionResponseData{
+				CustomID:   manageID + ":" + interaction.Member.User.ID,
+				Title:      modal.Title,
+				Components: components,
+			},
+		})
+	}
 	if err != nil {
-		log.Print(err)
+		logrus.Error(err)
 	}
 }
 
+// Why does the golang compiler care about commands??
+//
+//go:embed form_templates/*.json
+var formTemplates embed.FS
+
 func getModalByFormID(formID string) ModalJson {
 	var modal ModalJson
-	//TODO: add custom forms
-	entries, err := os.ReadDir("./form_templates")
+	entries, err := formTemplates.ReadDir("form_templates")
 	if err != nil {
-		log.Print(err)
+		logrus.Error(err)
+		return modal
 	}
 	for _, entry := range entries {
 		if strings.HasPrefix(entry.Name(), formID) {
-			json_file, err := os.ReadFile("./form_templates/" + entry.Name())
+			jsonFile, err := formTemplates.ReadFile("form_templates/" + entry.Name())
 			if err != nil {
-				log.Print(err)
+				logrus.Error(err)
+				continue
 			}
-			json.Unmarshal(json_file, &modal)
+			err = json.Unmarshal(jsonFile, &modal)
+			if err != nil {
+				logrus.Error(err)
+				continue
+			}
+			break
 		}
 	}
 	return modal
@@ -128,26 +144,55 @@ func hexToDecimal(hexColor string) int {
 	return int(decimal)
 }
 
-func respond(interaction *discordgo.Interaction, content string, ephemeral bool) {
+func simpleGetFromAPI(key string, url string) interface{} {
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		logrus.Error("Error creating request:", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	resp, err := client.Do(req)
+	if err != nil {
+		logrus.Error("Error making request:", err)
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		logrus.Error("Error reading response body:", err)
+	}
+
+	var result map[string]interface{}
+	err = json.Unmarshal(body, &result)
+	if err != nil {
+		logrus.Error("Error decoding JSON:", err)
+	}
+	return result[key]
+}
+
+func respond(interaction *discordgo.Interaction, content string, ephemeral bool) error {
 	var flag discordgo.MessageFlags
 	if ephemeral {
 		flag = discordgo.MessageFlagsEphemeral
 	}
-	bot.InteractionRespond(interaction, &discordgo.InteractionResponse{
+	err := bot.InteractionRespond(interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: content,
 			Flags:   flag,
 		},
 	})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func respondEmbed(interaction *discordgo.Interaction, embed discordgo.MessageEmbed, ephemeral bool) {
+func respondEmbed(interaction *discordgo.Interaction, embed discordgo.MessageEmbed, ephemeral bool) error {
 	var flag discordgo.MessageFlags
 	if ephemeral {
 		flag = discordgo.MessageFlagsEphemeral
 	}
-	bot.InteractionRespond(interaction, &discordgo.InteractionResponse{
+	err := bot.InteractionRespond(interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Flags: flag,
@@ -156,6 +201,10 @@ func respondEmbed(interaction *discordgo.Interaction, embed discordgo.MessageEmb
 			},
 		},
 	})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func findAndDeleteUnusedMessages() {
