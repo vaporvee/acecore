@@ -51,11 +51,11 @@ func main() {
 		logrus.Error("error opening connection,", err)
 		return
 	}
-	logrus.Infof("\nBot is now running as \"%s\"!", bot.State.User.Username)
+	logrus.Infof("Bot is now running as '%s'!", bot.State.User.Username)
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
-	logrus.Info("\nShutting down...")
+	logrus.Info("Shutting down...")
 	bot.Close()
 }
 

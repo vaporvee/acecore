@@ -24,7 +24,7 @@ type Command struct {
 var commands []Command = []Command{cmd_form, cmd_tag, cmd_tag_short, cmd_dadjoke, cmd_ping, cmd_ask, cmd_sticky, cmd_cat, cmd_autojoinroles, cmd_autopublish}
 
 func ready(s *discordgo.Session, event *discordgo.Ready) {
-	logrus.Info("\nStarting up...")
+	logrus.Info("Starting up...")
 	findAndDeleteUnusedMessages()
 	removeOldCommandFromAllGuilds(s)
 	var existingCommandNames []string
@@ -34,13 +34,13 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 			existingCommandNames = append(existingCommandNames, existingCommand.Name)
 		}
 		if err != nil {
-			logrus.Errorf("error fetching existing commands for guild %s: %v\n", guild.Name, err)
+			logrus.Errorf("error fetching existing commands for guild %s: %v", guild.Name, err)
 			continue
 		}
 		for _, command := range commands {
 			if !slices.Contains(existingCommandNames, command.Definition.Name) || slices.Contains(os.Args, "--update="+command.Definition.Name) {
 				cmd, err := s.ApplicationCommandCreate(s.State.User.ID, guild.ID, &command.Definition)
-				logrus.Infof("\nAdded command \"%s\"", cmd.Name)
+				logrus.Infof("Added command '%s'", cmd.Name)
 				if err != nil {
 					logrus.Error("error creating command,", err)
 					continue
@@ -48,14 +48,14 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 			}
 		}
 	}
-	logrus.Info("\nSuccessfully started the Bot!")
+	logrus.Info("Successfully started the Bot!")
 }
 
 func guildCreate(s *discordgo.Session, event *discordgo.GuildCreate) {
 	for _, command := range commands {
 		_, err := s.ApplicationCommandCreate(s.State.User.ID, event.Guild.ID, &command.Definition)
 		if err != nil {
-			logrus.Errorf("error creating command for guild %s: %v\n", event.Guild.Name, err)
+			logrus.Errorf("error creating command for guild %s: %v", event.Guild.Name, err)
 		}
 	}
 }
@@ -115,10 +115,10 @@ func removeOldCommandFromAllGuilds(s *discordgo.Session) {
 		}
 		for _, existingCommand := range existingCommands {
 			if !slices.Contains(commandIDs, existingCommand.Name) {
-				logrus.Infof("\nDeleting command \"%s\"", existingCommand.Name)
+				logrus.Infof("Deleting command '%s'", existingCommand.Name)
 				err := s.ApplicationCommandDelete(s.State.User.ID, guild.ID, existingCommand.ID)
 				if err != nil {
-					logrus.Errorf("error deleting command %s for guild %s: %v\n", existingCommand.Name, guild.Name, err)
+					logrus.Errorf("error deleting command %s for guild %s: %v", existingCommand.Name, guild.Name, err)
 				}
 			}
 		}
