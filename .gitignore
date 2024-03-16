@@ -4,3 +4,6 @@ data.json
 # Building
 acecore
 *.exe
+
+# Logging
+logs/
