@@ -6,7 +6,12 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path"
+	"path/filepath"
+	"runtime"
 	"strings"
+
+	"github.com/vaporvee/acecore/custom"
 )
 
 type Log struct {
@@ -23,6 +28,7 @@ type Message struct {
 type Embed struct {
 	Author      Author `json:"author"`
 	Title       string `json:"title"`
+	URL         string `json:"url"`
 	Color       string `json:"color"`
 	Description string `json:"description"`
 	Footer      Footer `json:"footer"`
@@ -43,6 +49,12 @@ func (cw *WebhookWriter) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
+func RootDir() string {
+	_, b, _, _ := runtime.Caller(0)
+	d := path.Join(path.Dir(b))
+	return filepath.Dir(d)
+}
+
 func webhook(p []byte) {
 	webhookURL := os.Getenv("LOG_WEBHOOK")
 	if webhookURL == "" || !strings.HasPrefix(webhookURL, "http://") && !strings.HasPrefix(webhookURL, "https://") {
@@ -54,13 +66,15 @@ func webhook(p []byte) {
 	if logJson.Level == "error" {
 		color = "16739179"
 	}
+	fileArray := strings.Split(strings.TrimPrefix(logJson.File, RootDir()), ":")
 	m := Message{
 		Embeds: []Embed{
 			{
 				Author: Author{
-					Name: logJson.File,
+					Name: logJson.Function,
 				},
-				Title:       logJson.Function,
+				Title:       "\"" + fileArray[0] + "\" on line " + fileArray[1],
+				URL:         strings.TrimSuffix(custom.Gh_url, "/") + fileArray[0] + "#L" + fileArray[1],
 				Color:       color,
 				Description: logJson.Message,
 				Footer: Footer{
