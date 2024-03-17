@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -24,6 +23,7 @@ type Message struct {
 type Embed struct {
 	Author      Author `json:"author"`
 	Title       string `json:"title"`
+	Color       string `json:"color"`
 	Description string `json:"description"`
 	Footer      Footer `json:"footer"`
 	Timestamp   string `json:"timestamp"`
@@ -50,6 +50,10 @@ func webhook(p []byte) {
 	}
 	var logJson Log
 	json.Unmarshal(p, &logJson)
+	var color string = "36314"
+	if logJson.Level == "Error" {
+		color = "16739179"
+	}
 	m := Message{
 		Embeds: []Embed{
 			{
@@ -57,6 +61,7 @@ func webhook(p []byte) {
 					Name: logJson.File,
 				},
 				Title:       logJson.Function,
+				Color:       color,
 				Description: logJson.Message,
 				Footer: Footer{
 					Text: logJson.Level,
@@ -81,7 +86,5 @@ func webhook(p []byte) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	body, _ := io.ReadAll(resp.Body)
-	fmt.Println(string(body))
 	defer resp.Body.Close()
 }
