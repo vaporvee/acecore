@@ -5,6 +5,7 @@
 - `/sticky` Stick a message to the bottom of a Discord channel. Not to overlook.
 - `/autojoinroles` Automatically add a specified role to users and another one for bots.
 - `/form` Make forms for your server with a specified result channel.
+- `/autopublish` Announcement posts get automatically published as soon as they're posted.
 - `/cat` Get a random cute cat picture.
 - `/dadjoke` Get a random joke that is as bad as your dad would tell one.
 - `/ask` (8ball) command
