@@ -51,7 +51,7 @@ func webhook(p []byte) {
 	var logJson Log
 	json.Unmarshal(p, &logJson)
 	var color string = "36314"
-	if logJson.Level == "Error" {
+	if logJson.Level == "error" {
 		color = "16739179"
 	}
 	m := Message{

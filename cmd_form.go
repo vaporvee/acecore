@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"os"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -77,9 +76,13 @@ var cmd_form Command = Command{
 	Interact: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		switch i.ApplicationCommandData().Options[0].Name {
 		case "help":
-			fileData, _ = os.ReadFile("./form_templates/form_demo.json")
+			fileData, err := formTemplates.ReadFile("form_templates/form_demo.json")
+			if err != nil {
+				logrus.Error(err)
+				return
+			}
 			fileReader := bytes.NewReader(fileData)
-			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
 					Content: "NOT SUPPORTED YET!(use `/form add` instead)\n\nGet the example file edit it (make sure to have a unique \"form_type\") and submit it via `/form create`.\nOr use the demo button to get an idea of how the example would look like.",
@@ -177,6 +180,7 @@ var cmd_form Command = Command{
 			})
 			if err != nil {
 				logrus.Error(err)
+				return
 			}
 			addFormButton(i.GuildID, i.ChannelID, message.ID, formManageID.String(), formID, options.Options[0].ChannelValue(s).ID, overwriteTitle, acceptChannelID, modsCanComment)
 			err = respond(i.Interaction, "Successfully added form button!", true)

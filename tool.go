@@ -57,11 +57,11 @@ func jsonStringShowModal(interaction *discordgo.Interaction, manageID string, fo
 			},
 		})
 	}
-	if overwrite[0] != "" {
+	if overwrite != nil && overwrite[0] != "" {
 		modal.Title = overwrite[0]
 	}
 	var err error
-	if components != nil {
+	if modal.Title != "" && components != nil {
 		err = bot.InteractionRespond(interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseModal,
 			Data: &discordgo.InteractionResponseData{
