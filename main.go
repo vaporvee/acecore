@@ -15,6 +15,7 @@ import (
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
+	"github.com/vaporvee/acecore/log2webhook"
 )
 
 //TODO: add more error handlings
@@ -79,6 +80,6 @@ func logrusInitFile() {
 		return
 	}
 
-	mw := io.MultiWriter(os.Stdout, log)
+	mw := io.MultiWriter(os.Stdout, log, &log2webhook.WebhookWriter{})
 	logrus.SetOutput(mw)
 }
