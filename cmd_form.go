@@ -9,8 +9,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var fileData []byte
-
 var cmd_form Command = Command{
 	Definition: discordgo.ApplicationCommand{
 		Name:                     "form",

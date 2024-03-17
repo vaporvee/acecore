@@ -319,9 +319,17 @@ func getAutoJoinRole(guildID string, isBot bool) string {
 	} else {
 		isBotString = "user"
 	}
-	err := db.QueryRow("SELECT "+isBotString+"_role FROM autojoinroles WHERE guild_id = $1", guildID).Scan(&role)
+	var exists bool
+	err := db.QueryRow("SELECT EXISTS (SELECT 1 FROM autojoinroles WHERE guild_id = $1)", guildID).Scan(&exists)
 	if err != nil {
-		logrus.Error(err, guildID)
+		logrus.Error(err)
+		return role
+	}
+	if exists {
+		err = db.QueryRow("SELECT "+isBotString+"_role FROM autojoinroles WHERE guild_id = $1", guildID).Scan(&role)
+		if err != nil {
+			logrus.Error(err, guildID)
+		}
 	}
 	return role
 }

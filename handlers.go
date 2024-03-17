@@ -159,8 +159,11 @@ func messageDelete(s *discordgo.Session, m *discordgo.MessageDelete) { //TODO: a
 }
 
 func guildMemberJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
-	err := s.GuildMemberRoleAdd(m.GuildID, m.User.ID, getAutoJoinRole(m.GuildID, m.User.Bot))
-	if err != nil {
-		logrus.Error(err)
+	role := getAutoJoinRole(m.GuildID, m.User.Bot)
+	if role != "" {
+		err := s.GuildMemberRoleAdd(m.GuildID, m.User.ID, role)
+		if err != nil {
+			logrus.Error(err)
+		}
 	}
 }
