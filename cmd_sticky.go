@@ -8,7 +8,7 @@ import (
 var cmd_sticky Command = Command{
 	Definition: discordgo.ApplicationCommand{
 		Name:                     "sticky",
-		Description:              "Stick messages to the bottom of the current channel",
+		Description:              "Stick or unstick messages to the bottom of the current channel",
 		DefaultMemberPermissions: int64Ptr(discordgo.PermissionManageMessages),
 		Options: []*discordgo.ApplicationCommandOption{
 			{
