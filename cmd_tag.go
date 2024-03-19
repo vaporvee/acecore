@@ -51,43 +51,7 @@ var cmd_tag Command = Command{
 		case "get":
 			GetTagCommand(i, i.ApplicationCommandData().Options[0].Options[0])
 		case "add":
-			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseModal,
-				Data: &discordgo.InteractionResponseData{
-					CustomID: "tag_add_modal" + i.Interaction.Member.User.ID,
-					Title:    "Add a custom tag command",
-					Components: []discordgo.MessageComponent{
-						discordgo.ActionsRow{
-							Components: []discordgo.MessageComponent{
-								discordgo.TextInput{
-									CustomID:  "tag_add_modal_name",
-									Label:     "Name",
-									Style:     discordgo.TextInputShort,
-									Required:  true,
-									MaxLength: 20,
-									Value:     "",
-								},
-							},
-						},
-						discordgo.ActionsRow{
-							Components: []discordgo.MessageComponent{
-								discordgo.TextInput{
-									CustomID:    "tag_add_modal_content",
-									Label:       "Content",
-									Placeholder: "Content that gets returned when the tag will be run",
-									Style:       discordgo.TextInputParagraph,
-									Required:    true,
-									MaxLength:   2000,
-									Value:       "",
-								},
-							},
-						},
-					},
-				},
-			})
-			if err != nil {
-				logrus.Error(err)
-			}
+			AddTagCommand(i, "")
 		case "remove":
 			removeTag(i.GuildID, i.ApplicationCommandData().Options[0].Options[0].StringValue())
 			err := respond(i.Interaction, "Tag removed!", true)
@@ -133,8 +97,59 @@ var cmd_tag_short Command = Command{
 	},
 }
 
+var context_tag Command = Command{
+	Definition: discordgo.ApplicationCommand{
+		Type:                     discordgo.MessageApplicationCommand,
+		Name:                     "Save as tag",
+		DefaultMemberPermissions: int64Ptr(discordgo.PermissionManageServer),
+	},
+	Interact: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		AddTagCommand(i, i.ApplicationCommandData().Resolved.Messages[i.ApplicationCommandData().TargetID].Content)
+	},
+}
+
 func GetTagCommand(i *discordgo.InteractionCreate, option *discordgo.ApplicationCommandInteractionDataOption) {
 	err := respond(i.Interaction, getTagContent(i.GuildID, option.Value.(string)), false)
+	if err != nil {
+		logrus.Error(err)
+	}
+}
+
+func AddTagCommand(i *discordgo.InteractionCreate, prevalue string) {
+	err := bot.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseModal,
+		Data: &discordgo.InteractionResponseData{
+			CustomID: "tag_add_modal" + i.Interaction.Member.User.ID,
+			Title:    "Add a custom tag command",
+			Components: []discordgo.MessageComponent{
+				discordgo.ActionsRow{
+					Components: []discordgo.MessageComponent{
+						discordgo.TextInput{
+							CustomID:  "tag_add_modal_name",
+							Label:     "Name",
+							Style:     discordgo.TextInputShort,
+							Required:  true,
+							MaxLength: 20,
+							Value:     "",
+						},
+					},
+				},
+				discordgo.ActionsRow{
+					Components: []discordgo.MessageComponent{
+						discordgo.TextInput{
+							CustomID:    "tag_add_modal_content",
+							Label:       "Content",
+							Placeholder: "Content that gets returned when the tag will be run",
+							Style:       discordgo.TextInputParagraph,
+							Required:    true,
+							MaxLength:   2000,
+							Value:       prevalue,
+						},
+					},
+				},
+			},
+		},
+	})
 	if err != nil {
 		logrus.Error(err)
 	}

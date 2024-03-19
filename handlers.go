@@ -21,7 +21,7 @@ type Command struct {
 	DynamicModalIDs     func() []string
 }
 
-var commands []Command = []Command{cmd_form, cmd_tag, cmd_tag_short, cmd_dadjoke, cmd_ping, cmd_ask, cmd_sticky, cmd_cat, cmd_autojoinroles, cmd_autopublish, context_sticky}
+var commands []Command = []Command{cmd_form, cmd_tag, cmd_tag_short, cmd_dadjoke, cmd_ping, cmd_ask, cmd_sticky, cmd_cat, cmd_autojoinroles, cmd_autopublish, context_sticky, context_tag}
 
 func ready(s *discordgo.Session, event *discordgo.Ready) {
 	logrus.Info("Starting up...")
