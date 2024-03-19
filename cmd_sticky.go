@@ -61,34 +61,41 @@ func inputStickyMessage(i *discordgo.InteractionCreate) {
 	} else {
 		messageText = i.ApplicationCommandData().Options[0].StringValue()
 	}
-	message, err := bot.ChannelMessageSendEmbed(i.ChannelID, &discordgo.MessageEmbed{
-		Type: discordgo.EmbedTypeArticle,
-		Footer: &discordgo.MessageEmbedFooter{
-			Text: "📌 Sticky message",
-		},
-		Color:       hexToDecimal(color["primary"]),
-		Description: messageText,
-	})
-	if err != nil {
-		logrus.Error(err)
-	}
-
-	if hasSticky(i.GuildID, i.ChannelID) {
-		err = bot.ChannelMessageDelete(i.ChannelID, getStickyMessageID(i.GuildID, i.ChannelID))
-		if err != nil {
-			logrus.Error(err, getStickyMessageID(i.GuildID, i.ChannelID))
-		}
-		removeSticky(i.GuildID, i.ChannelID)
-		addSticky(i.GuildID, i.ChannelID, messageText, message.ID)
-		err = respond(i.Interaction, "Sticky message in this channel was updated!", true)
+	if messageText == "" {
+		err := respond(i.Interaction, "Can't add empty sticky messages!", true)
 		if err != nil {
 			logrus.Error(err)
 		}
 	} else {
-		addSticky(i.GuildID, i.ChannelID, messageText, message.ID)
-		err := respond(i.Interaction, "Message sticked to the channel!", true)
+		message, err := bot.ChannelMessageSendEmbed(i.ChannelID, &discordgo.MessageEmbed{
+			Type: discordgo.EmbedTypeArticle,
+			Footer: &discordgo.MessageEmbedFooter{
+				Text: "📌 Sticky message",
+			},
+			Color:       hexToDecimal(color["primary"]),
+			Description: messageText,
+		})
 		if err != nil {
 			logrus.Error(err)
+		}
+
+		if hasSticky(i.GuildID, i.ChannelID) {
+			err = bot.ChannelMessageDelete(i.ChannelID, getStickyMessageID(i.GuildID, i.ChannelID))
+			if err != nil {
+				logrus.Error(err, getStickyMessageID(i.GuildID, i.ChannelID))
+			}
+			removeSticky(i.GuildID, i.ChannelID)
+			addSticky(i.GuildID, i.ChannelID, messageText, message.ID)
+			err = respond(i.Interaction, "Sticky message in this channel was updated!", true)
+			if err != nil {
+				logrus.Error(err)
+			}
+		} else {
+			addSticky(i.GuildID, i.ChannelID, messageText, message.ID)
+			err := respond(i.Interaction, "Message sticked to the channel!", true)
+			if err != nil {
+				logrus.Error(err)
+			}
 		}
 	}
 }
