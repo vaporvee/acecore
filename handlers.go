@@ -37,8 +37,21 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 			existingCommandNames = append(existingCommandNames, existingCommand.Name)
 		}
 	}
+	if slices.Contains(os.Args, "--clean") {
+		guilds := s.State.Guilds
+		if err != nil {
+			logrus.Errorf("error retrieving guilds: %v", err)
+		}
+
+		for _, guild := range guilds {
+			_, err := s.ApplicationCommandBulkOverwrite(s.State.User.ID, guild.ID, []*discordgo.ApplicationCommand{})
+			if err != nil {
+				logrus.Errorf("error deleting guild commands: %v", err)
+			}
+		}
+	}
 	for _, command := range commands {
-		if !slices.Contains(existingCommandNames, command.Definition.Name) || slices.Contains(os.Args, "--update="+command.Definition.Name) || slices.Contains(os.Args, "--update=all") {
+		if !slices.Contains(existingCommandNames, command.Definition.Name) || slices.Contains(os.Args, "--update="+command.Definition.Name) || slices.Contains(os.Args, "--update=all") || slices.Contains(os.Args, "--clean") {
 			cmd, err := s.ApplicationCommandCreate(s.State.User.ID, "", &command.Definition)
 			if err != nil {
 				logrus.Errorf("error creating global command '%s': %v", cmd.Name, err)
