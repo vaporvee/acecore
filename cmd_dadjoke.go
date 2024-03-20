@@ -16,4 +16,5 @@ var cmd_dadjoke Command = Command{
 			logrus.Error(err)
 		}
 	},
+	AllowDM: true,
 }

@@ -29,4 +29,5 @@ var cmd_ask Command = Command{
 			logrus.Error("Failed to respond with embed: ", err)
 		}
 	},
+	AllowDM: true,
 }

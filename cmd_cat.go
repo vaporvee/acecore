@@ -30,6 +30,7 @@ var cmd_cat Command = Command{
 			logrus.Error(err)
 		}
 	},
+	AllowDM: true,
 }
 
 type CatImage struct {

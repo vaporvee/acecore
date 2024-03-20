@@ -46,4 +46,5 @@ var cmd_ping Command = Command{
 			logrus.Error(err)
 		}
 	},
+	AllowDM: true,
 }

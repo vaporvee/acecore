@@ -19,6 +19,7 @@ type Command struct {
 	ModalIDs            []string
 	DynamicComponentIDs func() []string
 	DynamicModalIDs     func() []string
+	AllowDM             bool
 }
 
 var commands []Command = []Command{cmd_form, cmd_tag, cmd_tag_short, cmd_dadjoke, cmd_ping, cmd_ask, cmd_sticky, cmd_cat, cmd_autojoinroles, cmd_autopublish, context_sticky, context_tag}
@@ -28,40 +29,33 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 	findAndDeleteUnusedMessages()
 	removeOldCommandFromAllGuilds(s)
 	var existingCommandNames []string
-	for _, guild := range event.Guilds {
-		existingCommands, err := s.ApplicationCommands(s.State.User.ID, guild.ID)
+	existingCommands, err := s.ApplicationCommands(s.State.User.ID, "")
+	if err != nil {
+		logrus.Errorf("error fetching existing global commands: %v", err)
+	} else {
 		for _, existingCommand := range existingCommands {
 			existingCommandNames = append(existingCommandNames, existingCommand.Name)
 		}
-		if err != nil {
-			logrus.Errorf("error fetching existing commands for guild %s: %v", guild.Name, err)
-			continue
-		}
-		for _, command := range commands {
-			if !slices.Contains(existingCommandNames, command.Definition.Name) || slices.Contains(os.Args, "--update="+command.Definition.Name) {
-				cmd, err := s.ApplicationCommandCreate(s.State.User.ID, guild.ID, &command.Definition)
-				logrus.Infof("Added command '%s'", cmd.Name)
-				if err != nil {
-					logrus.Error("error creating command,", err)
-					continue
-				}
+	}
+	for _, command := range commands {
+		if !slices.Contains(existingCommandNames, command.Definition.Name) || slices.Contains(os.Args, "--update="+command.Definition.Name) || slices.Contains(os.Args, "--update=all") {
+			cmd, err := s.ApplicationCommandCreate(s.State.User.ID, "", &command.Definition)
+			if err != nil {
+				logrus.Errorf("error creating global command '%s': %v", cmd.Name, err)
+			} else {
+				logrus.Infof("Added global command '%s'", cmd.Name)
 			}
 		}
 	}
 	logrus.Info("Successfully started the Bot!")
 }
 
-func guildCreate(s *discordgo.Session, event *discordgo.GuildCreate) {
-	for _, command := range commands {
-		_, err := s.ApplicationCommandCreate(s.State.User.ID, event.Guild.ID, &command.Definition)
-		if err != nil {
-			logrus.Errorf("error creating command for guild %s: %v", event.Guild.Name, err)
-		}
-	}
-}
-
 func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	for _, command := range commands {
+		if i.ApplicationCommandData().Name == command.Definition.Name && !command.AllowDM && i.Interaction.GuildID == "" {
+			respond(i.Interaction, "This interaction is not available in DMs.", true)
+			return
+		}
 		switch i.Type {
 		case discordgo.InteractionApplicationCommand:
 			if command.Interact != nil && i.ApplicationCommandData().Name == command.Definition.Name {
@@ -103,12 +97,9 @@ func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 }
 
 func removeOldCommandFromAllGuilds(s *discordgo.Session) {
-	for _, guild := range s.State.Guilds {
-		existingCommands, err := s.ApplicationCommands(s.State.User.ID, guild.ID)
-		if err != nil {
-			logrus.Errorf("error fetching existing commands for guild %s: %v\n", guild.Name, err)
-			continue
-		}
+	existingCommands, err := s.ApplicationCommands(s.State.User.ID, "")
+	if err != nil {
+		logrus.Errorf("error fetching existing commands: %v\n", err)
 		var commandIDs []string
 		for _, command := range commands {
 			commandIDs = append(commandIDs, command.Definition.Name)
@@ -116,9 +107,9 @@ func removeOldCommandFromAllGuilds(s *discordgo.Session) {
 		for _, existingCommand := range existingCommands {
 			if !slices.Contains(commandIDs, existingCommand.Name) {
 				logrus.Infof("Deleting command '%s'", existingCommand.Name)
-				err := s.ApplicationCommandDelete(s.State.User.ID, guild.ID, existingCommand.ID)
+				err := s.ApplicationCommandDelete(s.State.User.ID, "", existingCommand.ID)
 				if err != nil {
-					logrus.Errorf("error deleting command %s for guild %s: %v", existingCommand.Name, guild.Name, err)
+					logrus.Errorf("error deleting command %s: %v", existingCommand.Name, err)
 				}
 			}
 		}
