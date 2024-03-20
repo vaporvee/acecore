@@ -42,6 +42,7 @@ func main() {
 	}
 	bot.Identify.Intents = discordgo.IntentsGuildMessages | discordgo.IntentsGuilds | discordgo.IntentMessageContent | discordgo.IntentGuildMembers
 	bot.AddHandler(ready)
+	bot.AddHandler(guildCreate)
 	bot.AddHandler(interactionCreate)
 	bot.AddHandler(messageCreate)
 	bot.AddHandler(messageDelete)
