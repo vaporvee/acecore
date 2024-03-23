@@ -79,12 +79,16 @@ func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				if !command.AllowDM && i.Interaction.GuildID == "" {
 					err := bot.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 						Type: discordgo.InteractionApplicationCommandAutocompleteResult,
+						Data: &discordgo.InteractionResponseData{
+							Choices: nil,
+						},
 					})
 					if err != nil {
 						logrus.Error(err)
 					}
+				} else {
+					command.Autocomplete(s, i)
 				}
-				command.Autocomplete(s, i)
 			}
 		case discordgo.InteractionModalSubmit:
 			if !command.AllowDM && i.Interaction.GuildID == "" {
