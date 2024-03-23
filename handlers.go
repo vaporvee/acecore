@@ -65,27 +65,29 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 
 func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	for _, command := range commands {
-		if i.ApplicationCommandData().Name == command.Definition.Name && !command.AllowDM && i.Interaction.GuildID == "" {
-			respond(i.Interaction, "This interaction is not available in DMs.", true)
-			return
-		}
 		switch i.Type {
 		case discordgo.InteractionApplicationCommand:
 			if command.Interact != nil && i.ApplicationCommandData().Name == command.Definition.Name {
-				command.Interact(s, i)
+				if !command.AllowDM && i.Interaction.GuildID == "" {
+					respond(i.Interaction, "This command is not available in DMs.", true)
+				} else {
+					command.Interact(s, i)
+				}
 			}
 		case discordgo.InteractionApplicationCommandAutocomplete:
-			if command.Autocomplete != nil && i.ApplicationCommandData().Name == command.Definition.Name {
+			if command.Autocomplete != nil && i.ApplicationCommandData().Name == command.Definition.Name && command.AllowDM && i.Interaction.GuildID != "" {
 				command.Autocomplete(s, i)
 			}
 		case discordgo.InteractionModalSubmit:
-			if command.ModalSubmit != nil {
-				// FIXME: Makes it dynamic i don't know why it isn't otherwise
-				if command.Definition.Name == "form" {
-					command.ModalIDs = getFormButtonIDs()
-				}
-				var hasID bool = false
+			if !command.AllowDM && i.Interaction.GuildID == "" {
+				respond(i.Interaction, "This modal is not available in DMs.", true)
+			} else {
 				if command.ModalSubmit != nil {
+					// FIXME: Makes it dynamic i don't know why it isn't otherwise
+					if command.Definition.Name == "form" {
+						command.ModalIDs = getFormButtonIDs()
+					}
+					var hasID bool = false
 					for _, modalID := range command.ModalIDs {
 						if strings.HasPrefix(i.ModalSubmitData().CustomID, modalID) {
 							hasID = true
@@ -97,12 +99,16 @@ func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				}
 			}
 		case discordgo.InteractionMessageComponent:
-			if command.ComponentInteract != nil {
-				if command.Definition.Name == "form" {
-					command.ComponentIDs = getFormButtonIDs()
-				} // FIXME: Makes it dynamic i don't know why it isn't otherwise
-				if slices.Contains(command.ComponentIDs, i.MessageComponentData().CustomID) {
-					command.ComponentInteract(s, i)
+			if !command.AllowDM && i.Interaction.GuildID == "" {
+				respond(i.Interaction, "This component is not available in DMs.", true)
+			} else {
+				if command.ComponentInteract != nil {
+					if command.Definition.Name == "form" {
+						command.ComponentIDs = getFormButtonIDs()
+					} // FIXME: Makes it dynamic i don't know why it isn't otherwise
+					if slices.Contains(command.ComponentIDs, i.MessageComponentData().CustomID) {
+						command.ComponentInteract(s, i)
+					}
 				}
 			}
 		}
