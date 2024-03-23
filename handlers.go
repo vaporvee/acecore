@@ -75,7 +75,15 @@ func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				}
 			}
 		case discordgo.InteractionApplicationCommandAutocomplete:
-			if command.Autocomplete != nil && i.ApplicationCommandData().Name == command.Definition.Name && command.AllowDM && i.Interaction.GuildID != "" {
+			if command.Autocomplete != nil && i.ApplicationCommandData().Name == command.Definition.Name {
+				if !command.AllowDM && i.Interaction.GuildID == "" {
+					err := bot.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+						Type: discordgo.InteractionApplicationCommandAutocompleteResult,
+					})
+					if err != nil {
+						logrus.Error(err)
+					}
+				}
 				command.Autocomplete(s, i)
 			}
 		case discordgo.InteractionModalSubmit:
