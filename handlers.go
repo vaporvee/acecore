@@ -22,7 +22,7 @@ type Command struct {
 	AllowDM             bool
 }
 
-var commands []Command = []Command{cmd_form, cmd_tag, cmd_tag_short, cmd_dadjoke, cmd_ping, cmd_ask, cmd_sticky, cmd_cat, cmd_autojoinroles, cmd_autopublish, context_sticky, context_tag}
+var commands []Command = []Command{cmd_form, cmd_ticket_form, cmd_tag, cmd_tag_short, cmd_dadjoke, cmd_ping, cmd_ask, cmd_sticky, cmd_cat, cmd_autojoinroles, cmd_autopublish, context_sticky, context_tag}
 
 func ready(s *discordgo.Session, event *discordgo.Ready) {
 	logrus.Info("Starting up...")
@@ -95,18 +95,17 @@ func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				respond(i.Interaction, "This modal is not available in DMs.", true)
 			} else {
 				if command.ModalSubmit != nil {
-					// FIXME: Makes it dynamic i don't know why it isn't otherwise
-					if command.Definition.Name == "form" {
-						command.ModalIDs = getFormButtonIDs()
-					}
 					var hasID bool = false
-					for _, modalID := range command.ModalIDs {
+					var modalIDs []string = append(command.ModalIDs, command.DynamicModalIDs()...)
+					for _, modalID := range modalIDs {
 						if strings.HasPrefix(i.ModalSubmitData().CustomID, modalID) {
 							hasID = true
+							break
 						}
 					}
 					if hasID {
 						command.ModalSubmit(s, i)
+						return // I have no idea why it crashes without that return
 					}
 				}
 			}
@@ -115,10 +114,15 @@ func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				respond(i.Interaction, "This component is not available in DMs.", true)
 			} else {
 				if command.ComponentInteract != nil {
-					if command.Definition.Name == "form" {
-						command.ComponentIDs = getFormButtonIDs()
-					} // FIXME: Makes it dynamic i don't know why it isn't otherwise
-					if slices.Contains(command.ComponentIDs, i.MessageComponentData().CustomID) {
+					if slices.Contains(command.ComponentIDs, i.MessageComponentData().CustomID) || slices.ContainsFunc(command.DynamicComponentIDs(), func(id string) bool {
+						var customID string
+						if strings.ContainsAny(i.MessageComponentData().CustomID, ";") {
+							customID = strings.TrimSuffix(i.MessageComponentData().CustomID, ";"+strings.Split(i.MessageComponentData().CustomID, ";")[1])
+						} else {
+							customID = i.MessageComponentData().CustomID
+						}
+						return id == customID
+					}) {
 						command.ComponentInteract(s, i)
 					}
 				}

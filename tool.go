@@ -215,3 +215,22 @@ func findAndDeleteUnusedMessages() {
 		}
 	}
 }
+
+func isIDRole(guildID, id string) bool {
+	_, err1 := bot.GuildMember(guildID, id)
+	if err1 == nil {
+		return false
+	}
+	roles, err2 := bot.GuildRoles(guildID)
+	if err2 == nil {
+		for _, role := range roles {
+			if role.ID == id {
+				return true
+			}
+		}
+	}
+
+	logrus.Error(err1)
+	logrus.Error(err2)
+	return false
+}

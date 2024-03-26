@@ -2,6 +2,8 @@ package main
 
 import (
 	"log"
+	"os"
+	"slices"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -14,57 +16,71 @@ func initTables() {
 		tag_content TEXT NOT NULL,
 		guild_id TEXT NOT NULL,
 		PRIMARY KEY (tag_id, guild_id)
-	);
-	CREATE TABLE IF NOT EXISTS sticky (
-		message_id TEXT NOT NULL,
-		channel_id TEXT NOT NULL,
-		message_content TEXT NOT NULL,
-		guild_id TEXT NOT NULL,
-		PRIMARY KEY (channel_id, guild_id)
-	);
-	CREATE TABLE IF NOT EXISTS custom_forms (
-		form_type TEXT NOT NULL,
-		title TEXT NOT NULL,
-		json JSON NOT NULL,
-		guild_id TEXT NOT NULL,
-		PRIMARY KEY (form_type, guild_id)
-	);
-	CREATE TABLE IF NOT EXISTS form_manage (
-		form_manage_id TEXT NOT NULL,
-		form_type TEXT NOT NULL,
-		overwrite_title TEXT,
-		message_id TEXT NOT NULL,
-		channel_id TEXT NOT NULL,
-		guild_id TEXT NOT NULL,
-		result_channel_id TEXT NOT NULL,
-		accept_channel_id TEXT,
-		mods_can_comment BOOL,
-		PRIMARY KEY (form_manage_id, form_type)
-	);
-	CREATE TABLE IF NOT EXISTS autojoinroles (
-		guild_id TEXT NOT NULL,
-		bot_role TEXT,
-		user_role TEXT,
-		PRIMARY KEY (guild_id)
-	);
-	CREATE TABLE IF NOT EXISTS autopublish (
-		guild_id TEXT NOT NULL,
-		news_channel_id TEXT NOT NULL,
-		PRIMARY KEY (guild_id, news_channel_id)
-	)
-	`
-
+		);
+		CREATE TABLE IF NOT EXISTS sticky (
+			message_id TEXT NOT NULL,
+			channel_id TEXT NOT NULL,
+			message_content TEXT NOT NULL,
+			guild_id TEXT NOT NULL,
+			PRIMARY KEY (channel_id, guild_id)
+			);
+			CREATE TABLE IF NOT EXISTS custom_forms (
+				form_type TEXT NOT NULL,
+				title TEXT NOT NULL,
+				json JSON NOT NULL,
+				guild_id TEXT NOT NULL,
+				PRIMARY KEY (form_type, guild_id)
+				);
+				CREATE TABLE IF NOT EXISTS form_manage (
+					form_manage_id TEXT NOT NULL,
+					form_type TEXT NOT NULL,
+					overwrite_title TEXT,
+					message_id TEXT NOT NULL,
+					channel_id TEXT NOT NULL,
+					guild_id TEXT NOT NULL,
+					result_channel_id TEXT NOT NULL,
+					accept_channel_id TEXT,
+					comment_category TEXT,
+					moderator_id TEXT,
+					PRIMARY KEY (form_manage_id, form_type)
+					);
+					CREATE TABLE IF NOT EXISTS autojoinroles (
+						guild_id TEXT NOT NULL,
+						bot_role TEXT,
+						user_role TEXT,
+						PRIMARY KEY (guild_id)
+						);
+						CREATE TABLE IF NOT EXISTS autopublish (
+							guild_id TEXT NOT NULL,
+							news_channel_id TEXT NOT NULL,
+							PRIMARY KEY (guild_id, news_channel_id)
+						)`
 	_, err := db.Exec(createTableQuery)
 	if err != nil {
 		log.Fatal(err)
 	}
+	if slices.Contains(os.Args, "--form-db-update") {
+		_, err := db.Exec("ALTER TABLE form_manage ADD moderator_id TEXT;")
+		if err != nil {
+			log.Fatal(err)
+		}
+		_, err = db.Exec("ALTER TABLE form_manage ADD comment_category TEXT;")
+		if err != nil {
+			log.Fatal(err)
+		}
+		_, err = db.Exec("ALTER TABLE form_manage DROP COLUMN mods_can_comment;")
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 }
 
 type FormResult struct {
-	OverwriteTitle  string
-	ResultChannelID string
-	AcceptChannelID string
-	ModsCanComment  bool
+	OverwriteTitle    string
+	ResultChannelID   string
+	AcceptChannelID   string
+	CommentCategoryID string
+	ModeratorID       string
 }
 
 func addTag(guildID, tagName, tagContent string) bool {
@@ -197,8 +213,20 @@ func getFormManageIdExists(id uuid.UUID) bool {
 	return exists
 }
 
-func addFormButton(guildID string, channelID string, messageID string, formManageID string, formType string, resultChannelID string, overwriteTitle string, acceptChannelID string, modsCanComment bool) {
-	_, err := db.Exec("INSERT INTO form_manage (guild_id, form_manage_id, channel_id, message_id, form_type, result_channel_id, overwrite_title, accept_channel_id, mods_can_comment) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)", guildID, formManageID, channelID, messageID, formType, resultChannelID, overwriteTitle, acceptChannelID, modsCanComment)
+func addFormButton(guildID string, channelID string, messageID string, formManageID string, formType string, resultChannelID string, overwriteTitle string, acceptChannelID string, commentCategory string, moderator_id string) {
+	_, err := db.Exec(
+		`INSERT INTO form_manage (
+			guild_id, 
+			form_manage_id, 
+			channel_id, 
+			message_id, 
+			form_type, 
+			result_channel_id, 
+			overwrite_title, 
+			accept_channel_id, 
+			comment_category,
+			moderator_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+		guildID, formManageID, channelID, messageID, formType, resultChannelID, overwriteTitle, acceptChannelID, commentCategory, moderator_id)
 	if err != nil {
 		logrus.Error(err)
 	}
@@ -255,7 +283,11 @@ func getFormResultValues(formManageID string) FormResult {
 	if err != nil {
 		logrus.Error(err)
 	}
-	err = db.QueryRow("SELECT mods_can_comment FROM form_manage WHERE form_manage_id = $1", formManageID).Scan(&result.ModsCanComment)
+	err = db.QueryRow("SELECT comment_category FROM form_manage WHERE form_manage_id = $1", formManageID).Scan(&result.CommentCategoryID)
+	if err != nil {
+		logrus.Error(err)
+	}
+	err = db.QueryRow("SELECT moderator_id FROM form_manage WHERE form_manage_id = $1", formManageID).Scan(&result.ModeratorID)
 	if err != nil {
 		logrus.Error(err)
 	}
@@ -269,6 +301,13 @@ func getFormOverwriteTitle(formManageID string) string {
 		logrus.Error(err)
 	}
 	return overwriteTitle
+}
+
+func updateFormCommentCategory(formManageID string, comment_category string) {
+	_, err := db.Exec("UPDATE form_manage SET comment_category = $1 WHERE form_manage_id = $2", comment_category, formManageID)
+	if err != nil {
+		logrus.Error(err)
+	}
 }
 
 func setAutoJoinRole(guildID string, option string, roleID string) bool {

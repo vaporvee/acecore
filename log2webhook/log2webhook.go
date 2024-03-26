@@ -63,9 +63,14 @@ func webhook(p []byte) {
 	var logJson Log
 	json.Unmarshal(p, &logJson)
 	var color string = "36314"
-	if logJson.Level == "error" {
-		color = "16739179"
+	formTitles := map[string]string{
+		"error": "16739179",
+		"debug": "16111426",
 	}
+	if val, ok := formTitles[logJson.Level]; ok {
+		color = val
+	}
+
 	fileArray := strings.Split(strings.TrimPrefix(logJson.File, RootDir()), ":")
 	m := Message{
 		Embeds: []Embed{
