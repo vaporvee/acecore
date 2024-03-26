@@ -5,5 +5,5 @@ var color map[string]string = map[string]string{
 	"yellow":  "#FFD93D",
 	"green":   "#6BCB77",
 	"blue":    "#008DDA",
-	"primary": "#211951",
+	"primary": "#564BA0",
 }
