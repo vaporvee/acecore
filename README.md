@@ -1,7 +1,4 @@
 <img src="https://raw.githubusercontent.com/vaporvee/acecore/main/custom/images/acecore_logo_big.png">
-<br><br>
-
-# [‎‎ Invite <br><img width="100px" src="https://github.com/vaporvee/acecore/blob/main/custom/images/acecore_round.png">](https://discord.com/oauth2/authorize?client_id=1216816348433219644)
 
 # Current features:
 - `/form` Make forms for your server with a specified result channel.
