@@ -96,7 +96,13 @@ func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			} else {
 				if command.ModalSubmit != nil {
 					var hasID bool = false
-					var modalIDs []string = append(command.ModalIDs, command.DynamicModalIDs()...)
+					var modalIDs []string
+					if command.ModalIDs != nil {
+						modalIDs = command.ModalIDs
+					}
+					if command.DynamicModalIDs != nil {
+						modalIDs = append(command.ModalIDs, command.DynamicModalIDs()...)
+					}
 					for _, modalID := range modalIDs {
 						if strings.HasPrefix(i.ModalSubmitData().CustomID, modalID) {
 							hasID = true
