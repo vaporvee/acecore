@@ -1,19 +1,20 @@
-<img src="https://raw.githubusercontent.com/vaporvee/acecore/main/custom/images/acecore_logo_big.png">
+![Acecore Logo](https://raw.githubusercontent.com/vaporvee/acecore/main/custom/images/acecore_logo_big.png)
 
-### Current features:
-- `/tag` - Pretty much custom commands that have quick access with `/g`.
-- `/ticket` - Adds a panel for a ticket form.
-- `/sticky` - Stick a message to the bottom of a Discord channel. Not to overlook.
-- `/autojoinroles` - Automatically add a specified role to users and another one for bots.
-- `/form` - Make forms for your server with a specified result channel.
-- `/autopublish` - Announcement posts get automatically published as soon as they're posted.
-- `/cat` - Get a random cute cat picture.
-- `/dadjoke` - Get a random joke that is as bad as your dad would tell one.
-- `/ask` - Ask something and get a response as gif(8ball)
-- `/ping` - Get the bot's current ping.
-<img width="700px" src="https://raw.githubusercontent.com/vaporvee/acecore/main/custom/images/screenshots/forms.png">
+## Current Features:
+- `/tag` - Custom commands also accessible via `/g`.
+- `/ticket` - Quick command for adding panel for submitting tickets.
+- `/sticky` - Allows sticking messages to the bottom of channels.
+- `/autojoinroles` - Automatically assigns roles to users and bots on server join.
+- `/form` - Create customizable forms with designated result channels.
+- `/autopublish` - Automatically publishes announcement posts upon submission.
+- `/cat` - Fetches a random cat picture.
+- `/dadjoke` - Retrieves a random dad joke.
+- `/ask` - Receive a gif response to your query, akin to an 8-ball.
+- `/ping` - Displays the bot's current ping.
 
-### Planned features:
-- Fully customizable custom forms 
-- Fully modular plugin system for self hosting with features i can't add to the main bot
-- Much more...
+![Forms Screenshot](https://raw.githubusercontent.com/vaporvee/acecore/main/custom/images/screenshots/forms.png)
+
+## Planned Features:
+- Fully customizable custom forms
+- Fully modular plugin system for self-hosting, allowing for additional features
+- And much more...
