@@ -11,9 +11,14 @@ require (
 )
 
 require (
-	github.com/gorilla/websocket v1.4.2 // indirect
-	golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b // indirect
-	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
+	github.com/disgoorg/disgo v0.17.2 // indirect
+	github.com/disgoorg/json v1.1.0 // indirect
+	github.com/disgoorg/snowflake/v2 v2.0.1 // indirect
+	github.com/gorilla/websocket v1.5.1 // indirect
+	github.com/sasha-s/go-csync v0.0.0-20240107134140-fcbab37b09ad // indirect
+	golang.org/x/crypto v0.18.0 // indirect
+	golang.org/x/net v0.20.0 // indirect
+	golang.org/x/sys v0.16.0 // indirect
 )
 
 replace github.com/vaporvee/acecore/custom => ./custom

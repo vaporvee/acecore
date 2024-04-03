@@ -5,54 +5,43 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/bwmarrin/discordgo"
+	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/events"
+	"github.com/disgoorg/snowflake/v2"
 	"github.com/sirupsen/logrus"
 )
 
 type Command struct {
-	Definition          discordgo.ApplicationCommand
-	Interact            func(s *discordgo.Session, i *discordgo.InteractionCreate)
-	ComponentInteract   func(s *discordgo.Session, i *discordgo.InteractionCreate)
-	Autocomplete        func(s *discordgo.Session, i *discordgo.InteractionCreate)
-	ModalSubmit         func(s *discordgo.Session, i *discordgo.InteractionCreate)
+	Definition          discord.SlashCommandCreate
+	Interact            func(e *events.ApplicationCommandInteractionCreate)
+	Autocomplete        func(e *events.AutocompleteInteractionCreate)
+	ComponentInteract   func(e *events.ComponentInteractionCreate)
+	ModalSubmit         func(e *events.ModalSubmitInteractionCreate)
 	ComponentIDs        []string
 	ModalIDs            []string
-	DynamicComponentIDs func() []string
 	DynamicModalIDs     func() []string
+	DynamicComponentIDs func() []string
 	AllowDM             bool
 }
 
 var commands []Command = []Command{cmd_form, cmd_ticket_form, cmd_tag, cmd_tag_short, cmd_dadjoke, cmd_ping, cmd_ask, cmd_sticky, cmd_cat, cmd_autojoinroles, cmd_autopublish, context_sticky, context_tag, cmd_userinfo}
 
-func ready(s *discordgo.Session, event *discordgo.Ready) {
+func ready(e *events.Ready) {
 	logrus.Info("Starting up...")
 	findAndDeleteUnusedMessages()
-	removeOldCommandFromAllGuilds(s)
+	removeOldCommandFromAllGuilds()
 	var existingCommandNames []string
-	existingCommands, err := s.ApplicationCommands(s.State.User.ID, "")
+	existingCommands, err := client.Rest().GetGlobalCommands(app.Bot.ID, false)
 	if err != nil {
 		logrus.Errorf("error fetching existing global commands: %v", err)
 	} else {
 		for _, existingCommand := range existingCommands {
-			existingCommandNames = append(existingCommandNames, existingCommand.Name)
-		}
-	}
-	if slices.Contains(os.Args, "--clean") {
-		guilds := s.State.Guilds
-		if err != nil {
-			logrus.Errorf("error retrieving guilds: %v", err)
-		}
-
-		for _, guild := range guilds {
-			_, err := s.ApplicationCommandBulkOverwrite(s.State.User.ID, guild.ID, []*discordgo.ApplicationCommand{})
-			if err != nil {
-				logrus.Errorf("error deleting guild commands: %v", err)
-			}
+			existingCommandNames = append(existingCommandNames, existingCommand.Name())
 		}
 	}
 	for _, command := range commands {
 		if !slices.Contains(existingCommandNames, command.Definition.Name) || slices.Contains(os.Args, "--update="+command.Definition.Name) || slices.Contains(os.Args, "--update=all") || slices.Contains(os.Args, "--clean") {
-			cmd, err := s.ApplicationCommandCreate(s.State.User.ID, "", &command.Definition)
+			cmd, err := client.Rest().CreateGlobalCommand(app.Bot.ID, command.Definition)
 			if err != nil {
 				logrus.Errorf("error creating global command '%s': %v", cmd.Name, err)
 			} else {
@@ -63,123 +52,138 @@ func ready(s *discordgo.Session, event *discordgo.Ready) {
 	logrus.Info("Successfully started the Bot!")
 }
 
-func interactionCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
+func applicationCommandInteractionCreate(e *events.ApplicationCommandInteractionCreate) {
 	for _, command := range commands {
-		switch i.Type {
-		case discordgo.InteractionApplicationCommand:
-			if command.Interact != nil && i.ApplicationCommandData().Name == command.Definition.Name {
-				if !command.AllowDM && i.Interaction.GuildID == "" {
-					respond(i.Interaction, "This command is not available in DMs.", true)
-				} else {
-					command.Interact(s, i)
-				}
-			}
-		case discordgo.InteractionApplicationCommandAutocomplete:
-			if command.Autocomplete != nil && i.ApplicationCommandData().Name == command.Definition.Name {
-				if !command.AllowDM && i.Interaction.GuildID == "" {
-					err := bot.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-						Type: discordgo.InteractionApplicationCommandAutocompleteResult,
-						Data: &discordgo.InteractionResponseData{
-							Choices: nil,
-						},
-					})
-					if err != nil {
-						logrus.Error(err)
-					}
-				} else {
-					command.Autocomplete(s, i)
-				}
-			}
-		case discordgo.InteractionModalSubmit:
-			if !command.AllowDM && i.Interaction.GuildID == "" {
-				respond(i.Interaction, "This modal is not available in DMs.", true)
+		if command.Interact != nil && e.SlashCommandInteractionData().CommandName() == command.Definition.Name {
+			if !command.AllowDM && e.SlashCommandInteractionData().GuildID().String() == "" {
+				e.CreateMessage(discord.NewMessageCreateBuilder().
+					SetContent("This command is not available in DMs.").SetEphemeral(true).
+					Build())
 			} else {
-				if command.ModalSubmit != nil {
-					var hasID bool = false
-					var modalIDs []string
-					if command.ModalIDs != nil {
-						modalIDs = command.ModalIDs
-					}
-					if command.DynamicModalIDs != nil {
-						modalIDs = append(command.ModalIDs, command.DynamicModalIDs()...)
-					}
-					for _, modalID := range modalIDs {
-						if strings.HasPrefix(i.ModalSubmitData().CustomID, modalID) {
-							hasID = true
-							break
-						}
-					}
-					if hasID {
-						command.ModalSubmit(s, i)
-						return // I have no idea why it crashes without that return
-					}
-				}
-			}
-		case discordgo.InteractionMessageComponent:
-			if !command.AllowDM && i.Interaction.GuildID == "" {
-				respond(i.Interaction, "This component is not available in DMs.", true)
-			} else {
-				if command.ComponentInteract != nil {
-					if slices.Contains(command.ComponentIDs, i.MessageComponentData().CustomID) || slices.ContainsFunc(command.DynamicComponentIDs(), func(id string) bool {
-						var customID string
-						if strings.ContainsAny(i.MessageComponentData().CustomID, ";") {
-							customID = strings.TrimSuffix(i.MessageComponentData().CustomID, ";"+strings.Split(i.MessageComponentData().CustomID, ";")[1])
-						} else {
-							customID = i.MessageComponentData().CustomID
-						}
-						return id == customID
-					}) {
-						command.ComponentInteract(s, i)
-					}
-				}
+				command.Interact(e)
 			}
 		}
 	}
 }
 
-func removeOldCommandFromAllGuilds(s *discordgo.Session) {
-	existingCommands, err := s.ApplicationCommands(s.State.User.ID, "")
-	if err != nil {
-		logrus.Errorf("error fetching existing commands: %v\n", err)
-		var commandIDs []string
-		for _, command := range commands {
-			commandIDs = append(commandIDs, command.Definition.Name)
-		}
-		for _, existingCommand := range existingCommands {
-			if !slices.Contains(commandIDs, existingCommand.Name) {
-				logrus.Infof("Deleting command '%s'", existingCommand.Name)
-				err := s.ApplicationCommandDelete(s.State.User.ID, "", existingCommand.ID)
+func autocompleteInteractionCreate(e *events.AutocompleteInteractionCreate) {
+	for _, command := range commands {
+		if command.Autocomplete != nil && e.Data.CommandName == command.Definition.Name {
+			if !command.AllowDM && e.GuildID().String() == "" {
+				err := e.AutocompleteResult(nil)
 				if err != nil {
-					logrus.Errorf("error deleting command %s: %v", existingCommand.Name, err)
+					logrus.Error(err)
+				}
+			} else {
+				command.Autocomplete(e)
+			}
+		}
+	}
+}
+
+func componentInteractionCreate(e *events.ComponentInteractionCreate) {
+	for _, command := range commands {
+		if !command.AllowDM && e.GuildID().String() == "" {
+			e.CreateMessage(discord.NewMessageCreateBuilder().
+				SetContent("This component is not available in DMs.").SetEphemeral(true).
+				Build())
+		} else {
+			if command.ComponentInteract != nil {
+				if slices.Contains(command.ComponentIDs, e.Data.CustomID()) || slices.ContainsFunc(command.DynamicComponentIDs(), func(id string) bool {
+					var customID string
+					if strings.ContainsAny(e.Data.CustomID(), ";") {
+						customID = strings.TrimSuffix(e.Data.CustomID(), ";"+strings.Split(e.Data.CustomID(), ";")[1])
+					} else {
+						customID = e.Data.CustomID()
+					}
+					return id == customID
+				}) {
+					command.ComponentInteract(e)
 				}
 			}
 		}
 	}
 }
 
-func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-	if len(m.Embeds) == 0 || m.Embeds[0].Footer == nil || m.Embeds[0].Footer.Text != "📌 Sticky message" {
-		if hasSticky(m.GuildID, m.ChannelID) {
-			stickymessageID := getStickyMessageID(m.GuildID, m.ChannelID)
-			err := s.ChannelMessageDelete(m.ChannelID, stickymessageID)
-			stickyMessage, _ := s.ChannelMessageSendEmbed(m.ChannelID, &discordgo.MessageEmbed{
-				Type: discordgo.EmbedTypeArticle,
-				Footer: &discordgo.MessageEmbedFooter{
-					Text: "📌 Sticky message",
+func modalSubmitInteractionCreate(e *events.ModalSubmitInteractionCreate) {
+	for _, command := range commands {
+		if !command.AllowDM && e.GuildID().String() == "" {
+			e.CreateMessage(discord.NewMessageCreateBuilder().
+				SetContent("This modal is not available in DMs.").SetEphemeral(true).
+				Build())
+		} else {
+			if command.ModalSubmit != nil {
+				var hasID bool = false
+				var modalIDs []string
+				if command.ModalIDs != nil {
+					modalIDs = command.ModalIDs
+				}
+				if command.DynamicModalIDs != nil {
+					modalIDs = append(command.ModalIDs, command.DynamicModalIDs()...)
+				}
+				for _, modalID := range modalIDs {
+					if strings.HasPrefix(e.Data.CustomID, modalID) {
+						hasID = true
+						break
+					}
+				}
+				if hasID {
+					command.ModalSubmit(e)
+					return // I have no idea why it crashes without that return
+				}
+			}
+		}
+	}
+}
+
+func removeOldCommandFromAllGuilds() {
+	globalCommands, err := client.Rest().GetGlobalCommands(app.Bot.ID, false)
+	if err != nil {
+		logrus.Error("error fetching existing global commands: %v", err)
+		return
+	}
+	var commandNames []string
+	for _, command := range commands {
+		commandNames = append(commandNames, command.Definition.Name)
+	}
+
+	for _, existingCommand := range globalCommands {
+		if slices.Contains(commandNames, existingCommand.Name()) {
+			logrus.Info("Deleting command '%s'", existingCommand.Name)
+			err := client.Rest().DeleteGlobalCommand(app.Bot.ID, existingCommand.ID())
+			if err != nil {
+				logrus.Error("error deleting command %s: %v", existingCommand.Name, err)
+			}
+		}
+	}
+}
+
+func messageCreate(e *events.MessageCreate) {
+	if len(e.Message.Embeds) == 0 || e.Message.Embeds[0].Footer == nil || e.Message.Embeds[0].Footer.Text != "📌 Sticky message" {
+		if hasSticky(e.Message.GuildID.String(), e.Message.ChannelID.String()) {
+			stickymessageID := getStickyMessageID(e.Message.GuildID.String(), e.Message.ChannelID.String())
+			err := e.Client().Rest().DeleteMessage(e.ChannelID, snowflake.MustParse(stickymessageID))
+			stickyMessage, _ := e.Client().Rest().CreateMessage(e.ChannelID, discord.MessageCreate{
+				Embeds: []discord.Embed{
+					{
+						Footer: &discord.EmbedFooter{
+							Text: "📌 Sticky message",
+						},
+						Color:       hexToDecimal(color["primary"]),
+						Description: getStickyMessageContent(e.Message.GuildID.String(), e.Message.ChannelID.String()),
+					},
 				},
-				Color:       hexToDecimal(color["primary"]),
-				Description: getStickyMessageContent(m.GuildID, m.ChannelID),
 			})
 			if err != nil {
 				logrus.Error(err)
 			}
-			updateStickyMessageID(m.GuildID, m.ChannelID, stickyMessage.ID)
+			updateStickyMessageID(e.Message.GuildID.String(), e.Message.ChannelID.String(), stickyMessage.ID.String())
 		}
 	}
-	channel, _ := s.Channel(m.ChannelID)
-	if channel.Type == discordgo.ChannelTypeGuildNews {
-		if isAutopublishEnabled(m.GuildID, m.ChannelID) {
-			_, err := s.ChannelMessageCrosspost(m.ChannelID, m.ID)
+	channel, _ := e.Channel()
+	if channel.Type() == discord.ChannelTypeGuildNews {
+		if isAutopublishEnabled(e.GuildID.String(), e.ChannelID.String()) {
+			_, err := e.Client().Rest().CrosspostMessage(e.ChannelID, e.MessageID)
 			if err != nil {
 				logrus.Error(err)
 			}
@@ -187,14 +191,14 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
-func messageDelete(s *discordgo.Session, m *discordgo.MessageDelete) { //TODO: also clear on bot start when message doesn't exist
-	tryDeleteUnusedMessage(m.ID)
+func messageDelete(e *events.MessageDelete) { //TODO: also clear on bot start when message doesn't exist
+	tryDeleteUnusedMessage(e.MessageID.String())
 }
 
-func guildMemberJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
-	role := getAutoJoinRole(m.GuildID, m.User.Bot)
+func guildMemberJoin(e *events.GuildMemberJoin) {
+	role := getAutoJoinRole(e.GuildID.String(), e.Member.User.Bot)
 	if role != "" {
-		err := s.GuildMemberRoleAdd(m.GuildID, m.User.ID, role)
+		err := e.Client().Rest().AddMemberRole(e.GuildID, e.Member.User.ID, snowflake.MustParse(role))
 		if err != nil {
 			logrus.Error(err)
 		}

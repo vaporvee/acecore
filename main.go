@@ -1,27 +1,30 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"io"
+	"net/url"
 	"os"
 	"os/signal"
 	"strconv"
 	"syscall"
 	"time"
 
-	"database/sql"
-	"net/url"
-
-	"github.com/bwmarrin/discordgo"
+	"github.com/disgoorg/disgo"
+	"github.com/disgoorg/disgo/bot"
+	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/gateway"
 	"github.com/joho/godotenv"
-	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
 	"github.com/vaporvee/acecore/log2webhook"
 )
 
-//TODO: add more error handlings
-
-var db *sql.DB
-var bot *discordgo.Session
+var (
+	app    *discord.Application
+	client bot.Client
+	db     *sql.DB
+)
 
 func main() {
 	logrusInitFile()
@@ -33,30 +36,42 @@ func main() {
 		logrus.Fatal(err)
 	}
 	initTables()
-	bot, err = discordgo.New("Bot " + os.Getenv("BOT_TOKEN"))
+	client, err := disgo.New("Bot "+os.Getenv("BOT_TOKEN"),
+		bot.WithGatewayConfigOpts(
+			gateway.WithIntents(
+				gateway.IntentGuilds,
+				gateway.IntentGuildMessages,
+				gateway.IntentDirectMessages,
+			),
+		),
+		bot.WithEventListenerFunc(ready),
+		bot.WithEventListenerFunc(applicationCommandInteractionCreate),
+		bot.WithEventListenerFunc(autocompleteInteractionCreate),
+		bot.WithEventListenerFunc(messageCreate),
+		bot.WithEventListenerFunc(messageDelete),
+		bot.WithEventListenerFunc(guildMemberJoin),
+	)
 	if err != nil {
 		logrus.Fatal("error creating Discord session,", err)
 		return
 	} else {
 		logrus.Info("Discord session created")
 	}
-	bot.Identify.Intents = discordgo.IntentsGuildMessages | discordgo.IntentsGuilds | discordgo.IntentMessageContent | discordgo.IntentGuildMembers
-	bot.AddHandler(ready)
-	bot.AddHandler(interactionCreate)
-	bot.AddHandler(messageCreate)
-	bot.AddHandler(messageDelete)
-	bot.AddHandler(guildMemberJoin)
-	err = bot.Open()
-	if err != nil {
+
+	if err = client.OpenGateway(context.TODO()); err != nil {
 		logrus.Error("error opening connection,", err)
 		return
 	}
-	logrus.Infof("Bot is now running as '%s'!", bot.State.User.Username)
+	app, err := client.Rest().GetCurrentApplication()
+	if err != nil {
+		logrus.Error(err)
+	}
+	logrus.Infof("Bot is now running as '%s'!", app.Bot.Username)
+
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
 	logrus.Info("Shutting down...")
-	bot.Close()
 }
 
 func logrusInitFile() {

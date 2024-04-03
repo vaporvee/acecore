@@ -2,22 +2,23 @@ package main
 
 import (
 	"github.com/bwmarrin/discordgo"
+	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/events"
+	"github.com/disgoorg/json"
 	"github.com/sirupsen/logrus"
 )
 
 var cmd_tag Command = Command{
-	Definition: discordgo.ApplicationCommand{
+	Definition: discord.SlashCommandCreate{
 		Name:                     "tag",
-		DefaultMemberPermissions: int64Ptr(discordgo.PermissionManageServer),
+		DefaultMemberPermissions: json.NewNullablePtr(discord.PermissionManageGuild),
 		Description:              "A command to show and edit saved presaved messages.",
-		Options: []*discordgo.ApplicationCommandOption{
-			{
+		Options: []discord.ApplicationCommandOption{
+			discord.ApplicationCommandOptionSubCommand{
 				Name:        "get",
 				Description: "A command to get messages saved to the bot.",
-				Type:        discordgo.ApplicationCommandOptionSubCommand,
-				Options: []*discordgo.ApplicationCommandOption{
-					{
-						Type:         discordgo.ApplicationCommandOptionString,
+				Options: []discord.ApplicationCommandOption{
+					discord.ApplicationCommandOptionString{
 						Name:         "tag",
 						Description:  "Your predefined tag for the saved message",
 						Required:     true,
@@ -25,18 +26,15 @@ var cmd_tag Command = Command{
 					},
 				},
 			},
-			{
+			discord.ApplicationCommandOptionSubCommand{
 				Name:        "add",
 				Description: "A command to add messages saved to the bot.",
-				Type:        discordgo.ApplicationCommandOptionSubCommand,
 			},
-			{
+			discord.ApplicationCommandOptionSubCommand{
 				Name:        "remove",
 				Description: "A command to remove messages saved to the bot.",
-				Type:        discordgo.ApplicationCommandOptionSubCommand,
-				Options: []*discordgo.ApplicationCommandOption{
-					{
-						Type:         discordgo.ApplicationCommandOptionString,
+				Options: []discord.ApplicationCommandOption{
+					discord.ApplicationCommandOptionString{
 						Name:         "tag",
 						Description:  "The tag you want to remove",
 						Required:     true,
@@ -46,10 +44,10 @@ var cmd_tag Command = Command{
 			},
 		},
 	},
-	Interact: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		switch i.ApplicationCommandData().Options[0].Name {
+	Interact: func(e *events.ApplicationCommandInteractionCreate) {
+		switch *e.SlashCommandInteractionData().SubCommandName {
 		case "get":
-			GetTagCommand(i, i.ApplicationCommandData().Options[0].Options[0])
+			GetTagCommand(e)
 		case "add":
 			AddTagCommand(i, "")
 		case "remove":
@@ -61,17 +59,19 @@ var cmd_tag Command = Command{
 		}
 	},
 	ModalIDs: []string{"tag_add_modal"},
-	ModalSubmit: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		tagName := i.ModalSubmitData().Components[0].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value
-		tagContent := i.ModalSubmitData().Components[1].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value
-		addTag(i.GuildID, tagName, tagContent)
-		err := respond(i.Interaction, "Tag \""+tagName+"\" added!", true)
+	ModalSubmit: func(e *events.ModalSubmitInteractionCreate) {
+		tagName := e.Data.Text("tag_add_modal_name")
+		tagContent := e.Data.Text("tag_add_modal_content")
+		addTag(e.GuildID().String(), tagName, tagContent)
+		err := e.CreateMessage(discord.NewMessageCreateBuilder().
+			SetContent("Tag \"" + tagName + "\" added!").SetEphemeral(true).
+			Build())
 		if err != nil {
 			logrus.Error(err)
 		}
 	},
-	Autocomplete: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		AutocompleteTag(i)
+	Autocomplete: func(e *events.AutocompleteInteractionCreate) {
+		AutocompleteTag(e)
 	},
 }
 
@@ -108,8 +108,8 @@ var context_tag Command = Command{
 	},
 }
 
-func GetTagCommand(i *discordgo.InteractionCreate, option *discordgo.ApplicationCommandInteractionDataOption) {
-	err := respond(i.Interaction, getTagContent(i.GuildID, option.Value.(string)), false)
+func GetTagCommand(e *events.ApplicationCommandInteractionCreate) {
+	err := e.CreateMessage(discord.NewMessageCreateBuilder().SetContent(getTagContent(guildID, option)).SetEphemeral(true).Build())
 	if err != nil {
 		logrus.Error(err)
 	}
