@@ -22,7 +22,7 @@ type Command struct {
 	AllowDM             bool
 }
 
-var commands []Command = []Command{cmd_form, cmd_ticket_form, cmd_tag, cmd_tag_short, cmd_dadjoke, cmd_ping, cmd_ask, cmd_sticky, cmd_cat, cmd_autojoinroles, cmd_autopublish, context_sticky, context_tag}
+var commands []Command = []Command{cmd_form, cmd_ticket_form, cmd_tag, cmd_tag_short, cmd_dadjoke, cmd_ping, cmd_ask, cmd_sticky, cmd_cat, cmd_autojoinroles, cmd_autopublish, context_sticky, context_tag, cmd_userinfo}
 
 func ready(s *discordgo.Session, event *discordgo.Ready) {
 	logrus.Info("Starting up...")
@@ -160,7 +160,8 @@ func removeOldCommandFromAllGuilds(s *discordgo.Session) {
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if len(m.Embeds) == 0 || m.Embeds[0].Footer == nil || m.Embeds[0].Footer.Text != "📌 Sticky message" {
 		if hasSticky(m.GuildID, m.ChannelID) {
-			err := s.ChannelMessageDelete(m.ChannelID, getStickyMessageID(m.GuildID, m.ChannelID))
+			stickymessageID := getStickyMessageID(m.GuildID, m.ChannelID)
+			err := s.ChannelMessageDelete(m.ChannelID, stickymessageID)
 			stickyMessage, _ := s.ChannelMessageSendEmbed(m.ChannelID, &discordgo.MessageEmbed{
 				Type: discordgo.EmbedTypeArticle,
 				Footer: &discordgo.MessageEmbedFooter{

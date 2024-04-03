@@ -135,13 +135,17 @@ func int64Ptr(i int64) *int64 {
 }
 
 func hexToDecimal(hexColor string) int {
-	// Remove the hash symbol if it's present
 	hexColor = strings.TrimPrefix(hexColor, "#")
 	decimal, err := strconv.ParseInt(hexColor, 16, 64)
 	if err != nil {
 		return 0
 	}
 	return int(decimal)
+}
+
+func decimalToHex(decimal int) string {
+	hexString := strconv.FormatInt(int64(decimal), 16)
+	return hexString
 }
 
 func simpleGetFromAPI(key string, url string) interface{} {

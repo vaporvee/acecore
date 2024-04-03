@@ -21,7 +21,7 @@ var cmd_ping Command = Command{
 			Timeout: 5 * time.Second,
 		}
 
-		resp, err := client.Get("https://discord.com/api/v9/gateway/bot")
+		resp, err := client.Get("https://discord.com/api/" + discordgo.APIVersion + "/gateway/bot")
 		if err != nil {
 			logrus.Error(err)
 			return
