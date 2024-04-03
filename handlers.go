@@ -182,6 +182,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			_, err := s.ChannelMessageCrosspost(m.ChannelID, m.ID)
 			if err != nil {
 				logrus.Error(err)
+				return
 			}
 		}
 	}
