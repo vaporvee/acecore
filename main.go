@@ -23,8 +23,8 @@ import (
 )
 
 var (
-	app    *discord.Application
 	client bot.Client
+	app    *discord.Application
 	db     *sql.DB
 )
 
@@ -47,13 +47,13 @@ func main() {
 			),
 		),
 		bot.WithEventListenerFunc(ready),
-		bot.WithEventListenerFunc(applicationCommandInteractionCreate),
-		bot.WithEventListenerFunc(autocompleteInteractionCreate),
-		bot.WithEventListenerFunc(componentInteractionCreate),
-		bot.WithEventListenerFunc(modalSubmitInteractionCreate),
-		bot.WithEventListenerFunc(messageCreate),
-		bot.WithEventListenerFunc(messageDelete),
-		bot.WithEventListenerFunc(guildMemberJoin),
+		//bot.WithEventListenerFunc(applicationCommandInteractionCreate),
+		//bot.WithEventListenerFunc(autocompleteInteractionCreate),
+		//bot.WithEventListenerFunc(componentInteractionCreate),
+		//bot.WithEventListenerFunc(modalSubmitInteractionCreate),
+		//bot.WithEventListenerFunc(messageCreate),
+		//bot.WithEventListenerFunc(messageDelete),
+		//bot.WithEventListenerFunc(guildMemberJoin),
 	)
 	if err != nil {
 		logrus.Fatal("error creating Discord session,", err)
@@ -66,7 +66,7 @@ func main() {
 		logrus.Error("error opening connection,", err)
 		return
 	}
-	app, err := client.Rest().GetCurrentApplication()
+	app, err = client.Rest().GetCurrentApplication()
 	if err != nil {
 		logrus.Error(err)
 	}

@@ -102,7 +102,7 @@ func getModalByFormID(formID string) ModalJson {
 }
 
 func getHighestRole(guildID string) (*discord.Role, error) {
-	botmember, err := client.Rest().GetMember(snowflake.MustParse(guildID), app.Bot.ID)
+	botmember, err := client.Rest().GetMember(snowflake.MustParse(guildID), client.ApplicationID())
 	if err != nil {
 		return nil, err
 	}
