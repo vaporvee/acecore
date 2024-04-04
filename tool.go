@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/sirupsen/logrus"
@@ -101,12 +102,12 @@ func getModalByFormID(formID string) ModalJson {
 	return modal
 }
 
-func getHighestRole(guildID string) (*discord.Role, error) {
-	botmember, err := client.Rest().GetMember(snowflake.MustParse(guildID), client.ApplicationID())
+func getHighestRole(guildID string, c bot.Client) (*discord.Role, error) {
+	botmember, err := c.Rest().GetMember(snowflake.MustParse(guildID), c.ApplicationID())
 	if err != nil {
 		return nil, err
 	}
-	roles, err := client.Rest().GetRoles(snowflake.MustParse(guildID))
+	roles, err := c.Rest().GetRoles(snowflake.MustParse(guildID))
 	if err != nil {
 		return nil, err
 	}
@@ -165,21 +166,21 @@ func simpleGetFromAPI(key string, url string) interface{} {
 	return result[key]
 }
 
-func findAndDeleteUnusedMessages() {
+func findAndDeleteUnusedMessages(c bot.Client) {
 	for _, message := range getAllSavedMessages() {
-		_, err := client.Rest().GetMessage(snowflake.MustParse(message.ChannelID), snowflake.MustParse(message.ID))
+		_, err := c.Rest().GetMessage(snowflake.MustParse(message.ChannelID), snowflake.MustParse(message.ID))
 		if err != nil {
 			tryDeleteUnusedMessage(message.ID)
 		}
 	}
 }
 
-func isIDRole(guildID snowflake.ID, id snowflake.ID) bool {
-	_, err1 := client.Rest().GetMember(guildID, id)
+func isIDRole(c bot.Client, guildID snowflake.ID, id snowflake.ID) bool {
+	_, err1 := c.Rest().GetMember(guildID, id)
 	if err1 == nil {
 		return false
 	}
-	roles, err2 := client.Rest().GetRoles(guildID)
+	roles, err2 := c.Rest().GetRoles(guildID)
 	if err2 == nil {
 		for _, role := range roles {
 			if role.ID == id {

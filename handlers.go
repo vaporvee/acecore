@@ -1,9 +1,12 @@
 package main
 
 import (
+	"fmt"
+	"os"
 	"slices"
 	"strings"
 
+	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/snowflake/v2"
@@ -11,7 +14,7 @@ import (
 )
 
 type Command struct {
-	Definition          discord.SlashCommandCreate
+	Definition          discord.ApplicationCommandCreate
 	Interact            func(e *events.ApplicationCommandInteractionCreate)
 	Autocomplete        func(e *events.AutocompleteInteractionCreate)
 	ComponentInteract   func(e *events.ComponentInteractionCreate)
@@ -27,49 +30,57 @@ var commands []Command = []Command{cmd_tag, cmd_tag_short, context_tag /*, cmd_f
 
 func ready(e *events.Ready) {
 	logrus.Info("Starting up...")
-	//findAndDeleteUnusedMessages()
-	removeOldCommandFromAllGuilds()
-	/*
-		var existingCommandNames []string
-		existingCommands, err := client.Rest().GetGlobalCommands(client.ApplicationID(), false)
-		if err != nil {
-			logrus.Errorf("error fetching existing global commands: %v", err)
-		} else {
-			for _, existingCommand := range existingCommands {
-				existingCommandNames = append(existingCommandNames, existingCommand.Name())
-			}
+	findAndDeleteUnusedMessages(e.Client())
+	removeOldCommandFromAllGuilds(e.Client())
+	var existingCommandNames []string
+	existingCommands, err := e.Client().Rest().GetGlobalCommands(e.Client().ApplicationID(), false)
+	if err != nil {
+		logrus.Errorf("error fetching existing global commands: %v", err)
+	} else {
+		for _, existingCommand := range existingCommands {
+			existingCommandNames = append(existingCommandNames, existingCommand.Name())
 		}
-		for _, command := range commands {
-			if !slices.Contains(existingCommandNames, command.Definition.Name) || slices.Contains(os.Args, "--update="+command.Definition.Name) || slices.Contains(os.Args, "--update=all") || slices.Contains(os.Args, "--clean") {
-				cmd, err := client.Rest().CreateGlobalCommand(client.ApplicationID(), command.Definition)
-				if err != nil {
-					logrus.Errorf("error creating global command '%s': %v", cmd.Name(), err)
-				} else {
-					logrus.Infof("Added global command '%s'", cmd.Name())
-				}
-			}
+	}
+	globalCommands := []discord.ApplicationCommandCreate{}
+	for _, command := range commands {
+		if !slices.Contains(existingCommandNames, command.Definition.CommandName()) || slices.Contains(os.Args, "--update="+command.Definition.CommandName()) || slices.Contains(os.Args, "--update=all") || slices.Contains(os.Args, "--clean") {
+			globalCommands = append(globalCommands, command.Definition)
+			logrus.Infof("Appending command \"%s\"", command.Definition.CommandName())
 		}
-		logrus.Info("Successfully started the Bot!")
-	*/
+	}
+	logrus.Infof("Attempting to add global commands %s", fmt.Sprint(globalCommands))
+	_, err = e.Client().Rest().SetGlobalCommands(e.Client().ApplicationID(), globalCommands)
+	if err != nil {
+		logrus.Errorf("error creating global commands '%s'", err)
+	} else {
+		logrus.Infof("Added global commands sucessfully!")
+	}
+	logrus.Info("Successfully started the Bot!")
 }
 
 func applicationCommandInteractionCreate(e *events.ApplicationCommandInteractionCreate) {
+	app, err := e.Client().Rest().GetCurrentApplication()
+	if err != nil {
+		logrus.Error(err)
+	}
 	for _, command := range commands {
-		if command.Interact != nil && e.SlashCommandInteractionData().CommandName() == command.Definition.Name {
-			if !command.AllowDM && e.SlashCommandInteractionData().GuildID().String() == "" {
+		if command.Interact != nil && e.SlashCommandInteractionData().CommandName() == command.Definition.CommandName() {
+			if !command.AllowDM && app.GuildID.String() == "" {
 				e.CreateMessage(discord.NewMessageCreateBuilder().
 					SetContent("This command is not available in DMs.").SetEphemeral(true).
 					Build())
 			} else {
 				command.Interact(e)
 			}
+
 		}
+
 	}
 }
 
 func autocompleteInteractionCreate(e *events.AutocompleteInteractionCreate) {
 	for _, command := range commands {
-		if command.Autocomplete != nil && e.Data.CommandName == command.Definition.Name {
+		if command.Autocomplete != nil && e.Data.CommandName == command.Definition.CommandName() {
 			if !command.AllowDM && e.GuildID().String() == "" {
 				err := e.AutocompleteResult(nil)
 				if err != nil {
@@ -137,22 +148,24 @@ func modalSubmitInteractionCreate(e *events.ModalSubmitInteractionCreate) {
 	}
 }
 
-func removeOldCommandFromAllGuilds() {
-	logrus.Debug(app.Bot.ID.String())
-	globalCommands, err := client.Rest().GetGlobalCommands(app.Bot.ID, false)
-	logrus.Debug("HERE") //doesnt get called
+func removeOldCommandFromAllGuilds(c bot.Client) {
+	app, err := c.Rest().GetCurrentApplication()
+	if err != nil {
+		logrus.Error(err)
+	}
+	globalCommands, err := c.Rest().GetGlobalCommands(app.Bot.ID, false)
 	if err != nil {
 		logrus.Errorf("error fetching existing global commands: %v", err)
 		return
 	}
 	var commandNames []string
 	for _, command := range commands {
-		commandNames = append(commandNames, command.Definition.Name)
+		commandNames = append(commandNames, command.Definition.CommandName())
 	}
 	for _, existingCommand := range globalCommands {
-		if slices.Contains(commandNames, existingCommand.Name()) {
+		if !slices.Contains(commandNames, existingCommand.Name()) {
 			logrus.Infof("Deleting command '%s'", existingCommand.Name())
-			err := client.Rest().DeleteGlobalCommand(client.ApplicationID(), existingCommand.ID())
+			err := c.Rest().DeleteGlobalCommand(c.ApplicationID(), existingCommand.ID())
 			if err != nil {
 				logrus.Errorf("error deleting command %s: %v", existingCommand.Name(), err)
 			}

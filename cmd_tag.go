@@ -98,7 +98,7 @@ var cmd_tag_short Command = Command{
 }
 
 var context_tag Command = Command{
-	Definition: discord.SlashCommandCreate{
+	Definition: discord.MessageCommandCreate{
 		Name:                     "Save as tag",
 		DefaultMemberPermissions: json.NewNullablePtr(discord.PermissionManageGuild),
 	},
@@ -129,6 +129,14 @@ func AddTagCommand(e *events.ApplicationCommandInteractionCreate, prevalue strin
 					Required:  true,
 					MaxLength: 20,
 					Value:     "",
+				},
+				discord.TextInputComponent{
+					CustomID:  "tag_add_modal_content",
+					Label:     "Content",
+					Style:     discord.TextInputStyleParagraph,
+					Required:  true,
+					MaxLength: 2000,
+					Value:     prevalue,
 				},
 			},
 		},
