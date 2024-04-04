@@ -1,5 +1,6 @@
 package main
 
+/*
 import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/sirupsen/logrus"
@@ -32,3 +33,4 @@ var cmd_autopublish Command = Command{
 		}
 	},
 }
+*/

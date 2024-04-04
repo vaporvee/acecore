@@ -11,6 +11,8 @@ import (
 	"syscall"
 	"time"
 
+	_ "github.com/lib/pq"
+
 	"github.com/disgoorg/disgo"
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
@@ -36,7 +38,7 @@ func main() {
 		logrus.Fatal(err)
 	}
 	initTables()
-	client, err := disgo.New("Bot "+os.Getenv("BOT_TOKEN"),
+	client, err := disgo.New(os.Getenv("BOT_TOKEN"),
 		bot.WithGatewayConfigOpts(
 			gateway.WithIntents(
 				gateway.IntentGuilds,
@@ -47,6 +49,8 @@ func main() {
 		bot.WithEventListenerFunc(ready),
 		bot.WithEventListenerFunc(applicationCommandInteractionCreate),
 		bot.WithEventListenerFunc(autocompleteInteractionCreate),
+		bot.WithEventListenerFunc(componentInteractionCreate),
+		bot.WithEventListenerFunc(modalSubmitInteractionCreate),
 		bot.WithEventListenerFunc(messageCreate),
 		bot.WithEventListenerFunc(messageDelete),
 		bot.WithEventListenerFunc(guildMemberJoin),

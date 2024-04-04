@@ -24,7 +24,7 @@ type Command struct {
 	AllowDM             bool
 }
 
-var commands []Command = []Command{cmd_form, cmd_ticket_form, cmd_tag, cmd_tag_short, cmd_dadjoke, cmd_ping, cmd_ask, cmd_sticky, cmd_cat, cmd_autojoinroles, cmd_autopublish, context_sticky, context_tag, cmd_userinfo}
+var commands []Command = []Command{cmd_tag, cmd_tag_short, context_tag /*, cmd_form, cmd_ticket_form, cmd_dadjoke, cmd_ping, cmd_ask, cmd_sticky, cmd_cat, cmd_autojoinroles, cmd_autopublish, context_sticky, cmd_userinfo*/}
 
 func ready(e *events.Ready) {
 	logrus.Info("Starting up...")
@@ -43,9 +43,9 @@ func ready(e *events.Ready) {
 		if !slices.Contains(existingCommandNames, command.Definition.Name) || slices.Contains(os.Args, "--update="+command.Definition.Name) || slices.Contains(os.Args, "--update=all") || slices.Contains(os.Args, "--clean") {
 			cmd, err := client.Rest().CreateGlobalCommand(app.Bot.ID, command.Definition)
 			if err != nil {
-				logrus.Errorf("error creating global command '%s': %v", cmd.Name, err)
+				logrus.Errorf("error creating global command '%s': %v", cmd.Name(), err)
 			} else {
-				logrus.Infof("Added global command '%s'", cmd.Name)
+				logrus.Infof("Added global command '%s'", cmd.Name())
 			}
 		}
 	}
@@ -139,7 +139,7 @@ func modalSubmitInteractionCreate(e *events.ModalSubmitInteractionCreate) {
 func removeOldCommandFromAllGuilds() {
 	globalCommands, err := client.Rest().GetGlobalCommands(app.Bot.ID, false)
 	if err != nil {
-		logrus.Error("error fetching existing global commands: %v", err)
+		logrus.Errorf("error fetching existing global commands: %v", err)
 		return
 	}
 	var commandNames []string
@@ -149,10 +149,10 @@ func removeOldCommandFromAllGuilds() {
 
 	for _, existingCommand := range globalCommands {
 		if slices.Contains(commandNames, existingCommand.Name()) {
-			logrus.Info("Deleting command '%s'", existingCommand.Name)
+			logrus.Infof("Deleting command '%s'", existingCommand.Name())
 			err := client.Rest().DeleteGlobalCommand(app.Bot.ID, existingCommand.ID())
 			if err != nil {
-				logrus.Error("error deleting command %s: %v", existingCommand.Name, err)
+				logrus.Errorf("error deleting command %s: %v", existingCommand.Name(), err)
 			}
 		}
 	}

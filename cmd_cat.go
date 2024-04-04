@@ -1,14 +1,6 @@
 package main
 
-import (
-	"encoding/json"
-	"io"
-	"net/http"
-
-	"github.com/bwmarrin/discordgo"
-	"github.com/sirupsen/logrus"
-)
-
+/*
 var cmd_cat Command = Command{
 	Definition: discordgo.ApplicationCommand{
 		Name:        "cat",
@@ -52,3 +44,4 @@ func GetCatImageURL() (string, error) {
 
 	return "https://cataas.com/cat/" + images.ID, err
 }
+*/

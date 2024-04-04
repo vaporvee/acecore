@@ -1,10 +1,6 @@
 package main
 
-import (
-	"github.com/bwmarrin/discordgo"
-	"github.com/sirupsen/logrus"
-)
-
+/*
 var cmd_autojoinroles Command = Command{
 	Definition: discordgo.ApplicationCommand{
 		Name:        "autojoinroles",
@@ -66,3 +62,4 @@ var cmd_autojoinroles Command = Command{
 		purgeUnusedAutoJoinRoles(i.GuildID)
 	},
 }
+*/

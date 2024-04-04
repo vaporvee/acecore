@@ -1,5 +1,6 @@
 package main
 
+/*
 import (
 	"fmt"
 	"net/http"
@@ -48,3 +49,4 @@ var cmd_ping Command = Command{
 	},
 	AllowDM: true,
 }
+*/

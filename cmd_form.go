@@ -1,15 +1,6 @@
 package main
 
-import (
-	"bytes"
-	"fmt"
-	"strings"
-
-	"github.com/bwmarrin/discordgo"
-	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
-)
-
+/*
 var cmd_form Command = Command{
 	Definition: discordgo.ApplicationCommand{
 		Name:                     "form",
@@ -572,3 +563,4 @@ func getFormButtonIDs() []string {
 	}
 	return IDs
 }
+*/

@@ -1,5 +1,6 @@
 package main
 
+/*
 import (
 	"encoding/json"
 	"fmt"
@@ -232,3 +233,4 @@ func parseRetryAfterHeader(headers http.Header) time.Duration {
 
 	return time.Duration(retryAfter) * time.Millisecond
 }
+*/

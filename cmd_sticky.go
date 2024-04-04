@@ -1,5 +1,6 @@
 package main
 
+/*
 import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/sirupsen/logrus"
@@ -99,3 +100,4 @@ func inputStickyMessage(i *discordgo.InteractionCreate) {
 		}
 	}
 }
+*/
