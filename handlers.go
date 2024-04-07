@@ -43,29 +43,27 @@ func ready(e *events.Ready) {
 	}
 	globalCommands := []discord.ApplicationCommandCreate{}
 	for _, command := range commands {
-		if !slices.Contains(existingCommandNames, command.Definition.CommandName()) || slices.Contains(os.Args, "--update="+command.Definition.CommandName()) || slices.Contains(os.Args, "--update=all") || slices.Contains(os.Args, "--clean") {
+		if !slices.Contains(existingCommandNames, command.Definition.CommandName()) || slices.Contains(os.Args, "--update-all") || slices.Contains(os.Args, "--clean") {
 			globalCommands = append(globalCommands, command.Definition)
 			logrus.Infof("Appending command \"%s\"", command.Definition.CommandName())
 		}
 	}
-	logrus.Infof("Attempting to add global commands %s", fmt.Sprint(globalCommands))
-	_, err = e.Client().Rest().SetGlobalCommands(e.Client().ApplicationID(), globalCommands)
-	if err != nil {
-		logrus.Errorf("error creating global commands '%s'", err)
-	} else {
-		logrus.Infof("Added global commands sucessfully!")
+	if len(globalCommands) > 0 {
+		logrus.Infof("Attempting to add global commands %s", fmt.Sprint(globalCommands))
+		_, err = e.Client().Rest().SetGlobalCommands(e.Client().ApplicationID(), globalCommands)
+		if err != nil {
+			logrus.Errorf("error creating global commands '%s'", err)
+		} else {
+			logrus.Infof("Added global commands sucessfully!")
+		}
 	}
 	logrus.Info("Successfully started the Bot!")
 }
 
 func applicationCommandInteractionCreate(e *events.ApplicationCommandInteractionCreate) {
-	app, err := e.Client().Rest().GetCurrentApplication()
-	if err != nil {
-		logrus.Error(err)
-	}
 	for _, command := range commands {
 		if command.Interact != nil && e.SlashCommandInteractionData().CommandName() == command.Definition.CommandName() {
-			if !command.AllowDM && app.GuildID.String() == "" {
+			if !command.AllowDM && e.ApplicationCommandInteraction.GuildID().String() == "" {
 				e.CreateMessage(discord.NewMessageCreateBuilder().
 					SetContent("This command is not available in DMs.").SetEphemeral(true).
 					Build())
@@ -81,7 +79,7 @@ func applicationCommandInteractionCreate(e *events.ApplicationCommandInteraction
 func autocompleteInteractionCreate(e *events.AutocompleteInteractionCreate) {
 	for _, command := range commands {
 		if command.Autocomplete != nil && e.Data.CommandName == command.Definition.CommandName() {
-			if !command.AllowDM && e.GuildID().String() == "" {
+			if !command.AllowDM && e.AutocompleteInteraction.GuildID().String() == "" {
 				err := e.AutocompleteResult(nil)
 				if err != nil {
 					logrus.Error(err)
@@ -95,7 +93,7 @@ func autocompleteInteractionCreate(e *events.AutocompleteInteractionCreate) {
 
 func componentInteractionCreate(e *events.ComponentInteractionCreate) {
 	for _, command := range commands {
-		if !command.AllowDM && e.GuildID().String() == "" {
+		if !command.AllowDM && e.ComponentInteraction.GuildID().String() == "" {
 			e.CreateMessage(discord.NewMessageCreateBuilder().
 				SetContent("This component is not available in DMs.").SetEphemeral(true).
 				Build())
@@ -119,7 +117,7 @@ func componentInteractionCreate(e *events.ComponentInteractionCreate) {
 
 func modalSubmitInteractionCreate(e *events.ModalSubmitInteractionCreate) {
 	for _, command := range commands {
-		if !command.AllowDM && e.GuildID().String() == "" {
+		if !command.AllowDM && e.ModalSubmitInteraction.GuildID().String() == "" {
 			e.CreateMessage(discord.NewMessageCreateBuilder().
 				SetContent("This modal is not available in DMs.").SetEphemeral(true).
 				Build())

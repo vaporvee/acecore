@@ -130,6 +130,8 @@ func AddTagCommand(e *events.ApplicationCommandInteractionCreate, prevalue strin
 					MaxLength: 20,
 					Value:     "",
 				},
+			},
+			discord.ActionRowComponent{
 				discord.TextInputComponent{
 					CustomID:  "tag_add_modal_content",
 					Label:     "Content",
@@ -141,37 +143,6 @@ func AddTagCommand(e *events.ApplicationCommandInteractionCreate, prevalue strin
 			},
 		},
 	})
-	/*Data: &discordgo.InteractionResponseData{
-		CustomID: "tag_add_modal" + i.Interaction.Member.User.ID,
-		Title:    "Add a custom tag command",
-		Components: []discordgo.MessageComponent{
-			discordgo.ActionsRow{
-				Components: []discordgo.MessageComponent{
-					discordgo.TextInput{
-						CustomID:  "tag_add_modal_name",
-						Label:     "Name",
-						Style:     discordgo.TextInputShort,
-						Required:  true,
-						MaxLength: 20,
-						Value:     "",
-					},
-				},
-			},
-			discordgo.ActionsRow{
-				Components: []discordgo.MessageComponent{
-					discordgo.TextInput{
-						CustomID:    "tag_add_modal_content",
-						Label:       "Content",
-						Placeholder: "Content that gets returned when the tag will be run",
-						Style:       discordgo.TextInputParagraph,
-						Required:    true,
-						MaxLength:   2000,
-						Value:       prevalue,
-					},
-				},
-			},
-		},
-	},*/
 	if err != nil {
 		logrus.Error(err)
 	}
