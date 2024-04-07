@@ -62,11 +62,14 @@ func ready(e *events.Ready) {
 
 func applicationCommandInteractionCreate(e *events.ApplicationCommandInteractionCreate) {
 	for _, command := range commands {
-		if command.Interact != nil && e.SlashCommandInteractionData().CommandName() == command.Definition.CommandName() {
+		if command.Interact != nil && e.Data.CommandName() == command.Definition.CommandName() {
 			if !command.AllowDM && e.ApplicationCommandInteraction.GuildID().String() == "" {
-				e.CreateMessage(discord.NewMessageCreateBuilder().
+				err := e.CreateMessage(discord.NewMessageCreateBuilder().
 					SetContent("This command is not available in DMs.").SetEphemeral(true).
 					Build())
+				if err != nil {
+					logrus.Error(err)
+				}
 			} else {
 				command.Interact(e)
 			}

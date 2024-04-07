@@ -48,7 +48,7 @@ var cmd_tag Command = Command{
 		case "get":
 			GetTagCommand(e)
 		case "add":
-			AddTagCommand(e, "")
+			AddTagCommand(e)
 		case "remove":
 			removeTag(e.GuildID().String(), e.SlashCommandInteractionData().String("tag"))
 			err := e.CreateMessage(discord.NewMessageCreateBuilder().
@@ -103,7 +103,7 @@ var context_tag Command = Command{
 		DefaultMemberPermissions: json.NewNullablePtr(discord.PermissionManageGuild),
 	},
 	Interact: func(e *events.ApplicationCommandInteractionCreate) {
-		AddTagCommand(e, e.SlashCommandInteractionData().String(""))
+		AddTagCommand(e)
 	},
 }
 
@@ -116,7 +116,11 @@ func GetTagCommand(e *events.ApplicationCommandInteractionCreate) {
 	}
 }
 
-func AddTagCommand(e *events.ApplicationCommandInteractionCreate, prevalue string) {
+func AddTagCommand(e *events.ApplicationCommandInteractionCreate) {
+	var prevalue string
+	if e.ApplicationCommandInteraction.Data.Type() == discord.ApplicationCommandTypeMessage {
+		prevalue = e.MessageCommandInteractionData().TargetMessage().Content
+	}
 	err := e.Modal(discord.ModalCreate{
 		CustomID: "tag_add_modal" + e.User().ID.String(),
 		Title:    "Add a custom tag command",
