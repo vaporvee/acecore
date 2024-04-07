@@ -48,8 +48,8 @@ func main() {
 		bot.WithEventListenerFunc(autocompleteInteractionCreate),
 		bot.WithEventListenerFunc(componentInteractionCreate),
 		bot.WithEventListenerFunc(modalSubmitInteractionCreate),
+		bot.WithEventListenerFunc(messageCreate),
 		/*
-			bot.WithEventListenerFunc(messageCreate),
 			bot.WithEventListenerFunc(messageDelete),
 			bot.WithEventListenerFunc(guildMemberJoin),
 		*/

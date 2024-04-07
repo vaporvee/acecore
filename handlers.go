@@ -26,7 +26,7 @@ type Command struct {
 	AllowDM             bool
 }
 
-var commands []Command = []Command{cmd_tag, cmd_tag_short, context_tag /*, cmd_form, cmd_ticket_form, cmd_dadjoke, cmd_ping, cmd_ask, cmd_sticky, cmd_cat, cmd_autojoinroles, cmd_autopublish, context_sticky, cmd_userinfo*/}
+var commands []Command = []Command{cmd_tag, cmd_tag_short, context_tag, cmd_sticky, context_sticky /*, cmd_form, cmd_ticket_form, cmd_dadjoke, cmd_ping, cmd_ask,  cmd_cat, cmd_autojoinroles, cmd_autopublish, cmd_userinfo*/}
 
 func ready(e *events.Ready) {
 	logrus.Info("Starting up...")
@@ -196,15 +196,18 @@ func messageCreate(e *events.MessageCreate) {
 			updateStickyMessageID(e.Message.GuildID.String(), e.Message.ChannelID.String(), stickyMessage.ID.String())
 		}
 	}
-	channel, _ := e.Channel()
-	if channel.Type() == discord.ChannelTypeGuildNews {
-		if isAutopublishEnabled(e.GuildID.String(), e.ChannelID.String()) {
-			_, err := e.Client().Rest().CrosspostMessage(e.ChannelID, e.MessageID)
-			if err != nil {
-				logrus.Error(err)
-			}
-		}
-	}
+	/*
+	   channel, _ := e.Channel()
+
+	   	if channel.Type() == discord.ChannelTypeGuildNews {
+	   		if isAutopublishEnabled(e.GuildID.String(), e.ChannelID.String()) {
+	   			_, err := e.Client().Rest().CrosspostMessage(e.ChannelID, e.MessageID)
+	   			if err != nil {
+	   				logrus.Error(err)
+	   			}
+	   		}
+	   	}
+	*/
 }
 
 func messageDelete(e *events.MessageDelete) { //TODO: also clear on bot start when message doesn't exist
