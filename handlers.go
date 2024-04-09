@@ -26,7 +26,7 @@ type Command struct {
 	AllowDM             bool
 }
 
-var commands []Command = []Command{cmd_tag, cmd_tag_short, context_tag, cmd_sticky, context_sticky /*, cmd_form, cmd_ticket_form, cmd_dadjoke, cmd_ping, cmd_ask,  cmd_cat, cmd_autojoinroles, cmd_autopublish, cmd_userinfo*/}
+var commands []Command = []Command{cmd_tag, cmd_tag_short, context_tag, cmd_sticky, context_sticky, cmd_ping, cmd_userinfo, cmd_form, cmd_ask, cmd_cat, cmd_dadjoke /*, cmd_ticket_form, cmd_autojoinroles, cmd_autopublish*/}
 
 func ready(e *events.Ready) {
 	logrus.Info("Starting up...")

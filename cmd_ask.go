@@ -1,35 +1,30 @@
 package main
 
-/*
 import (
-	"github.com/bwmarrin/discordgo"
+	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/events"
 	"github.com/sirupsen/logrus"
 )
 
-var cmd_ask Command = Command{
-	Definition: discordgo.ApplicationCommand{
+var cmd_ask = Command{
+	Definition: discord.SlashCommandCreate{
 		Name:        "ask",
 		Description: "Ask anything and get a gif as response!",
-		Options: []*discordgo.ApplicationCommandOption{
-			{
-				Type:        discordgo.ApplicationCommandOptionString,
+		Options: []discord.ApplicationCommandOption{
+			&discord.ApplicationCommandOptionString{
 				Name:        "question",
 				Description: "The question you want to ask",
 				Required:    true,
 			},
 		},
 	},
-	Interact: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		err := respondEmbed(i.Interaction, discordgo.MessageEmbed{
-			Type:  discordgo.EmbedTypeImage,
-			Color: hexToDecimal(color["primary"]),
-			Image: &discordgo.MessageEmbedImage{
-				URL: simpleGetFromAPI("image", "https://yesno.wtf/api").(string),
-			}}, false)
+	Interact: func(e *events.ApplicationCommandInteractionCreate) {
+		err := e.CreateMessage(discord.NewMessageCreateBuilder().
+			AddEmbeds(discord.NewEmbedBuilder().SetImage(simpleGetFromAPI("image", "https://yesno.wtf/api").(string)).SetColor(hexToDecimal(color["primary"])).Build()).
+			Build())
 		if err != nil {
-			logrus.Error("Failed to respond with embed: ", err)
+			logrus.Error(err)
 		}
 	},
 	AllowDM: true,
 }
-*/

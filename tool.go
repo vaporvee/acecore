@@ -36,6 +36,21 @@ type MessageIDs struct {
 	ChannelID string
 }
 
+func noNullString(in interface{}) string {
+	var s string = ""
+	var is_str bool
+	switch in.(type) {
+	case string:
+		is_str = true
+	case *string:
+		is_str = true
+	}
+	if in != nil && is_str {
+		s = fmt.Sprint(in)
+	}
+	return s
+}
+
 func jsonStringShowModal(userID string, manageID string, formID string, overwrite ...string) discord.InteractionResponse {
 	var modal ModalJson = getModalByFormID(formID)
 	var components []discord.ContainerComponent
