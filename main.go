@@ -40,6 +40,7 @@ func main() {
 			gateway.WithIntents(
 				gateway.IntentGuilds,
 				gateway.IntentGuildMessages,
+				gateway.IntentGuildMembers,
 				gateway.IntentDirectMessages,
 			),
 		),
@@ -50,9 +51,7 @@ func main() {
 		bot.WithEventListenerFunc(modalSubmitInteractionCreate),
 		bot.WithEventListenerFunc(messageCreate),
 		bot.WithEventListenerFunc(messageDelete),
-		/*
-			bot.WithEventListenerFunc(guildMemberJoin),
-		*/
+		bot.WithEventListenerFunc(guildMemberJoin),
 	)
 	if err != nil {
 		logrus.Fatal("error creating Discord session,", err)

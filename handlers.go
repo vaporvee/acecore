@@ -26,7 +26,7 @@ type Command struct {
 	AllowDM             bool
 }
 
-var commands []Command = []Command{cmd_tag, cmd_tag_short, context_tag, cmd_sticky, context_sticky, cmd_ping, cmd_userinfo, cmd_form, cmd_ask, cmd_cat, cmd_dadjoke, cmd_ticket_form /*, cmd_autojoinroles, cmd_autopublish*/}
+var commands []Command = []Command{cmd_tag, cmd_tag_short, context_tag, cmd_sticky, context_sticky, cmd_ping, cmd_userinfo, cmd_form, cmd_ask, cmd_cat, cmd_dadjoke, cmd_ticket_form, cmd_autopublish, cmd_autojoinroles}
 
 func ready(e *events.Ready) {
 	logrus.Info("Starting up...")
@@ -196,18 +196,19 @@ func messageCreate(e *events.MessageCreate) {
 			updateStickyMessageID(e.Message.GuildID.String(), e.Message.ChannelID.String(), stickyMessage.ID.String())
 		}
 	}
-	/*
-	   channel, _ := e.Channel()
-
-	   	if channel.Type() == discord.ChannelTypeGuildNews {
-	   		if isAutopublishEnabled(e.GuildID.String(), e.ChannelID.String()) {
-	   			_, err := e.Client().Rest().CrosspostMessage(e.ChannelID, e.MessageID)
-	   			if err != nil {
-	   				logrus.Error(err)
-	   			}
-	   		}
-	   	}
-	*/
+	channel, err := e.Client().Rest().GetChannel(e.Message.ChannelID)
+	if err != nil {
+		logrus.Error(err)
+	}
+	if channel != nil && channel.Type() == discord.ChannelTypeGuildNews {
+		logrus.Debug("HERE")
+		if isAutopublishEnabled(e.GuildID.String(), e.ChannelID.String()) {
+			_, err := e.Client().Rest().CrosspostMessage(e.ChannelID, e.MessageID)
+			if err != nil {
+				logrus.Error(err)
+			}
+		}
+	}
 }
 
 func messageDelete(e *events.MessageDelete) { //TODO: also clear on bot start when message doesn't exist
@@ -215,6 +216,7 @@ func messageDelete(e *events.MessageDelete) { //TODO: also clear on bot start wh
 }
 
 func guildMemberJoin(e *events.GuildMemberJoin) {
+	logrus.Debug("TESSST")
 	role := getAutoJoinRole(e.GuildID.String(), e.Member.User.Bot)
 	if role != "" {
 		err := e.Client().Rest().AddMemberRole(e.GuildID, e.Member.User.ID, snowflake.MustParse(role))

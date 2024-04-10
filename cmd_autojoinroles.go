@@ -1,65 +1,67 @@
 package main
 
-/*
+import (
+	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/events"
+	"github.com/sirupsen/logrus"
+)
+
 var cmd_autojoinroles Command = Command{
-	Definition: discordgo.ApplicationCommand{
+	Definition: discord.SlashCommandCreate{
 		Name:        "autojoinroles",
 		Description: "Give users a role when they join",
-		Options: []*discordgo.ApplicationCommandOption{
-			{
-				Type:        discordgo.ApplicationCommandOptionSubCommand,
+		Options: []discord.ApplicationCommandOption{
+			&discord.ApplicationCommandOptionSubCommand{
 				Name:        "bot",
 				Description: "Give bots a role when they join (Leave empty to remove current)",
-				Options: []*discordgo.ApplicationCommandOption{
-					{
-
-						Type:        discordgo.ApplicationCommandOptionRole,
+				Options: []discord.ApplicationCommandOption{
+					&discord.ApplicationCommandOptionRole{
 						Name:        "role",
 						Description: "The role bots should get when they join the server",
 					},
 				},
 			},
-			{
-				Type:        discordgo.ApplicationCommandOptionSubCommand,
+			&discord.ApplicationCommandOptionSubCommand{
 				Name:        "user",
 				Description: "Give users a role when they join (Leave empty to remove current)",
-				Options: []*discordgo.ApplicationCommandOption{
-					{
-						Type:        discordgo.ApplicationCommandOptionRole,
+				Options: []discord.ApplicationCommandOption{
+					&discord.ApplicationCommandOptionRole{
 						Name:        "role",
 						Description: "The role users should get when they join the server",
 					}},
 			},
 		},
 	},
-	Interact: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	Interact: func(e *events.ApplicationCommandInteractionCreate) {
 		var role string
-		option := i.ApplicationCommandData().Options[0].Name
+		option := *e.SlashCommandInteractionData().SubCommandName
 		var content string
-		if len(i.ApplicationCommandData().Options[0].Options) == 1 {
-			var givenRole *discordgo.Role = i.ApplicationCommandData().Options[0].Options[0].RoleValue(s, i.GuildID)
-			role = givenRole.ID
-			botrole, err := getHighestRole(i.GuildID)
+		if len(e.SlashCommandInteractionData().Options) == 1 {
+			var givenRole discord.Role = e.SlashCommandInteractionData().Role("role")
+			role = givenRole.ID.String()
+			botrole, err := getHighestRole(e.GuildID().String(), e.Client())
 			if err != nil {
 				logrus.Error(err)
 			}
 			if givenRole.Position >= botrole.Position {
-				content = "<@&" + role + "> is not below the Bot's current highest role(<@&" + botrole.ID + ">). That makes it unable to manage it."
+				content = "<@&" + role + "> is not below the Bot's current highest role(<@&" + botrole.ID.String() + ">). That makes it unable to manage it."
 			} else {
-				if setAutoJoinRole(i.GuildID, option, role) {
+				if setAutoJoinRole(e.GuildID().String(), option, role) {
 					content = "Updated auto join role for " + option + "s as <@&" + role + ">"
 				} else {
 					content = "Setup auto join role for " + option + "s as <@&" + role + ">"
 				}
 			}
-		} else if setAutoJoinRole(i.GuildID, option, role) {
+		} else if setAutoJoinRole(e.GuildID().String(), option, role) {
 			content = "Deleted auto join role for " + option + "s"
 		}
-		err := respond(i.Interaction, content, true)
+		if content == "" {
+			content = "No auto join role set for " + option + "s to delete."
+		}
+		err := e.CreateMessage(discord.NewMessageCreateBuilder().SetContent(content).SetEphemeral(true).Build())
 		if err != nil {
 			logrus.Error(err)
 		}
-		purgeUnusedAutoJoinRoles(i.GuildID)
+		purgeUnusedAutoJoinRoles(e.GuildID().String())
 	},
 }
-*/
