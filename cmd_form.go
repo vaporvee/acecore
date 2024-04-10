@@ -19,6 +19,11 @@ var cmd_form Command = Command{
 		Name:                     "form",
 		DefaultMemberPermissions: json.NewNullablePtr(discord.PermissionManageChannels),
 		Description:              "Create custom forms right inside Discord",
+		Contexts: []discord.InteractionContextType{
+			discord.InteractionContextTypeGuild,
+			discord.InteractionContextTypePrivateChannel},
+		IntegrationTypes: []discord.ApplicationIntegrationType{
+			discord.ApplicationIntegrationTypeGuildInstall},
 		Options: []discord.ApplicationCommandOption{
 			&discord.ApplicationCommandOptionSubCommand{
 				Name:        "help",
@@ -250,7 +255,6 @@ var cmd_form Command = Command{
 						Build())
 				}
 			} else {
-				logrus.Debug(result.AcceptChannelID)
 				if result.AcceptChannelID == "" {
 					_, err := e.Client().Rest().CreateMessage(snowflake.MustParse(result.ResultChannelID), discord.NewMessageCreateBuilder().
 						SetEmbeds(discord.NewEmbedBuilder().
@@ -270,7 +274,6 @@ var cmd_form Command = Command{
 						}
 					}
 				} else {
-					logrus.Debug("HEERE")
 					var buttons []discord.InteractiveComponent
 					if result.CommentCategoryID != "" {
 						buttons = []discord.InteractiveComponent{discord.
@@ -335,6 +338,9 @@ var cmd_ticket_form Command = Command{
 		Name:                     "ticket",
 		DefaultMemberPermissions: json.NewNullablePtr(discord.PermissionManageChannels),
 		Description:              "A quick command to create Ticketpanels. (/form for more)",
+		Contexts: []discord.InteractionContextType{
+			discord.InteractionContextTypeGuild,
+			discord.InteractionContextTypePrivateChannel},
 		Options: []discord.ApplicationCommandOption{
 			&discord.ApplicationCommandOptionString{
 				Name:        "title",

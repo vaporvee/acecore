@@ -23,7 +23,6 @@ type Command struct {
 	ModalIDs            []string
 	DynamicModalIDs     func() []string
 	DynamicComponentIDs func() []string
-	AllowDM             bool
 }
 
 var commands []Command = []Command{cmd_tag, cmd_tag_short, context_tag, cmd_sticky, context_sticky, cmd_ping, cmd_userinfo, cmd_form, cmd_ask, cmd_cat, cmd_dadjoke, cmd_ticket_form, cmd_autopublish, cmd_autojoinroles}
@@ -63,56 +62,33 @@ func ready(e *events.Ready) {
 func applicationCommandInteractionCreate(e *events.ApplicationCommandInteractionCreate) {
 	for _, command := range commands {
 		if command.Interact != nil && e.Data.CommandName() == command.Definition.CommandName() {
-			if !command.AllowDM && e.ApplicationCommandInteraction.GuildID().String() == "" {
-				err := e.CreateMessage(discord.NewMessageCreateBuilder().
-					SetContent("This command is not available in DMs.").SetEphemeral(true).
-					Build())
-				if err != nil {
-					logrus.Error(err)
-				}
-			} else {
-				command.Interact(e)
-			}
-
+			command.Interact(e)
 		}
-
 	}
+
 }
 
 func autocompleteInteractionCreate(e *events.AutocompleteInteractionCreate) {
 	for _, command := range commands {
 		if command.Autocomplete != nil && e.Data.CommandName == command.Definition.CommandName() {
-			if !command.AllowDM && e.AutocompleteInteraction.GuildID().String() == "" {
-				err := e.AutocompleteResult(nil)
-				if err != nil {
-					logrus.Error(err)
-				}
-			} else {
-				command.Autocomplete(e)
-			}
+			command.Autocomplete(e)
 		}
 	}
 }
 
 func componentInteractionCreate(e *events.ComponentInteractionCreate) {
 	for _, command := range commands {
-		if !command.AllowDM && e.ComponentInteraction.GuildID().String() == "" {
-			e.CreateMessage(discord.NewMessageCreateBuilder().
-				SetContent("This component is not available in DMs.").SetEphemeral(true).
-				Build())
-		} else {
-			if command.ComponentInteract != nil {
-				if slices.Contains(command.ComponentIDs, e.Data.CustomID()) || slices.ContainsFunc(command.DynamicComponentIDs(), func(id string) bool {
-					var customID string
-					if strings.ContainsAny(e.Data.CustomID(), ";") {
-						customID = strings.TrimSuffix(e.Data.CustomID(), ";"+strings.Split(e.Data.CustomID(), ";")[1])
-					} else {
-						customID = e.Data.CustomID()
-					}
-					return id == customID
-				}) {
-					command.ComponentInteract(e)
+		if command.ComponentInteract != nil {
+			if slices.Contains(command.ComponentIDs, e.Data.CustomID()) || slices.ContainsFunc(command.DynamicComponentIDs(), func(id string) bool {
+				var customID string
+				if strings.ContainsAny(e.Data.CustomID(), ";") {
+					customID = strings.TrimSuffix(e.Data.CustomID(), ";"+strings.Split(e.Data.CustomID(), ";")[1])
+				} else {
+					customID = e.Data.CustomID()
 				}
+				return id == customID
+			}) {
+				command.ComponentInteract(e)
 			}
 		}
 	}
@@ -120,30 +96,24 @@ func componentInteractionCreate(e *events.ComponentInteractionCreate) {
 
 func modalSubmitInteractionCreate(e *events.ModalSubmitInteractionCreate) {
 	for _, command := range commands {
-		if !command.AllowDM && e.ModalSubmitInteraction.GuildID().String() == "" {
-			e.CreateMessage(discord.NewMessageCreateBuilder().
-				SetContent("This modal is not available in DMs.").SetEphemeral(true).
-				Build())
-		} else {
-			if command.ModalSubmit != nil {
-				var hasID bool = false
-				var modalIDs []string
-				if command.ModalIDs != nil {
-					modalIDs = command.ModalIDs
+		if command.ModalSubmit != nil {
+			var hasID bool = false
+			var modalIDs []string
+			if command.ModalIDs != nil {
+				modalIDs = command.ModalIDs
+			}
+			if command.DynamicModalIDs != nil {
+				modalIDs = append(command.ModalIDs, command.DynamicModalIDs()...)
+			}
+			for _, modalID := range modalIDs {
+				if strings.HasPrefix(e.Data.CustomID, modalID) {
+					hasID = true
+					break
 				}
-				if command.DynamicModalIDs != nil {
-					modalIDs = append(command.ModalIDs, command.DynamicModalIDs()...)
-				}
-				for _, modalID := range modalIDs {
-					if strings.HasPrefix(e.Data.CustomID, modalID) {
-						hasID = true
-						break
-					}
-				}
-				if hasID {
-					command.ModalSubmit(e)
-					return // I have no idea why it crashes without that return
-				}
+			}
+			if hasID {
+				command.ModalSubmit(e)
+				return // I have no idea why it crashes without that return
 			}
 		}
 	}
@@ -201,7 +171,6 @@ func messageCreate(e *events.MessageCreate) {
 		logrus.Error(err)
 	}
 	if channel != nil && channel.Type() == discord.ChannelTypeGuildNews {
-		logrus.Debug("HERE")
 		if isAutopublishEnabled(e.GuildID.String(), e.ChannelID.String()) {
 			_, err := e.Client().Rest().CrosspostMessage(e.ChannelID, e.MessageID)
 			if err != nil {
@@ -217,7 +186,6 @@ func messageDelete(e *events.MessageDelete) { //TODO: also clear on bot start wh
 }
 
 func guildMemberJoin(e *events.GuildMemberJoin) {
-	logrus.Debug("TESSST")
 	role := getAutoJoinRole(e.GuildID.String(), e.Member.User.Bot)
 	if role != "" {
 		err := e.Client().Rest().AddMemberRole(e.GuildID, e.Member.User.ID, snowflake.MustParse(role))

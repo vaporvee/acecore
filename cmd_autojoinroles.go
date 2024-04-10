@@ -10,6 +10,11 @@ var cmd_autojoinroles Command = Command{
 	Definition: discord.SlashCommandCreate{
 		Name:        "autojoinroles",
 		Description: "Give users a role when they join",
+		Contexts: []discord.InteractionContextType{
+			discord.InteractionContextTypeGuild,
+			discord.InteractionContextTypePrivateChannel},
+		IntegrationTypes: []discord.ApplicationIntegrationType{
+			discord.ApplicationIntegrationTypeGuildInstall},
 		Options: []discord.ApplicationCommandOption{
 			&discord.ApplicationCommandOptionSubCommand{
 				Name:        "bot",

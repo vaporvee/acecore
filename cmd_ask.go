@@ -10,6 +10,15 @@ var cmd_ask = Command{
 	Definition: discord.SlashCommandCreate{
 		Name:        "ask",
 		Description: "Ask anything and get a gif as response!",
+		Contexts: []discord.InteractionContextType{
+			discord.InteractionContextTypeGuild,
+			discord.InteractionContextTypePrivateChannel,
+			discord.InteractionContextTypeBotDM,
+		},
+		IntegrationTypes: []discord.ApplicationIntegrationType{
+			discord.ApplicationIntegrationTypeGuildInstall,
+			discord.ApplicationIntegrationTypeUserInstall,
+		},
 		Options: []discord.ApplicationCommandOption{
 			&discord.ApplicationCommandOptionString{
 				Name:        "question",
@@ -26,5 +35,4 @@ var cmd_ask = Command{
 			logrus.Error(err)
 		}
 	},
-	AllowDM: true,
 }

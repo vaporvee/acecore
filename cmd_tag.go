@@ -7,11 +7,17 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// TODO: make user installable tag command using userIDs instead of guildIDs
 var cmd_tag Command = Command{
 	Definition: discord.SlashCommandCreate{
 		Name:                     "tag",
 		DefaultMemberPermissions: json.NewNullablePtr(discord.PermissionManageGuild),
 		Description:              "A command to show and edit saved presaved messages.",
+		Contexts: []discord.InteractionContextType{
+			discord.InteractionContextTypeGuild,
+			discord.InteractionContextTypePrivateChannel},
+		IntegrationTypes: []discord.ApplicationIntegrationType{
+			discord.ApplicationIntegrationTypeGuildInstall},
 		Options: []discord.ApplicationCommandOption{
 			discord.ApplicationCommandOptionSubCommand{
 				Name:        "get",
@@ -80,6 +86,11 @@ var cmd_tag_short Command = Command{
 	Definition: discord.SlashCommandCreate{
 		Name:        "g",
 		Description: "A short command to get presaved messages.",
+		Contexts: []discord.InteractionContextType{
+			discord.InteractionContextTypeGuild,
+			discord.InteractionContextTypePrivateChannel},
+		IntegrationTypes: []discord.ApplicationIntegrationType{
+			discord.ApplicationIntegrationTypeGuildInstall},
 		Options: []discord.ApplicationCommandOption{
 			discord.ApplicationCommandOptionString{
 				Name:         "tag",
@@ -101,6 +112,11 @@ var context_tag Command = Command{
 	Definition: discord.MessageCommandCreate{
 		Name:                     "Save as tag",
 		DefaultMemberPermissions: json.NewNullablePtr(discord.PermissionManageGuild),
+		Contexts: []discord.InteractionContextType{
+			discord.InteractionContextTypeGuild,
+			discord.InteractionContextTypePrivateChannel},
+		IntegrationTypes: []discord.ApplicationIntegrationType{
+			discord.ApplicationIntegrationTypeGuildInstall},
 	},
 	Interact: func(e *events.ApplicationCommandInteractionCreate) {
 		AddTagCommand(e)

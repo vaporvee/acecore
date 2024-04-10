@@ -14,6 +14,15 @@ var cmd_ping Command = Command{
 	Definition: discord.SlashCommandCreate{
 		Name:        "ping",
 		Description: "Returns the ping of the bot",
+		Contexts: []discord.InteractionContextType{
+			discord.InteractionContextTypeGuild,
+			discord.InteractionContextTypePrivateChannel,
+			discord.InteractionContextTypeBotDM,
+		},
+		IntegrationTypes: []discord.ApplicationIntegrationType{
+			discord.ApplicationIntegrationTypeGuildInstall,
+			discord.ApplicationIntegrationTypeUserInstall,
+		},
 	},
 	Interact: func(e *events.ApplicationCommandInteractionCreate) {
 		start := time.Now()
@@ -51,5 +60,4 @@ var cmd_ping Command = Command{
 			logrus.Error(err)
 		}
 	},
-	AllowDM: true,
 }

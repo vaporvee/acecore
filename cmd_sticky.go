@@ -13,6 +13,11 @@ var cmd_sticky Command = Command{
 		Name:                     "sticky",
 		Description:              "Stick or unstick messages to the bottom of the current channel",
 		DefaultMemberPermissions: json.NewNullablePtr(discord.PermissionManageMessages),
+		Contexts: []discord.InteractionContextType{
+			discord.InteractionContextTypeGuild,
+			discord.InteractionContextTypePrivateChannel},
+		IntegrationTypes: []discord.ApplicationIntegrationType{
+			discord.ApplicationIntegrationTypeGuildInstall},
 		Options: []discord.ApplicationCommandOption{
 			&discord.ApplicationCommandOptionString{
 				Name:        "message",
@@ -53,6 +58,11 @@ var context_sticky Command = Command{
 	Definition: discord.MessageCommandCreate{
 		Name:                     "Stick to channel",
 		DefaultMemberPermissions: json.NewNullablePtr(discord.PermissionManageMessages),
+		Contexts: []discord.InteractionContextType{
+			discord.InteractionContextTypeGuild,
+			discord.InteractionContextTypePrivateChannel},
+		IntegrationTypes: []discord.ApplicationIntegrationType{
+			discord.ApplicationIntegrationTypeGuildInstall},
 	},
 	Interact: func(e *events.ApplicationCommandInteractionCreate) {
 		inputStickyMessage(e)

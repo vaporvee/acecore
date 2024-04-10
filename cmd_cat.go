@@ -14,6 +14,15 @@ var cmd_cat = Command{
 	Definition: discord.SlashCommandCreate{
 		Name:        "cat",
 		Description: "Random cat pictures",
+		Contexts: []discord.InteractionContextType{
+			discord.InteractionContextTypeGuild,
+			discord.InteractionContextTypePrivateChannel,
+			discord.InteractionContextTypeBotDM,
+		},
+		IntegrationTypes: []discord.ApplicationIntegrationType{
+			discord.ApplicationIntegrationTypeGuildInstall,
+			discord.ApplicationIntegrationTypeUserInstall,
+		},
 	},
 	Interact: func(e *events.ApplicationCommandInteractionCreate) {
 		cat, err := GetCatImageURL()
@@ -26,7 +35,6 @@ var cmd_cat = Command{
 			}
 		}
 	},
-	AllowDM: true,
 }
 
 type CatImage struct {

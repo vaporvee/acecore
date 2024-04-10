@@ -10,6 +10,11 @@ var cmd_autopublish Command = Command{
 	Definition: discord.SlashCommandCreate{
 		Name:        "autopublish",
 		Description: "Toggle automatically publishing every post in a announcement channel",
+		Contexts: []discord.InteractionContextType{
+			discord.InteractionContextTypeGuild,
+			discord.InteractionContextTypePrivateChannel},
+		IntegrationTypes: []discord.ApplicationIntegrationType{
+			discord.ApplicationIntegrationTypeGuildInstall},
 	},
 	Interact: func(e *events.ApplicationCommandInteractionCreate) {
 		channel := e.Channel()

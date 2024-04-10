@@ -42,6 +42,15 @@ var cmd_userinfo Command = Command{
 	Definition: discord.SlashCommandCreate{
 		Name:        "info",
 		Description: "Gives you information about a user or this bot.",
+		Contexts: []discord.InteractionContextType{
+			discord.InteractionContextTypeGuild,
+			discord.InteractionContextTypePrivateChannel,
+			discord.InteractionContextTypeBotDM,
+		},
+		IntegrationTypes: []discord.ApplicationIntegrationType{
+			discord.ApplicationIntegrationTypeGuildInstall,
+			discord.ApplicationIntegrationTypeUserInstall,
+		},
 		Options: []discord.ApplicationCommandOption{
 			&discord.ApplicationCommandOptionSubCommand{
 				Name:        "user",
@@ -92,7 +101,7 @@ var cmd_userinfo Command = Command{
 				embedBuilder.AddField("Discriminator", user.Discriminator, false)
 			}
 			if user.AccentColor != nil {
-				embedBuilder.AddField("Accent color", strconv.Itoa(*user.AccentColor), true)
+				embedBuilder.AddField("Accent color", "#"+strconv.FormatInt(int64(*user.AccentColor), 16), true)
 			}
 			if user.AvatarDecorationURL() != nil {
 				value := fmt.Sprintf("[PNG (animated)](%s)\n[PNG](%s)", *user.AvatarDecorationURL(), *user.AvatarDecorationURL()+"?passthrough=false")
@@ -119,7 +128,6 @@ var cmd_userinfo Command = Command{
 		}
 
 	},
-	AllowDM: true,
 }
 
 func checkDefaultPb(user discord.User) string {
