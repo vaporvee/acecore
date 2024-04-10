@@ -63,8 +63,11 @@ var cmd_userinfo Command = Command{
 	Interact: func(e *events.ApplicationCommandInteractionCreate) {
 		switch *e.SlashCommandInteractionData().SubCommandName {
 		case "user":
-			var user discord.User = e.SlashCommandInteractionData().User("user")
-			var userHasFlags string = fetchFlagStrings(user)
+			user, err := e.Client().Rest().GetUser(e.SlashCommandInteractionData().User("user").ID)
+			if err != nil {
+				logrus.Error(err)
+			}
+			var userHasFlags string = fetchFlagStrings(*user)
 			var userType string = "User"
 			if user.Bot {
 				userType = "Unverified Bot"
@@ -75,7 +78,7 @@ var cmd_userinfo Command = Command{
 				userType = "System"
 			}
 			embedBuilder := discord.NewEmbedBuilder()
-			embedBuilder.SetThumbnail(checkDefaultPb(user))
+			embedBuilder.SetThumbnail(checkDefaultPb(*user) + "?size=4096")
 			embedBuilder.AddField("ID", user.ID.String(), false)
 			embedBuilder.AddField("Type", userType, true)
 			if user.GlobalName != nil {
@@ -99,14 +102,12 @@ var cmd_userinfo Command = Command{
 			embedBuilder.AddField("Created at", creation, false)
 
 			if user.BannerURL() != nil {
-				value := fmt.Sprint(*user.BannerURL())
-				embedBuilder.SetImage(value)
+				embedBuilder.SetImage(*user.BannerURL() + "?size=4096")
 			}
 			embedBuilder.SetTitle("User info")
 			embedBuilder.SetDescription(user.Mention())
 			embedBuilder.SetColor(hexToDecimal(color["primary"]))
-			embedBuilder.SetFooterText("Currently a bit broken because of Discord's constant user API changes")
-			err := e.CreateMessage(discord.NewMessageCreateBuilder().
+			err = e.CreateMessage(discord.NewMessageCreateBuilder().
 				SetEmbeds(embedBuilder.Build()).
 				Build())
 			if err != nil {

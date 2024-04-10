@@ -111,8 +111,8 @@ var cmd_form Command = Command{
 			if overwriteTitle != "" {
 				title = overwriteTitle
 			}
-			if data.Channel("accept_channel").ID.String() != "0" {
-				acceptChannelID = data.Channel("accept_channel").ID.String()
+			if data.Channel("approve_channel").ID.String() != "0" {
+				acceptChannelID = data.Channel("approve_channel").ID.String()
 			}
 			modsCanAnswer = data.Bool("mods_can_answer")
 
@@ -250,23 +250,16 @@ var cmd_form Command = Command{
 						Build())
 				}
 			} else {
+				logrus.Debug(result.AcceptChannelID)
 				if result.AcceptChannelID == "" {
-					var buttons []discord.ButtonComponent
-					var components []discord.ContainerComponent
-					if result.CommentCategoryID != "" {
-						buttons = []discord.ButtonComponent{discord.
-							NewButton(discord.ButtonStylePrimary, "Comment", "form:"+form_manage_id+";comment", "").
-							WithEmoji(discord.ComponentEmoji{Name: "👥"})}
-						for _, button := range buttons {
-							components = append(components, discord.NewActionRow(button))
-						}
-					}
 					_, err := e.Client().Rest().CreateMessage(snowflake.MustParse(result.ResultChannelID), discord.NewMessageCreateBuilder().
 						SetEmbeds(discord.NewEmbedBuilder().
 							SetAuthorName(*e.User().GlobalName).SetAuthorIcon(*e.User().AvatarURL()).SetTitle("\""+modal.Title+"\"").SetDescription("This is the submitted result").
 							SetColor(hexToDecimal(color["primary"])).SetFields(fields...).
 							Build()).
-						SetContainerComponents(components...).
+						SetContainerComponents(discord.NewActionRow(discord.
+							NewButton(discord.ButtonStylePrimary, "Comment", "form:"+form_manage_id+";comment", "").
+							WithEmoji(discord.ComponentEmoji{Name: "👥"}))).
 						Build())
 					if err != nil {
 						logrus.Error(err)
@@ -277,28 +270,25 @@ var cmd_form Command = Command{
 						}
 					}
 				} else {
-					var buttons []discord.ButtonComponent
+					logrus.Debug("HEERE")
+					var buttons []discord.InteractiveComponent
 					if result.CommentCategoryID != "" {
-						buttons = []discord.ButtonComponent{discord.
+						buttons = []discord.InteractiveComponent{discord.
 							NewButton(discord.ButtonStylePrimary, "Comment", "form:"+form_manage_id+";comment", "").
 							WithEmoji(discord.ComponentEmoji{Name: "👥"})}
 					}
 					buttons = append(buttons, discord.
-						NewButton(discord.ButtonStylePrimary, "Decline", "form:"+form_manage_id+";decline", "").
+						NewButton(discord.ButtonStyleDanger, "Decline", "form:"+form_manage_id+";decline", "").
 						WithEmoji(discord.ComponentEmoji{Name: "🛑"}),
 						discord.
-							NewButton(discord.ButtonStylePrimary, "Approve", "form:"+form_manage_id+";approve", "").
+							NewButton(discord.ButtonStyleSuccess, "Approve", "form:"+form_manage_id+";approve", "").
 							WithEmoji(discord.ComponentEmoji{Name: "🎉"}))
-					var components []discord.ContainerComponent
-					for _, button := range buttons {
-						components = append(components, discord.NewActionRow(button))
-					}
 					_, err := e.Client().Rest().CreateMessage(snowflake.MustParse(result.AcceptChannelID), discord.NewMessageCreateBuilder().
 						SetEmbeds(discord.NewEmbedBuilder().
 							SetAuthorName(*e.User().GlobalName).SetAuthorIcon(*e.User().AvatarURL()).SetTitle("\""+modal.Title+"\"").SetDescription("**This submission needs approval.**").
 							SetColor(hexToDecimal(color["primary"])).SetFields(fields...).
 							Build()).
-						SetContainerComponents(components...).
+						SetContainerComponents(discord.NewActionRow(buttons...)).
 						Build())
 
 					if err != nil {
@@ -410,8 +400,8 @@ var cmd_ticket_form Command = Command{
 
 // moderator can be userID as well as  roleID
 func createFormComment(form_manage_id string, author snowflake.ID, moderator snowflake.ID, commentName string, embed discord.Embed, guildID snowflake.ID, client bot.Client) discord.Channel {
-	var category snowflake.ID
-	_, err := client.Rest().GetChannel(snowflake.MustParse(getFormResultValues(form_manage_id).CommentCategoryID))
+	var category snowflake.ID = snowflake.MustParse(getFormResultValues(form_manage_id).CommentCategoryID)
+	_, err := client.Rest().GetChannel(category)
 	if err != nil {
 		c, err := client.Rest().CreateGuildChannel(guildID, discord.GuildCategoryChannelCreate{Name: strings.Trim(embed.Title, "\"") + " mod " + commentName + "s"})
 		if err != nil {
@@ -456,6 +446,7 @@ func createFormComment(form_manage_id string, author snowflake.ID, moderator sno
 	if isIDRole(client, guildID, moderator) {
 		modTypeChar = "&"
 	}
+	embed.Description = "This was submitted"
 	_, err = client.Rest().CreateMessage(ch.ID(), discord.NewMessageCreateBuilder().
 		SetContent("<@"+modTypeChar+moderator.String()+"> <@"+author.String()+">").SetEmbeds(embed).
 		Build())
