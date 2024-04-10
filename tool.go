@@ -140,8 +140,6 @@ func getHighestRole(guildID string, c bot.Client) (*discord.Role, error) {
 	return highestRole, nil
 }
 
-func ptr(s string) *string { return &s }
-
 func hexToDecimal(hexColor string) int {
 	hexColor = strings.TrimPrefix(hexColor, "#")
 	decimal, err := strconv.ParseInt(hexColor, 16, 64)
@@ -149,11 +147,6 @@ func hexToDecimal(hexColor string) int {
 		return 0
 	}
 	return int(decimal)
-}
-
-func decimalToHex(decimal int) string {
-	hexString := strconv.FormatInt(int64(decimal), 16)
-	return hexString
 }
 
 func simpleGetFromAPI(key string, url string) interface{} {
