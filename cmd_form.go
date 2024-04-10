@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/bwmarrin/discordgo"
+	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/json"
@@ -98,19 +98,22 @@ var cmd_form Command = Command{
 			var title, formID, overwriteTitle, acceptChannelID string
 			var modsCanAnswer bool
 			var resultChannelID string
-			moderator := e.Member().User.ID.String()
 			data := e.SlashCommandInteractionData()
-			resultChannelID = data.Channel("result_channel").ID.String()
-			moderator = data.Role("moderator").ID.String()
-			if moderator == "" {
-				moderator = data.User("moderator").ID.String()
+			if data.Channel("result_channel").ID.String() != "0" {
+				resultChannelID = data.Channel("result_channel").ID.String()
+			}
+			moderator := data.Role("moderator").ID.String()
+			if moderator == "0" {
+				moderator = e.User().ID.String()
 			}
 			formID = data.String("type")
 			overwriteTitle = data.String("title")
 			if overwriteTitle != "" {
 				title = overwriteTitle
 			}
-			acceptChannelID = data.Channel("accept_channel").ID.String()
+			if data.Channel("accept_channel").ID.String() != "0" {
+				acceptChannelID = data.Channel("accept_channel").ID.String()
+			}
 			modsCanAnswer = data.Bool("mods_can_answer")
 
 			if formID == "" {
@@ -153,6 +156,7 @@ var cmd_form Command = Command{
 				}
 				category = c.ID().String()
 			}
+
 			addFormButton(e.GuildID().String(), e.Channel().ID().String(), message.ID.String(), formManageID.String(), formID, resultChannelID, overwriteTitle, acceptChannelID, category, moderator)
 			err = e.CreateMessage(discord.NewMessageCreateBuilder().SetContent("Successfully added form button!").SetEphemeral(true).Build())
 			if err != nil {
@@ -175,7 +179,7 @@ var cmd_form Command = Command{
 					e.CreateMessage(discord.NewMessageCreateBuilder().SetContent("Submission declined!").SetEphemeral(true).Build())
 				case "approve":
 					embed := e.Message.Embeds[0]
-					embed.Description = fmt.Sprintf("This submission was approved by <@%s>.", e.Member().User.ID)
+					embed.Description = fmt.Sprintf("This submission was approved by <@%s>.", e.User().ID)
 					_, err := e.Client().Rest().CreateMessage(snowflake.MustParse(getFormResultValues(form_manage_id).ResultChannelID), discord.NewMessageCreateBuilder().
 						SetEmbeds(embed).
 						Build())
@@ -190,149 +194,117 @@ var cmd_form Command = Command{
 				case "comment":
 					author := strings.TrimSuffix(strings.Split(e.Message.Embeds[0].Fields[len(e.Message.Embeds[0].Fields)-1].Value, "<@")[1], ">")
 					embed := e.Message.Embeds[0]
-					moderator := e.Member().User.ID
-					createFormComment(form_manage_id, author, moderator, "answer", embed, e)
+					moderator := e.User().ID
+					channel := createFormComment(form_manage_id, snowflake.MustParse(author), moderator, "answer", embed, *e.GuildID(), e.Client())
+					e.CreateMessage(discord.NewMessageCreateBuilder().SetContent("Created channel " + discord.ChannelMention(channel.ID())).SetEphemeral(true).Build())
 				}
 			} else {
-				if strings.HasPrefix(i.Interaction.MessageComponentData().CustomID, "form:") {
-					var formManageID string = strings.TrimPrefix(i.Interaction.MessageComponentData().CustomID, "form:")
-					jsonStringShowModal(i.Interaction, i.Interaction.MessageComponentData().CustomID, getFormType(formManageID), getFormOverwriteTitle(formManageID))
-				} else if i.Interaction.MessageComponentData().CustomID == "form_demo" {
-					jsonStringShowModal(i.Interaction, "form_demo", "form_demo")
+				if strings.HasPrefix(e.ButtonInteractionData().CustomID(), "form:") {
+					var formManageID string = strings.TrimPrefix(e.ButtonInteractionData().CustomID(), "form:")
+					e.Modal(jsonStringBuildModal(e.User().ID.String(), formManageID, getFormType(formManageID), getFormOverwriteTitle(formManageID)))
+				} else if e.ButtonInteractionData().CustomID() == "form_demo" {
+					e.Modal(jsonStringBuildModal(e.User().ID.String(), "form_demo", "form_demo"))
 				}
 			}
 		}
 	},
-	ModalSubmit: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		if !strings.HasPrefix(i.ModalSubmitData().CustomID, "form_demo") {
-			var form_manage_id string = strings.Split(i.ModalSubmitData().CustomID, ":")[1]
+	ModalSubmit: func(e *events.ModalSubmitInteractionCreate) {
+		if !strings.HasPrefix(e.Data.CustomID, "form_demo") {
+			var form_manage_id string = strings.Split(e.Data.CustomID, ":")[1]
 			var result FormResult = getFormResultValues(form_manage_id)
-			var fields []*discordgo.MessageEmbedField
+			var fields []discord.EmbedField
 			var modal ModalJson = getModalByFormID(getFormType(form_manage_id))
 			var overwrite_title string = getFormOverwriteTitle(form_manage_id)
 			if overwrite_title != "" {
 				modal.Title = overwrite_title
 			}
-			for index, component := range i.ModalSubmitData().Components {
-				var input *discordgo.TextInput = component.(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput)
-				fields = append(fields, &discordgo.MessageEmbedField{
+			var inline bool
+			var index int = 0
+			for _, component := range e.Data.Components {
+				var input discord.TextInputComponent = component.(discord.TextInputComponent)
+				inline = input.Style == discord.TextInputStyleShort
+				fields = append(fields, discord.EmbedField{
 					Name:   modal.Form[index].Label,
 					Value:  input.Value,
-					Inline: input.Style == discordgo.TextInputShort,
+					Inline: &inline,
 				})
+				index++
 			}
 
-			channel, _ := s.Channel(i.ChannelID)
-			fields = append(fields, &discordgo.MessageEmbedField{
-				Value: "From <#" + channel.ID + "> by <@" + i.Member.User.ID + ">",
+			fields = append(fields, discord.EmbedField{
+				Value: "From <#" + e.Channel().ID().String() + "> by " + e.User().Mention(),
 			})
 			if result.ResultChannelID == "" {
 				if result.CommentCategoryID != "" {
-					createFormComment(form_manage_id, i.Member.User.ID, result.ModeratorID, "answer", &discordgo.MessageEmbed{
-						Author: &discordgo.MessageEmbedAuthor{
-							Name:    i.Member.User.Username,
-							IconURL: i.Member.AvatarURL("256"),
-						},
-						Title:       "\"" + modal.Title + "\"",
-						Color:       hexToDecimal(color["primary"]),
-						Description: "This is the submitted result",
-						Fields:      fields,
-					}, i)
+					channel := createFormComment(form_manage_id, e.User().ID, snowflake.MustParse(result.ModeratorID), "answer", discord.NewEmbedBuilder().
+						SetAuthorName(*e.User().GlobalName).SetAuthorIcon(*e.User().AvatarURL()).SetTitle("\""+modal.Title+"\"").SetDescription("This is the submitted result").
+						SetColor(hexToDecimal(color["primary"])).SetFields(fields...).
+						Build(), *e.GuildID(), e.Client())
+					err := e.CreateMessage(discord.NewMessageCreateBuilder().SetContent("Created channel " + discord.ChannelMention(channel.ID())).SetEphemeral(true).Build())
+					if err != nil {
+						logrus.Error(err)
+					}
 				} else {
-					respond(i.Interaction, "You need to provide either a `result_channel` or enable `mods_can_answer` to create a valid form.", true)
+					e.CreateMessage(discord.NewMessageCreateBuilder().
+						SetContent("You need to provide either a `result_channel` or enable `mods_can_answer` to create a valid form.").SetEphemeral(true).
+						Build())
 				}
 			} else {
 				if result.AcceptChannelID == "" {
-					var buttons []discordgo.MessageComponent
+					var buttons []discord.ButtonComponent
+					var components []discord.ContainerComponent
 					if result.CommentCategoryID != "" {
-						buttons = []discordgo.MessageComponent{
-							discordgo.ActionsRow{
-								Components: []discordgo.MessageComponent{
-									discordgo.Button{
-										Style: discordgo.PrimaryButton,
-										Emoji: discordgo.ComponentEmoji{
-											Name: "👥",
-										},
-										Label:    "Comment",
-										CustomID: "form:" + form_manage_id + ";comment",
-									},
-								},
-							},
+						buttons = []discord.ButtonComponent{discord.
+							NewButton(discord.ButtonStylePrimary, "Comment", "form:"+form_manage_id+";comment", "").
+							WithEmoji(discord.ComponentEmoji{Name: "👥"})}
+						for _, button := range buttons {
+							components = append(components, discord.NewActionRow(button))
 						}
 					}
-					_, err := s.ChannelMessageSendComplex(result.ResultChannelID, &discordgo.MessageSend{
-						Embed: &discordgo.MessageEmbed{
-							Author: &discordgo.MessageEmbedAuthor{
-								Name:    i.Member.User.Username,
-								IconURL: i.Member.AvatarURL("256"),
-							},
-							Title:       "\"" + modal.Title + "\"",
-							Color:       hexToDecimal(color["primary"]),
-							Description: "This is the submitted result",
-							Fields:      fields,
-						},
-						Components: buttons,
-					})
+					_, err := e.Client().Rest().CreateMessage(snowflake.MustParse(result.ResultChannelID), discord.NewMessageCreateBuilder().
+						SetEmbeds(discord.NewEmbedBuilder().
+							SetAuthorName(*e.User().GlobalName).SetAuthorIcon(*e.User().AvatarURL()).SetTitle("\""+modal.Title+"\"").SetDescription("This is the submitted result").
+							SetColor(hexToDecimal(color["primary"])).SetFields(fields...).
+							Build()).
+						SetContainerComponents(components...).
+						Build())
 					if err != nil {
 						logrus.Error(err)
 					} else {
-						err = respond(i.Interaction, "Submited!", true)
+						err = e.CreateMessage(discord.NewMessageCreateBuilder().SetContent("Submitted!").SetEphemeral(true).Build())
 						if err != nil {
 							logrus.Error(err)
 						}
 					}
 				} else {
-					var buttons []discordgo.MessageComponent
+					var buttons []discord.ButtonComponent
 					if result.CommentCategoryID != "" {
-						buttons = []discordgo.MessageComponent{
-							discordgo.Button{
-								Style: discordgo.PrimaryButton,
-								Emoji: discordgo.ComponentEmoji{
-									Name: "👥",
-								},
-								Label:    "Comment",
-								CustomID: "form:" + form_manage_id + ";comment",
-							},
-						}
+						buttons = []discord.ButtonComponent{discord.
+							NewButton(discord.ButtonStylePrimary, "Comment", "form:"+form_manage_id+";comment", "").
+							WithEmoji(discord.ComponentEmoji{Name: "👥"})}
 					}
-					buttons = append(buttons,
-						discordgo.Button{
-							Style: discordgo.DangerButton,
-							Emoji: discordgo.ComponentEmoji{
-								Name: "🛑",
-							},
-							Label:    "Decline",
-							CustomID: "form:" + form_manage_id + ";decline",
-						},
-						discordgo.Button{
-							Style: discordgo.SuccessButton,
-							Emoji: discordgo.ComponentEmoji{
-								Name: "🎉",
-							},
-							Label:    "Approve",
-							CustomID: "form:" + form_manage_id + ";approve",
-						})
-					_, err := s.ChannelMessageSendComplex(result.AcceptChannelID, &discordgo.MessageSend{
-						Embed: &discordgo.MessageEmbed{
-							Author: &discordgo.MessageEmbedAuthor{
-								Name:    i.Member.User.Username,
-								IconURL: i.Member.AvatarURL("256"),
-							},
-							Title:       "\"" + modal.Title + "\"",
-							Color:       hexToDecimal(color["primary"]),
-							Description: "**This submission needs approval.**",
-							Fields:      fields,
-						},
-						Components: []discordgo.MessageComponent{
-							discordgo.ActionsRow{
-								Components: buttons,
-							},
-						}},
-					)
+					buttons = append(buttons, discord.
+						NewButton(discord.ButtonStylePrimary, "Decline", "form:"+form_manage_id+";decline", "").
+						WithEmoji(discord.ComponentEmoji{Name: "🛑"}),
+						discord.
+							NewButton(discord.ButtonStylePrimary, "Approve", "form:"+form_manage_id+";approve", "").
+							WithEmoji(discord.ComponentEmoji{Name: "🎉"}))
+					var components []discord.ContainerComponent
+					for _, button := range buttons {
+						components = append(components, discord.NewActionRow(button))
+					}
+					_, err := e.Client().Rest().CreateMessage(snowflake.MustParse(result.AcceptChannelID), discord.NewMessageCreateBuilder().
+						SetEmbeds(discord.NewEmbedBuilder().
+							SetAuthorName(*e.User().GlobalName).SetAuthorIcon(*e.User().AvatarURL()).SetTitle("\""+modal.Title+"\"").SetDescription("**This submission needs approval.**").
+							SetColor(hexToDecimal(color["primary"])).SetFields(fields...).
+							Build()).
+						SetContainerComponents(components...).
+						Build())
+
 					if err != nil {
 						logrus.Error(err)
 					} else {
-						err = respond(i.Interaction, "Submited!", true)
+						err = e.CreateMessage(discord.NewMessageCreateBuilder().SetContent("Submitted!").SetEphemeral(true).Build())
 						if err != nil {
 							logrus.Error(err)
 						}
@@ -340,32 +312,26 @@ var cmd_form Command = Command{
 				}
 			}
 		} else {
-			err := respond(i.Interaction, "The results would be submited...", true)
+			err := e.CreateMessage(discord.NewMessageCreateBuilder().SetContent("The results would be submited...").SetEphemeral(true).Build())
 			if err != nil {
 				logrus.Error(err)
 			}
 		}
 
 	},
-	Autocomplete: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		choices := []*discordgo.ApplicationCommandOptionChoice{
-			{
+	Autocomplete: func(e *events.AutocompleteInteractionCreate) {
+		err := e.AutocompleteResult([]discord.AutocompleteChoice{
+			&discord.AutocompleteChoiceString{
 				Name:  "Support Ticket",
 				Value: "template_ticket",
 			},
-			{
+			&discord.AutocompleteChoiceString{
 				Name:  "Submit URL",
 				Value: "template_url",
 			},
-			{
+			&discord.AutocompleteChoiceString{
 				Name:  "General",
 				Value: "template_general",
-			},
-		}
-		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionApplicationCommandAutocompleteResult,
-			Data: &discordgo.InteractionResponseData{
-				Choices: choices,
 			},
 		})
 		if err != nil {
@@ -375,41 +341,31 @@ var cmd_form Command = Command{
 }
 
 var cmd_ticket_form Command = Command{
-	Definition: discordgo.ApplicationCommand{
+	Definition: discord.SlashCommandCreate{
 		Name:                     "ticket",
-		DefaultMemberPermissions: int64Ptr(discordgo.PermissionManageChannels),
+		DefaultMemberPermissions: json.NewNullablePtr(discord.PermissionManageChannels),
 		Description:              "A quick command to create Ticketpanels. (/form for more)",
-		Options: []*discordgo.ApplicationCommandOption{
-			{
-				Type:        discordgo.ApplicationCommandOptionString,
+		Options: []discord.ApplicationCommandOption{
+			&discord.ApplicationCommandOptionString{
 				Name:        "title",
 				Description: "The title the ticket should have",
 			},
-			{
-				Type:        discordgo.ApplicationCommandOptionMentionable,
+			&discord.ApplicationCommandOptionMentionable{
 				Name:        "moderator",
 				Description: "Who can interact with moderating buttons.",
 			},
 		},
 	},
-	Interact: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	Interact: func(e *events.ApplicationCommandInteractionCreate) {
 		var title string = "Ticket"
 		var moderator string
-		if i.ApplicationCommandData().Options != nil {
-			for _, opt := range i.ApplicationCommandData().Options {
-				switch opt.Name {
-				case "title":
-					title = opt.StringValue()
-				case "moderator":
-					moderator = opt.RoleValue(s, i.GuildID).ID
-					if moderator == "" {
-						moderator = opt.UserValue(s).ID
-					}
-				}
-			}
+		data := e.SlashCommandInteractionData()
+		if data.String("title") != "" {
+			title = data.String("title")
 		}
+		moderator = data.Role("moderator").ID.String()
 		if moderator == "" {
-			moderator = i.Member.User.ID
+			moderator = data.User("moderator").ID.String()
 		}
 		var exists bool = true
 		var formManageID uuid.UUID = uuid.New()
@@ -417,29 +373,16 @@ var cmd_ticket_form Command = Command{
 			formManageID = uuid.New()
 			exists = getFormManageIdExists(formManageID)
 		}
-		message, err := s.ChannelMessageSendComplex(i.ChannelID, &discordgo.MessageSend{
-			Embed: &discordgo.MessageEmbed{
-				Color:       hexToDecimal(color["primary"]),
-				Title:       title,
-				Description: "Press the bottom button to open a form popup.",
-			},
-			Components: []discordgo.MessageComponent{
-				discordgo.ActionsRow{
-					Components: []discordgo.MessageComponent{
-						discordgo.Button{
-							CustomID: "form:" + formManageID.String(),
-							Style:    discordgo.SuccessButton,
-							Label:    "Submit",
-							Emoji: discordgo.ComponentEmoji{
-								Name:     "anim_rocket",
-								ID:       "1215740398706757743",
-								Animated: true,
-							},
-						},
-					},
-				},
-			},
-		})
+		messagebuild := discord.NewMessageCreateBuilder().SetEmbeds(discord.NewEmbedBuilder().
+			SetTitle(title).SetDescription("Press the bottom button to open a form popup.").SetColor(hexToDecimal(color["primary"])).
+			Build()).SetContainerComponents(discord.ActionRowComponent{
+			discord.NewSuccessButton("Submit", "form:"+formManageID.String()).WithEmoji(discord.ComponentEmoji{
+				Name:     "anim_rocket",
+				ID:       snowflake.MustParse("1215740398706757743"),
+				Animated: true,
+			})}).
+			Build()
+		message, err := e.Client().Rest().CreateMessage(e.Channel().ID(), messagebuild)
 		if err != nil {
 			logrus.Error(err)
 			return
@@ -448,17 +391,17 @@ var cmd_ticket_form Command = Command{
 			title = "Ticket"
 		}
 		var category string
-		c, err := s.GuildChannelCreate(i.GuildID, title+" mod answers", discordgo.ChannelTypeGuildCategory)
+		c, err := e.Client().Rest().CreateGuildChannel(*e.GuildID(), discord.GuildCategoryChannelCreate{Name: title + " mod answers"})
 		if err != nil {
 			logrus.Error(err)
 		}
-		category = c.ID
+		category = c.ID().String()
 		if title == "Ticket" {
 			title = ""
 		}
 
-		addFormButton(i.GuildID, i.ChannelID, message.ID, formManageID.String(), "template_ticket", "", title, "", category, moderator)
-		err = respond(i.Interaction, "Successfully added ticket panel!\n(`/form` for more options or custom ticket forms.)", true)
+		addFormButton(e.GuildID().String(), e.Channel().ID().String(), message.ID.String(), formManageID.String(), "template_ticket", "", title, "", category, moderator)
+		err = e.CreateMessage(discord.NewMessageCreateBuilder().SetContent("Successfully added ticket panel!\n(`/form` for more options or custom ticket forms.)").SetEphemeral(true).Build())
 		if err != nil {
 			logrus.Error(err)
 		}
@@ -466,53 +409,60 @@ var cmd_ticket_form Command = Command{
 }
 
 // moderator can be userID as well as  roleID
-func createFormComment(form_manage_id string, author string, moderator snowflake.ID, commentName string, embed discord.Embed, e *events.ComponentInteractionCreate) {
+func createFormComment(form_manage_id string, author snowflake.ID, moderator snowflake.ID, commentName string, embed discord.Embed, guildID snowflake.ID, client bot.Client) discord.Channel {
 	var category snowflake.ID
-	_, err := e.Client().Rest().GetChannel(snowflake.MustParse(getFormResultValues(form_manage_id).CommentCategoryID))
+	_, err := client.Rest().GetChannel(snowflake.MustParse(getFormResultValues(form_manage_id).CommentCategoryID))
 	if err != nil {
-		c, err := e.Client().Rest().CreateGuildChannel(*e.GuildID(), discord.GuildCategoryChannelCreate{Name: strings.Trim(embed.Title, "\"") + " mod " + commentName + "s"})
+		c, err := client.Rest().CreateGuildChannel(guildID, discord.GuildCategoryChannelCreate{Name: strings.Trim(embed.Title, "\"") + " mod " + commentName + "s"})
 		if err != nil {
 			logrus.Error(err)
 		}
 		category = c.ID()
 		updateFormCommentCategory(form_manage_id, category.String())
 	}
-	ch, err := e.Client().Rest().CreateGuildChannel(*e.GuildID(), discord.GuildTextChannelCreate{
+	ch, err := client.Rest().CreateGuildChannel(guildID, discord.GuildTextChannelCreate{
 		ParentID: category,
 		Name:     strings.ToLower(embed.Author.Name) + "-" + commentName,
 	})
 	if err != nil {
 		logrus.Error(err)
 	}
-	err = bot.ChannelPermissionSet(ch.ID, i.GuildID, discordgo.PermissionOverwriteTypeRole, 0, discordgo.PermissionViewChannel)
-	_, err = e.Client().Rest().UpdateChannel(ch.ID(), discord.GuildTextChannelUpdate{PermissionOverwrites: &[]discord.PermissionOverwrite{}})
-	if err != nil {
-		logrus.Error(err)
+	var permissionOverwrites []discord.PermissionOverwrite = []discord.PermissionOverwrite{
+		discord.RolePermissionOverwrite{
+			RoleID: guildID,
+			Deny:   discord.PermissionViewChannel,
+		}}
+
+	if isIDRole(client, guildID, moderator) {
+		permissionOverwrites = append(permissionOverwrites, discord.RolePermissionOverwrite{
+			RoleID: moderator,
+			Allow:  discord.PermissionViewChannel,
+		})
+	} else {
+		permissionOverwrites = append(permissionOverwrites, discord.MemberPermissionOverwrite{
+			UserID: moderator,
+			Allow:  discord.PermissionViewChannel,
+		})
 	}
-	modType := discordgo.PermissionOverwriteTypeMember
-	if isIDRole(i.GuildID, moderator) {
-		modType = discordgo.PermissionOverwriteTypeRole
-	}
-	err = bot.ChannelPermissionSet(ch.ID, moderator, modType, discordgo.PermissionViewChannel, 0)
-	if err != nil {
-		logrus.Error(err)
-	}
-	err = bot.ChannelPermissionSet(ch.ID, author, discordgo.PermissionOverwriteTypeMember, discordgo.PermissionViewChannel, 0)
-	if err != nil {
-		logrus.Error(err)
-	}
-	modTypeChar := "&"
-	if modType == discordgo.PermissionOverwriteTypeMember {
-		modTypeChar = ""
-	}
-	_, err = bot.ChannelMessageSendComplex(ch.ID, &discordgo.MessageSend{
-		Content: "<@" + modTypeChar + moderator + "> <@" + author + ">",
-		Embed:   embed,
+	permissionOverwrites = append(permissionOverwrites, discord.RolePermissionOverwrite{
+		RoleID: author,
+		Allow:  discord.PermissionViewChannel,
 	})
+	_, err = client.Rest().UpdateChannel(ch.ID(), discord.GuildTextChannelUpdate{PermissionOverwrites: &permissionOverwrites})
 	if err != nil {
 		logrus.Error(err)
 	}
-	respond(i.Interaction, "Created channel <#"+ch.ID+">", true)
+	modTypeChar := ""
+	if isIDRole(client, guildID, moderator) {
+		modTypeChar = "&"
+	}
+	_, err = client.Rest().CreateMessage(ch.ID(), discord.NewMessageCreateBuilder().
+		SetContent("<@"+modTypeChar+moderator.String()+"> <@"+author.String()+">").SetEmbeds(embed).
+		Build())
+	if err != nil {
+		logrus.Error(err)
+	}
+	return ch
 }
 
 func getFormButtonIDs() []string {

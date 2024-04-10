@@ -51,7 +51,7 @@ func noNullString(in interface{}) string {
 	return s
 }
 
-func jsonStringShowModal(userID string, manageID string, formID string, overwrite ...string) discord.InteractionResponse {
+func jsonStringBuildModal(userID string, manageID string, formID string, overwrite ...string) discord.ModalCreate {
 	var modal ModalJson = getModalByFormID(formID)
 	var components []discord.ContainerComponent
 	for index, component := range modal.Form {
@@ -76,13 +76,10 @@ func jsonStringShowModal(userID string, manageID string, formID string, overwrit
 		modal.Title = overwrite[0]
 	}
 
-	return discord.InteractionResponse{
-		Type: discord.InteractionResponseTypeModal,
-		Data: &discord.ModalCreate{
-			CustomID:   manageID + ":" + userID,
-			Title:      modal.Title,
-			Components: components,
-		},
+	return discord.ModalCreate{
+		CustomID:   "form:" + manageID + ":" + userID,
+		Title:      modal.Title,
+		Components: components,
 	}
 
 }
@@ -94,6 +91,9 @@ var formTemplates embed.FS
 
 func getModalByFormID(formID string) ModalJson {
 	var modal ModalJson
+	if formID == "" {
+		return modal
+	}
 	entries, err := formTemplates.ReadDir("form_templates")
 	if err != nil {
 		logrus.Error(err)

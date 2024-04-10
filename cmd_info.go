@@ -92,14 +92,15 @@ var cmd_userinfo Command = Command{
 				embedBuilder.AddField("Accent color", strconv.Itoa(*user.AccentColor), true)
 			}
 			if user.AvatarDecorationURL() != nil {
-				decoration := strings.TrimSuffix(*user.AvatarDecorationURL(), ".gif")
-				value := fmt.Sprintf("[PNG (animated)](%s)\n[PNG](%s)", decoration, decoration+"?passthrough=false")
+				value := fmt.Sprintf("[PNG (animated)](%s)\n[PNG](%s)", *user.AvatarDecorationURL(), *user.AvatarDecorationURL()+"?passthrough=false")
 				embedBuilder.AddField("Avatar decoration", value, true)
 			}
 			creation := "<:discord_member:1224717530078253166> " + discord.TimestampStyleLongDateTime.FormatTime(user.CreatedAt()) + "-" + discord.TimestampStyleRelative.FormatTime(user.CreatedAt())
 			embedBuilder.AddField("Created at", creation, false)
+
 			if user.BannerURL() != nil {
-				embedBuilder.SetImage(*user.BannerURL())
+				value := fmt.Sprint(*user.BannerURL())
+				embedBuilder.SetImage(value)
 			}
 			embedBuilder.SetTitle("User info")
 			embedBuilder.SetDescription(user.Mention())
@@ -134,22 +135,22 @@ func fetchFlagStrings(user discord.User) string {
 			userHasFlagsString += flagName + ", "
 		}
 	}
-	if noNullString(user.AvatarDecorationData.Asset) == "a_5e1210779d99ece1c0b4f438a5bc6e72" {
+	if user.AvatarDecorationData != nil && user.AvatarDecorationData.Asset == "a_5e1210779d99ece1c0b4f438a5bc6e72" {
 		userHasFlagsString += "<:Limited_Lootbox_Clown:1224714172705804300>[`Lootbox Clown`](https://discord.com/settings/Lootboxes)"
 	}
 	/*
 		if user.PremiumType > 0 {
 			userHasFlagsString += "<:Nitro:1224708672492666943>[`Nitro`](https://discord.com/settings/premium), "
-				}
-					if user.Bot {
-						appuser := bot.State.Application
-						if appuser.Flags&1<<23 != 0 {
-							userHasFlagsString += "<:Supports_Commands:1224848976201646100>[`Supports Commands`](https://discord.com/blog/welcome-to-the-new-era-of-discord-apps?ref=badge)"
-						}
-						if appuser.Flags&1<<6 != 0 {
-							userHasFlagsString += "<:Uses_Automod:1224862880982106202>`Uses Automod`"
-						}
-					}
+		}
+		if user.Bot {
+			appuser := bot.State.Application
+			if appuser.Flags&1<<23 != 0 {
+				userHasFlagsString += "<:Supports_Commands:1224848976201646100>[`Supports Commands`](https://discord.com/blog/welcome-to-the-new-era-of-discord-apps?ref=badge)"
+			}
+			if appuser.Flags&1<<6 != 0 {
+				userHasFlagsString += "<:Uses_Automod:1224862880982106202>`Uses Automod`"
+			}
+		}
 	*/
 	returnString := strings.TrimSuffix(userHasFlagsString, ", ")
 	return returnString
