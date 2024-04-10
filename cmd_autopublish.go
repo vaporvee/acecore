@@ -1,31 +1,38 @@
 package main
 
 import (
-	"github.com/bwmarrin/discordgo"
+	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/events"
 	"github.com/sirupsen/logrus"
 )
 
 var cmd_autopublish Command = Command{
-	Definition: discordgo.ApplicationCommand{
+	Definition: discord.SlashCommandCreate{
 		Name:        "autopublish",
 		Description: "Toggle automatically publishing every post in a announcement channel",
 	},
-	Interact: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		channel, _ := s.State.Channel(i.ChannelID)
-		if channel.Type == discordgo.ChannelTypeGuildNews {
-			if toggleAutoPublish(i.GuildID, i.ChannelID) {
-				err := respond(i.Interaction, "Autopublishing is now disabled on <#"+i.ChannelID+">", true)
+	Interact: func(e *events.ApplicationCommandInteractionCreate) {
+		channel := e.Channel()
+		if channel.Type() == discord.ChannelTypeGuildNews {
+			if toggleAutoPublish(e.GuildID().String(), e.Channel().ID().String()) {
+				err := e.CreateMessage(discord.NewMessageCreateBuilder().
+					SetContent("Autopublishing is now disabled on " + discord.ChannelMention(e.Channel().ID())).SetEphemeral(true).
+					Build())
 				if err != nil {
 					logrus.Error(err)
 				}
 			} else {
-				err := respond(i.Interaction, "Autopublishing is now enabled on <#"+i.ChannelID+">", true)
+				err := e.CreateMessage(discord.NewMessageCreateBuilder().
+					SetContent("Autopublishing is now enabled on " + discord.ChannelMention(e.Channel().ID())).SetEphemeral(true).
+					Build())
 				if err != nil {
 					logrus.Error(err)
 				}
 			}
 		} else {
-			err := respond(i.Interaction, "This is not an announcement channel!", true)
+			err := e.CreateMessage(discord.NewMessageCreateBuilder().
+				SetContent("This is not an announcement channel!").SetEphemeral(true).
+				Build())
 			if err != nil {
 				logrus.Error(err)
 			}

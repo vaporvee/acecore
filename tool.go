@@ -9,7 +9,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/bwmarrin/discordgo"
+	"github.com/disgoorg/disgo/bot"
+	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/snowflake/v2"
 	"github.com/sirupsen/logrus"
 )
 
@@ -34,46 +36,52 @@ type MessageIDs struct {
 	ChannelID string
 }
 
-func jsonStringShowModal(interaction *discordgo.Interaction, manageID string, formID string, overwrite ...string) {
+func noNullString(in interface{}) string {
+	var s string = ""
+	var is_str bool
+	switch in.(type) {
+	case string:
+		is_str = true
+	case *string:
+		is_str = true
+	}
+	if in != nil && is_str {
+		s = fmt.Sprint(in)
+	}
+	return s
+}
+
+func jsonStringBuildModal(userID string, manageID string, formID string, overwrite ...string) discord.ModalCreate {
 	var modal ModalJson = getModalByFormID(formID)
-	var components []discordgo.MessageComponent
+	var components []discord.ContainerComponent
 	for index, component := range modal.Form {
-		var style discordgo.TextInputStyle = discordgo.TextInputShort
+		var style discord.TextInputStyle = discord.TextInputStyleShort
 		if component.IsParagraph {
-			style = discordgo.TextInputParagraph
+			style = discord.TextInputStyleParagraph
 		}
-		components = append(components, discordgo.ActionsRow{
-			Components: []discordgo.MessageComponent{
-				discordgo.TextInput{
-					CustomID:    fmt.Sprint(index),
-					Label:       component.Label,
-					Style:       style,
-					Placeholder: component.Placeholder,
-					Required:    component.Required,
-					MaxLength:   component.MaxLength,
-					MinLength:   component.MinLength,
-					Value:       component.Value,
-				},
+		components = append(components, discord.ActionRowComponent{
+			discord.TextInputComponent{
+				CustomID:    fmt.Sprint(index),
+				Label:       component.Label,
+				Style:       style,
+				Placeholder: component.Placeholder,
+				Required:    component.Required,
+				MaxLength:   component.MaxLength,
+				MinLength:   &component.MinLength,
+				Value:       component.Value,
 			},
 		})
 	}
 	if overwrite != nil && overwrite[0] != "" {
 		modal.Title = overwrite[0]
 	}
-	var err error
-	if modal.Title != "" && components != nil {
-		err = bot.InteractionRespond(interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseModal,
-			Data: &discordgo.InteractionResponseData{
-				CustomID:   manageID + ":" + interaction.Member.User.ID,
-				Title:      modal.Title,
-				Components: components,
-			},
-		})
+
+	return discord.ModalCreate{
+		CustomID:   "form:" + manageID + ":" + userID,
+		Title:      modal.Title,
+		Components: components,
 	}
-	if err != nil {
-		logrus.Error(err)
-	}
+
 }
 
 // Why does the golang compiler care about commands??
@@ -83,6 +91,9 @@ var formTemplates embed.FS
 
 func getModalByFormID(formID string) ModalJson {
 	var modal ModalJson
+	if formID == "" {
+		return modal
+	}
 	entries, err := formTemplates.ReadDir("form_templates")
 	if err != nil {
 		logrus.Error(err)
@@ -106,32 +117,27 @@ func getModalByFormID(formID string) ModalJson {
 	return modal
 }
 
-func getHighestRole(guildID string) (*discordgo.Role, error) {
-	botMember, err := bot.GuildMember(guildID, bot.State.User.ID)
+func getHighestRole(guildID string, c bot.Client) (*discord.Role, error) {
+	botmember, err := c.Rest().GetMember(snowflake.MustParse(guildID), c.ApplicationID())
 	if err != nil {
 		return nil, err
 	}
-	roles, err := bot.GuildRoles(guildID)
+	roles, err := c.Rest().GetRoles(snowflake.MustParse(guildID))
 	if err != nil {
 		return nil, err
 	}
-
-	var highestRole *discordgo.Role
-	for _, roleID := range botMember.Roles {
+	var highestRole *discord.Role
+	for _, roleID := range botmember.RoleIDs {
 		for _, role := range roles {
 			if role.ID == roleID {
 				if highestRole == nil || role.Position > highestRole.Position {
-					highestRole = role
+					highestRole = &role
 				}
 				break
 			}
 		}
 	}
 	return highestRole, nil
-}
-
-func int64Ptr(i int64) *int64 {
-	return &i
 }
 
 func hexToDecimal(hexColor string) int {
@@ -141,11 +147,6 @@ func hexToDecimal(hexColor string) int {
 		return 0
 	}
 	return int(decimal)
-}
-
-func decimalToHex(decimal int) string {
-	hexString := strconv.FormatInt(int64(decimal), 16)
-	return hexString
 }
 
 func simpleGetFromAPI(key string, url string) interface{} {
@@ -173,59 +174,21 @@ func simpleGetFromAPI(key string, url string) interface{} {
 	return result[key]
 }
 
-func respond(interaction *discordgo.Interaction, content string, ephemeral bool) error {
-	var flag discordgo.MessageFlags
-	if ephemeral {
-		flag = discordgo.MessageFlagsEphemeral
-	}
-	err := bot.InteractionRespond(interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: content,
-			Flags:   flag,
-		},
-	})
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func respondEmbed(interaction *discordgo.Interaction, embed discordgo.MessageEmbed, ephemeral bool) error {
-	var flag discordgo.MessageFlags
-	if ephemeral {
-		flag = discordgo.MessageFlagsEphemeral
-	}
-	err := bot.InteractionRespond(interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Flags: flag,
-			Embeds: []*discordgo.MessageEmbed{
-				&embed,
-			},
-		},
-	})
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func findAndDeleteUnusedMessages() {
+func findAndDeleteUnusedMessages(c bot.Client) {
 	for _, message := range getAllSavedMessages() {
-		_, err := bot.ChannelMessage(message.ChannelID, message.ID)
+		_, err := c.Rest().GetMessage(snowflake.MustParse(message.ChannelID), snowflake.MustParse(message.ID))
 		if err != nil {
 			tryDeleteUnusedMessage(message.ID)
 		}
 	}
 }
 
-func isIDRole(guildID, id string) bool {
-	_, err1 := bot.GuildMember(guildID, id)
+func isIDRole(c bot.Client, guildID snowflake.ID, id snowflake.ID) bool {
+	_, err1 := c.Rest().GetMember(guildID, id)
 	if err1 == nil {
 		return false
 	}
-	roles, err2 := bot.GuildRoles(guildID)
+	roles, err2 := c.Rest().GetRoles(guildID)
 	if err2 == nil {
 		for _, role := range roles {
 			if role.ID == id {

@@ -1,98 +1,103 @@
 package main
 
 import (
-	"github.com/bwmarrin/discordgo"
+	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/events"
+	"github.com/disgoorg/json"
+	"github.com/disgoorg/snowflake/v2"
 	"github.com/sirupsen/logrus"
 )
 
 var cmd_sticky Command = Command{
-	Definition: discordgo.ApplicationCommand{
+	Definition: discord.SlashCommandCreate{
 		Name:                     "sticky",
 		Description:              "Stick or unstick messages to the bottom of the current channel",
-		DefaultMemberPermissions: int64Ptr(discordgo.PermissionManageMessages),
-		Options: []*discordgo.ApplicationCommandOption{
-			{
-				Type:        discordgo.ApplicationCommandOptionString,
+		DefaultMemberPermissions: json.NewNullablePtr(discord.PermissionManageMessages),
+		Options: []discord.ApplicationCommandOption{
+			&discord.ApplicationCommandOptionString{
 				Name:        "message",
 				Description: "The message you want to stick to the bottom of this channel",
 				Required:    false,
 			},
 		},
 	},
-	Interact: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		if len(i.ApplicationCommandData().Options) == 0 {
-			if hasSticky(i.GuildID, i.ChannelID) {
-				err := s.ChannelMessageDelete(i.ChannelID, getStickyMessageID(i.GuildID, i.ChannelID))
+	Interact: func(e *events.ApplicationCommandInteractionCreate) {
+		if len(e.SlashCommandInteractionData().Options) == 0 {
+			if hasSticky(e.GuildID().String(), e.Channel().ID().String()) {
+				err := e.Client().Rest().DeleteMessage(e.Channel().ID(), snowflake.MustParse(getStickyMessageID(e.GuildID().String(), e.Channel().ID().String())))
 				if err != nil {
 					logrus.Error(err)
 				}
-				removeSticky(i.GuildID, i.ChannelID)
-				err = respond(i.Interaction, "The sticky message was removed from this channel!", true)
+				removeSticky(e.GuildID().String(), e.Channel().ID().String())
+				err = e.CreateMessage(discord.NewMessageCreateBuilder().
+					SetContent("The sticky message was removed from this channel!").SetEphemeral(true).
+					Build())
 				if err != nil {
 					logrus.Error(err)
 				}
 			} else {
-				err := respond(i.Interaction, "This channel has no sticky message!", true)
+				err := e.CreateMessage(discord.NewMessageCreateBuilder().
+					SetContent("This channel has no sticky message!").SetEphemeral(true).
+					Build())
 				if err != nil {
 					logrus.Error(err)
 				}
 			}
 		} else {
-			inputStickyMessage(i)
+			inputStickyMessage(e)
 		}
 	},
 }
 
 var context_sticky Command = Command{
-	Definition: discordgo.ApplicationCommand{
+	Definition: discord.MessageCommandCreate{
 		Name:                     "Stick to channel",
-		Type:                     discordgo.MessageApplicationCommand,
-		DefaultMemberPermissions: int64Ptr(discordgo.PermissionManageMessages),
+		DefaultMemberPermissions: json.NewNullablePtr(discord.PermissionManageMessages),
 	},
-	Interact: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		inputStickyMessage(i)
+	Interact: func(e *events.ApplicationCommandInteractionCreate) {
+		inputStickyMessage(e)
 	},
 }
 
-func inputStickyMessage(i *discordgo.InteractionCreate) {
+func inputStickyMessage(e *events.ApplicationCommandInteractionCreate) {
 	var messageText string
-	if len(i.ApplicationCommandData().Options) == 0 {
-		messageText = i.ApplicationCommandData().Resolved.Messages[i.ApplicationCommandData().TargetID].Content //TODO add more data then just content
+	if e.ApplicationCommandInteraction.Data.Type() == discord.ApplicationCommandTypeMessage {
+		messageText = e.MessageCommandInteractionData().TargetMessage().Content //TODO add more data then just content
 	} else {
-		messageText = i.ApplicationCommandData().Options[0].StringValue()
+		messageText = e.SlashCommandInteractionData().String("message")
 	}
 	if messageText == "" {
-		err := respond(i.Interaction, "Can't add empty sticky messages!", true)
+		err := e.CreateMessage(discord.NewMessageCreateBuilder().
+			SetContent("Can't add empty sticky messages!").SetEphemeral(true).
+			Build())
 		if err != nil {
 			logrus.Error(err)
 		}
 	} else {
-		message, err := bot.ChannelMessageSendEmbed(i.ChannelID, &discordgo.MessageEmbed{
-			Type: discordgo.EmbedTypeArticle,
-			Footer: &discordgo.MessageEmbedFooter{
-				Text: "📌 Sticky message",
-			},
-			Color:       hexToDecimal(color["primary"]),
-			Description: messageText,
-		})
+		message, err := e.Client().Rest().CreateMessage(e.Channel().ID(), discord.MessageCreate{Embeds: []discord.Embed{
+			{Description: messageText, Footer: &discord.EmbedFooter{Text: "📌 Sticky message"}, Color: hexToDecimal(color["primary"])}}})
 		if err != nil {
 			logrus.Error(err)
 		}
 
-		if hasSticky(i.GuildID, i.ChannelID) {
-			err = bot.ChannelMessageDelete(i.ChannelID, getStickyMessageID(i.GuildID, i.ChannelID))
+		if hasSticky(e.GuildID().String(), e.Channel().ID().String()) {
+			err = e.Client().Rest().DeleteMessage(e.Channel().ID(), snowflake.MustParse(getStickyMessageID(e.GuildID().String(), e.Channel().ID().String())))
 			if err != nil {
-				logrus.Error(err, getStickyMessageID(i.GuildID, i.ChannelID))
+				logrus.Error(err, getStickyMessageID(e.GuildID().String(), e.Channel().ID().String()))
 			}
-			removeSticky(i.GuildID, i.ChannelID)
-			addSticky(i.GuildID, i.ChannelID, messageText, message.ID)
-			err = respond(i.Interaction, "Sticky message in this channel was updated!", true)
+			removeSticky(e.GuildID().String(), e.Channel().ID().String())
+			addSticky(e.GuildID().String(), e.Channel().ID().String(), messageText, message.ID.String())
+			err = e.CreateMessage(discord.NewMessageCreateBuilder().
+				SetContent("Sticky message in this channel was updated!").SetEphemeral(true).
+				Build())
 			if err != nil {
 				logrus.Error(err)
 			}
 		} else {
-			addSticky(i.GuildID, i.ChannelID, messageText, message.ID)
-			err := respond(i.Interaction, "Message sticked to the channel!", true)
+			addSticky(e.GuildID().String(), e.Channel().ID().String(), messageText, message.ID.String())
+			err := e.CreateMessage(discord.NewMessageCreateBuilder().
+				SetContent("Message sticked to the channel!").SetEphemeral(true).
+				Build())
 			if err != nil {
 				logrus.Error(err)
 			}

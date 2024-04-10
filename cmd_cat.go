@@ -5,29 +5,25 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/bwmarrin/discordgo"
+	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/events"
 	"github.com/sirupsen/logrus"
 )
 
-var cmd_cat Command = Command{
-	Definition: discordgo.ApplicationCommand{
+var cmd_cat = Command{
+	Definition: discord.SlashCommandCreate{
 		Name:        "cat",
 		Description: "Random cat pictures",
 	},
-	Interact: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	Interact: func(e *events.ApplicationCommandInteractionCreate) {
 		cat, err := GetCatImageURL()
 		if err == nil {
-			err := respondEmbed(i.Interaction, discordgo.MessageEmbed{
-				Type:  discordgo.EmbedTypeImage,
-				Color: hexToDecimal(color["primary"]),
-				Image: &discordgo.MessageEmbedImage{
-					URL: cat,
-				}}, false)
+			err = e.CreateMessage(discord.NewMessageCreateBuilder().
+				AddEmbeds(discord.NewEmbedBuilder().SetImage(cat).SetColor(hexToDecimal(color["primary"])).Build()).
+				Build())
 			if err != nil {
 				logrus.Error(err)
 			}
-		} else {
-			logrus.Error(err)
 		}
 	},
 	AllowDM: true,
