@@ -28,7 +28,7 @@ var cmd_cat = Command{
 		cat, err := GetCatImageURL()
 		if err == nil {
 			err = e.CreateMessage(discord.NewMessageCreateBuilder().
-				AddEmbeds(discord.NewEmbedBuilder().SetImage(cat).SetColor(hexToDecimal(color["primary"])).Build()).
+				AddEmbeds(discord.NewEmbedBuilder().SetDescription(cat.Fact).SetImage(cat.Image).SetColor(hexToDecimal(color["primary"])).Build()).
 				Build())
 			if err != nil {
 				logrus.Error(err)
@@ -37,22 +37,22 @@ var cmd_cat = Command{
 	},
 }
 
-type CatImage struct {
-	ID string `json:"_id"`
+type Cat struct {
+	Image string `json:"image"`
+	Fact  string `json:"fact"`
 }
 
-func GetCatImageURL() (string, error) {
-	resp, err := http.Get("https://cataas.com/cat?json=true")
+func GetCatImageURL() (Cat, error) {
+	resp, err := http.Get("https://some-random-api.com/animal/cat")
+	var cat Cat
 	if err != nil {
-		return "", err
+		return cat, err
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return cat, err
 	}
-	var images CatImage
-	err = json.Unmarshal(body, &images)
-
-	return "https://cataas.com/cat/" + images.ID, err
+	err = json.Unmarshal(body, &cat)
+	return cat, err
 }

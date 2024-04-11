@@ -201,3 +201,18 @@ func isIDRole(c bot.Client, guildID snowflake.ID, id snowflake.ID) bool {
 	logrus.Error(err2)
 	return false
 }
+
+func isGIFImage(imageData []byte) bool {
+	if len(imageData) < 6 {
+		return false
+	}
+	// Check for the GIF89a header at the beginning of the byte array
+	if string(imageData[0:6]) == "GIF89a" {
+		return true
+	}
+	// Check for the GIF87a header at the beginning of the byte array
+	if string(imageData[0:6]) == "GIF87a" {
+		return true
+	}
+	return false
+}

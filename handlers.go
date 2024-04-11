@@ -25,7 +25,7 @@ type Command struct {
 	DynamicComponentIDs func() []string
 }
 
-var commands []Command = []Command{cmd_tag, cmd_tag_short, context_tag, cmd_sticky, context_sticky, cmd_ping, cmd_userinfo, cmd_form, cmd_ask, cmd_cat, cmd_dadjoke, cmd_ticket_form, cmd_autopublish, cmd_autojoinroles}
+var commands []Command = []Command{cmd_tag, cmd_tag_short, context_tag, cmd_sticky, context_sticky, cmd_ping, cmd_userinfo, cmd_getemoji, cmd_form, cmd_ask, cmd_cat, cmd_dadjoke, cmd_ticket_form, cmd_autopublish, cmd_autojoinroles}
 
 func ready(e *events.Ready) {
 	logrus.Info("Starting up...")

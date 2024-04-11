@@ -39,6 +39,7 @@ func main() {
 		bot.WithGatewayConfigOpts(
 			gateway.WithIntents(
 				gateway.IntentGuilds,
+				gateway.IntentGuildEmojisAndStickers,
 				gateway.IntentGuildMessages,
 				gateway.IntentGuildMembers,
 				gateway.IntentDirectMessages,
