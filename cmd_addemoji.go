@@ -12,7 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var cmd_getemoji Command = Command{
+var cmd_addemoji Command = Command{
 	Definition: discord.SlashCommandCreate{
 		Name:        "add-emoji",
 		Description: "Add an external emoji directly to the server.",
@@ -27,9 +27,7 @@ var cmd_getemoji Command = Command{
 	Interact: func(e *events.ApplicationCommandInteractionCreate) {
 		emojiRegex := regexp.MustCompile(`<(.+):(\d+)>`)
 		emojistring := emojiRegex.FindString(e.SlashCommandInteractionData().String("emoji"))
-		logrus.Debug(emojistring)
 		emojiArray := strings.Split(emojistring, ":")
-		logrus.Debug(emojiArray)
 		var emojiName string
 		var emojiID string
 		var emojiFileName string
@@ -37,28 +35,35 @@ var cmd_getemoji Command = Command{
 			emojiName = strings.TrimSuffix(emojiArray[1], ">")
 			emojiID = strings.TrimSuffix(emojiArray[2], ">")
 		}
-		imageType, emojiRead := getEmoji(emojiID)
-		emojiData, err := io.ReadAll(emojiRead)
+		imageType, emojiReadBit64 := getEmoji(emojiID)
+		emojiData, err := discord.NewIcon(imageType, emojiReadBit64)
 		if err != nil {
 			logrus.Error(err)
 		}
 		_, err = e.Client().Rest().CreateEmoji(*e.GuildID(), discord.EmojiCreate{
-			Name: emojiName,
-			Image: discord.Icon{
-				Type: imageType,
-				Data: emojiData,
-			},
+			Name:  emojiName,
+			Image: *emojiData,
 		})
 		if err != nil {
+			if strings.HasPrefix(err.Error(), "50035") {
+				e.CreateMessage(discord.NewMessageCreateBuilder().SetContent("Failed adding emoji. Did you provide a correct one?").SetEphemeral(true).Build())
+				return
+			}
+			if strings.HasPrefix(err.Error(), "50138") {
+				e.CreateMessage(discord.NewMessageCreateBuilder().SetContent("Failed adding emoji. Unable to resize the emoji image.").SetEphemeral(true).Build())
+				return
+			}
 			logrus.Error(err)
+			return
 		}
 		if imageType == discord.IconTypeGIF {
 			emojiFileName = emojiName + ".gif"
 		} else {
 			emojiFileName = emojiName + ".png"
 		}
+		_, emojiRead := getEmoji(emojiID) // for some reason any []bit variable thats used with NewIcon gets corrupted even when its redeclared in a new variable
 		err = e.CreateMessage(discord.NewMessageCreateBuilder().
-			SetContentf("Emoji %s sucessfully added to this server!", emojiName).SetFiles(discord.NewFile(emojiFileName, "The emoji that was picked", emojiRead)).SetEphemeral(true).
+			SetContentf("Emoji %s sucessfully added to this server!", emojiName).SetFiles(discord.NewFile(emojiFileName, "", emojiRead)).SetEphemeral(true).
 			Build())
 		if err != nil {
 			logrus.Error(err)
@@ -80,10 +85,8 @@ func getEmoji(emojiID string) (discord.IconType, io.Reader) {
 	}
 	isAnimated := isGIFImage(imageData)
 	if isAnimated {
-		logrus.Debug("GIF")
 		return discord.IconTypeGIF, bytes.NewReader(imageData)
 	} else {
-		logrus.Debug("PNG")
 		return discord.IconTypePNG, bytes.NewReader(imageData)
 	}
 }
