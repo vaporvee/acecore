@@ -11,6 +11,7 @@ import (
 
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/rest"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/sirupsen/logrus"
 )
@@ -34,21 +35,6 @@ type ModalJson struct {
 type MessageIDs struct {
 	ID        string
 	ChannelID string
-}
-
-func noNullString(in interface{}) string {
-	var s string = ""
-	var is_str bool
-	switch in.(type) {
-	case string:
-		is_str = true
-	case *string:
-		is_str = true
-	}
-	if in != nil && is_str {
-		s = fmt.Sprint(in)
-	}
-	return s
 }
 
 func jsonStringBuildModal(userID string, manageID string, formID string, overwrite ...string) discord.ModalCreate {
@@ -215,4 +201,40 @@ func isGIFImage(imageData []byte) bool {
 		return true
 	}
 	return false
+}
+
+func messageIsPoll(channelID string, messageID string, client bot.Client) bool {
+	url := rest.DefaultConfig().URL + "/channels/" + channelID + "/messages/" + messageID
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		logrus.Error(err)
+		return false
+	}
+
+	auth := "Bot " + client.Token()
+	req.Header.Set("Authorization", auth)
+
+	resp, err := client.Rest().HTTPClient().Do(req)
+	if err != nil {
+		logrus.Error(err)
+		return false
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		logrus.Error(err)
+		return false
+	}
+
+	var data map[string]interface{}
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		logrus.Error(err)
+		return false
+	}
+
+	_, ok := data["poll"]
+	return ok
 }

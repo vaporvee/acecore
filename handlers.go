@@ -25,7 +25,7 @@ type Command struct {
 	DynamicComponentIDs func() []string
 }
 
-var commands []Command = []Command{cmd_tag, cmd_tag_short, context_tag, cmd_sticky, context_sticky, cmd_ping, cmd_userinfo, cmd_addemoji, cmd_form, cmd_ask, cmd_cat, cmd_dadjoke, cmd_ticket_form, cmd_autopublish, cmd_autojoinroles}
+var commands []Command = []Command{cmd_tag, cmd_tag_short, context_tag, cmd_sticky, context_sticky, cmd_ping, cmd_userinfo, cmd_addemoji, cmd_form, cmd_ask, cmd_cat, cmd_dadjoke, cmd_ticket_form, cmd_blockpolls, cmd_autopublish, cmd_autojoinroles}
 
 func ready(e *events.Ready) {
 	logrus.Info("Starting up...")
@@ -170,12 +170,17 @@ func messageCreate(e *events.MessageCreate) {
 	if err != nil {
 		logrus.Error(err)
 	}
-	if channel != nil && channel.Type() == discord.ChannelTypeGuildNews {
-		if isAutopublishEnabled(e.GuildID.String(), e.ChannelID.String()) {
-			_, err := e.Client().Rest().CrosspostMessage(e.ChannelID, e.MessageID)
-			if err != nil {
-				logrus.Error(err)
-				return
+	if channel != nil {
+		if isBlockPollsEnabled(e.GuildID.String(), e.Message.ChannelID.String()) && messageIsPoll(e.Message.ChannelID.String(), e.Message.ID.String(), e.Client()) {
+			e.Client().Rest().DeleteMessage(e.Message.ChannelID, e.Message.ID)
+		}
+		if channel.Type() == discord.ChannelTypeGuildNews {
+			if isAutopublishEnabled(e.GuildID.String(), e.ChannelID.String()) {
+				_, err := e.Client().Rest().CrosspostMessage(e.ChannelID, e.MessageID)
+				if err != nil {
+					logrus.Error(err)
+					return
+				}
 			}
 		}
 	}

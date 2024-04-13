@@ -50,11 +50,17 @@ func initTables() {
 						user_role TEXT,
 						PRIMARY KEY (guild_id)
 						);
-						CREATE TABLE IF NOT EXISTS autopublish (
+					CREATE TABLE IF NOT EXISTS autopublish (
+						guild_id TEXT NOT NULL,
+						news_channel_id TEXT NOT NULL,
+						PRIMARY KEY (guild_id, news_channel_id)
+						);
+						CREATE TABLE IF NOT EXISTS blockpolls (
 							guild_id TEXT NOT NULL,
-							news_channel_id TEXT NOT NULL,
-							PRIMARY KEY (guild_id, news_channel_id)
-						)`
+							channel_id TEXT NOT NULL,
+							PRIMARY KEY (guild_id, channel_id)
+						)
+						`
 	_, err := db.Exec(createTableQuery)
 	if err != nil {
 		log.Fatal(err)
@@ -388,6 +394,35 @@ func toggleAutoPublish(guildID string, newsChannelID string) bool {
 func isAutopublishEnabled(guildID string, newsChannelID string) bool {
 	var enabled bool
 	err := db.QueryRow("SELECT EXISTS (SELECT 1 FROM autopublish WHERE guild_id = $1 AND news_channel_id = $2)", guildID, newsChannelID).Scan(&enabled)
+	if err != nil {
+		logrus.Error(err)
+	}
+	return enabled
+}
+
+func toggleBlockPolls(guildID string, channelID string) bool {
+	var exists bool
+	err := db.QueryRow("SELECT EXISTS (SELECT 1 FROM blockpolls WHERE guild_id = $1 AND channel_id = $2)", guildID, channelID).Scan(&exists)
+	if err != nil {
+		logrus.Error(err)
+	}
+	if exists {
+		_, err := db.Exec("DELETE FROM blockpolls WHERE guild_id = $1 AND channel_id = $2", guildID, channelID)
+		if err != nil {
+			logrus.Error(err)
+		}
+	} else {
+		_, err := db.Exec("INSERT INTO blockpolls (guild_id, channel_id) VALUES ($1, $2)", guildID, channelID)
+		if err != nil {
+			logrus.Error(err)
+		}
+	}
+	return exists
+}
+
+func isBlockPollsEnabled(guildID string, channelID string) bool {
+	var enabled bool
+	err := db.QueryRow("SELECT EXISTS (SELECT 1 FROM blockpolls WHERE guild_id = $1 AND channel_id = $2)", guildID, channelID).Scan(&enabled)
 	if err != nil {
 		logrus.Error(err)
 	}
