@@ -11,10 +11,10 @@ import (
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/json"
 	"github.com/sirupsen/logrus"
-	"github.com/vaporvee/acecore/struct_cmd"
+	"github.com/vaporvee/acecore/cmd"
 )
 
-var cmd_addemoji struct_cmd.Command = struct_cmd.Command{
+var cmd_addemoji cmd.Command = cmd.Command{
 	Definition: discord.SlashCommandCreate{
 		Name:                     "add-emoji",
 		Description:              "Add an external emoji directly to the server.",

@@ -14,11 +14,11 @@ import (
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/sirupsen/logrus"
+	"github.com/vaporvee/acecore/cmd"
 	"github.com/vaporvee/acecore/custom"
-	"github.com/vaporvee/acecore/struct_cmd"
 )
 
-var commands []struct_cmd.Command = []struct_cmd.Command{cmd_tag, cmd_tag_short, context_tag, cmd_sticky, context_sticky, cmd_ping, cmd_userinfo, cmd_addemoji, cmd_form, cmd_ask, cmd_cat, cmd_dadjoke, cmd_ticket_form, cmd_blockpolls, cmd_autopublish, cmd_autojoinroles}
+var commands []cmd.Command = []cmd.Command{cmd_tag, cmd_tag_short, context_tag, cmd_sticky, context_sticky, cmd_ping, cmd_userinfo, cmd_addemoji, cmd_form, cmd_ask, cmd_cat, cmd_dadjoke, cmd_ticket_form, cmd_blockpolls, cmd_autopublish, cmd_autojoinroles}
 
 func ready(e *events.Ready) {
 	logrus.Info("Starting up...")
@@ -88,7 +88,7 @@ func loadPlugins(directory string, e *events.Ready) error {
 				continue
 			}
 
-			pluginPtr, ok := symPlugin.(**struct_cmd.Plugin)
+			pluginPtr, ok := symPlugin.(**cmd.Plugin)
 			if !ok {
 				logrus.Errorf("Plugin does not match expected type")
 				continue

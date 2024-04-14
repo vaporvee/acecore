@@ -4,10 +4,10 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/sirupsen/logrus"
-	"github.com/vaporvee/acecore/struct_cmd"
+	"github.com/vaporvee/acecore/cmd"
 )
 
-var Plugin = &struct_cmd.Plugin{
+var Plugin = &cmd.Plugin{
 	Name: "testplugin",
 	Register: func(e *events.Ready) error {
 		app, err := e.Client().Rest().GetCurrentApplication()
@@ -17,7 +17,7 @@ var Plugin = &struct_cmd.Plugin{
 		logrus.Infof("%s has a working plugin called \"testplugin\"", app.Bot.Username)
 		return nil
 	},
-	Commands: []struct_cmd.Command{
+	Commands: []cmd.Command{
 		{
 			Definition: discord.SlashCommandCreate{
 				Name:        "testplugincommand",

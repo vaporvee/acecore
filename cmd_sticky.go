@@ -6,11 +6,11 @@ import (
 	"github.com/disgoorg/json"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/sirupsen/logrus"
+	"github.com/vaporvee/acecore/cmd"
 	"github.com/vaporvee/acecore/custom"
-	"github.com/vaporvee/acecore/struct_cmd"
 )
 
-var cmd_sticky struct_cmd.Command = struct_cmd.Command{
+var cmd_sticky cmd.Command = cmd.Command{
 	Definition: discord.SlashCommandCreate{
 		Name:                     "sticky",
 		Description:              "Stick or unstick messages to the bottom of the current channel",
@@ -56,7 +56,7 @@ var cmd_sticky struct_cmd.Command = struct_cmd.Command{
 	},
 }
 
-var context_sticky struct_cmd.Command = struct_cmd.Command{
+var context_sticky cmd.Command = cmd.Command{
 	Definition: discord.MessageCommandCreate{
 		Name:                     "Stick to channel",
 		DefaultMemberPermissions: json.NewNullablePtr(discord.PermissionManageMessages),

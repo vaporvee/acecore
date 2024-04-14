@@ -5,10 +5,10 @@ import (
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/json"
 	"github.com/sirupsen/logrus"
-	"github.com/vaporvee/acecore/struct_cmd"
+	"github.com/vaporvee/acecore/cmd"
 )
 
-var cmd_autopublish struct_cmd.Command = struct_cmd.Command{
+var cmd_autopublish cmd.Command = cmd.Command{
 	Definition: discord.SlashCommandCreate{
 		Name:                     "autopublish",
 		Description:              "Toggle automatically publishing every post in a announcement channel",

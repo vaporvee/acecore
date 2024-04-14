@@ -1,4 +1,4 @@
-package struct_cmd
+package cmd
 
 import (
 	"github.com/disgoorg/disgo/discord"

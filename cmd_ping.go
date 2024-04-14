@@ -8,11 +8,11 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/sirupsen/logrus"
+	"github.com/vaporvee/acecore/cmd"
 	"github.com/vaporvee/acecore/custom"
-	"github.com/vaporvee/acecore/struct_cmd"
 )
 
-var cmd_ping struct_cmd.Command = struct_cmd.Command{
+var cmd_ping cmd.Command = cmd.Command{
 	Definition: discord.SlashCommandCreate{
 		Name:        "ping",
 		Description: "Returns the ping of the bot",

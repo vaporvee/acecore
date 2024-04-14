@@ -1,4 +1,4 @@
-module struct_cmd
+module github.com/vaporvee/acecore/cmd
 
 go 1.22.1
 

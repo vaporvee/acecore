@@ -12,11 +12,11 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"github.com/vaporvee/acecore/cmd"
 	"github.com/vaporvee/acecore/custom"
-	"github.com/vaporvee/acecore/struct_cmd"
 )
 
-var cmd_form struct_cmd.Command = struct_cmd.Command{
+var cmd_form cmd.Command = cmd.Command{
 	Definition: discord.SlashCommandCreate{
 		Name:                     "form",
 		DefaultMemberPermissions: json.NewNullablePtr(discord.PermissionManageChannels),
@@ -335,7 +335,7 @@ var cmd_form struct_cmd.Command = struct_cmd.Command{
 	},
 }
 
-var cmd_ticket_form struct_cmd.Command = struct_cmd.Command{
+var cmd_ticket_form cmd.Command = cmd.Command{
 	Definition: discord.SlashCommandCreate{
 		Name:                     "ticket",
 		DefaultMemberPermissions: json.NewNullablePtr(discord.PermissionManageChannels),

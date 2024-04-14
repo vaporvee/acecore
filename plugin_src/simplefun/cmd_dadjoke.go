@@ -4,10 +4,10 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/sirupsen/logrus"
-	"github.com/vaporvee/acecore/struct_cmd"
+	"github.com/vaporvee/acecore/cmd"
 )
 
-var cmd_dadjoke = struct_cmd.Command{
+var cmd_dadjoke = cmd.Command{
 	Definition: discord.SlashCommandCreate{
 		Name:        "dadjoke",
 		Description: "Gives you a random joke that is as bad as your dad would tell them",
