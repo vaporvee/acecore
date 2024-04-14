@@ -171,7 +171,13 @@ func messageCreate(e *events.MessageCreate) {
 		logrus.Error(err)
 	}
 	if channel != nil {
-		if isBlockPollsEnabled(e.GuildID.String(), e.Message.ChannelID.String()) && messageIsPoll(e.Message.ChannelID.String(), e.Message.ID.String(), e.Client()) {
+		isBlockPollsEnabledGlobal := isGlobalBlockPolls(e.GuildID.String())
+		isBlockPollsEnabled, allowedRole := getBlockPollsEnabled(e.GuildID.String(), e.Message.ChannelID.String())
+		var hasAllowedRole bool
+		if allowedRole != "" {
+			hasAllowedRole = slices.Contains(e.Message.Member.RoleIDs, snowflake.MustParse(allowedRole))
+		}
+		if (isBlockPollsEnabledGlobal || isBlockPollsEnabled) && !hasAllowedRole && messageIsPoll(e.Message.ChannelID.String(), e.Message.ID.String(), e.Client()) {
 			e.Client().Rest().DeleteMessage(e.Message.ChannelID, e.Message.ID)
 		}
 		if channel.Type() == discord.ChannelTypeGuildNews {

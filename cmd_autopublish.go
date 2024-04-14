@@ -3,13 +3,15 @@ package main
 import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
+	"github.com/disgoorg/json"
 	"github.com/sirupsen/logrus"
 )
 
 var cmd_autopublish Command = Command{
 	Definition: discord.SlashCommandCreate{
-		Name:        "autopublish",
-		Description: "Toggle automatically publishing every post in a announcement channel",
+		Name:                     "autopublish",
+		Description:              "Toggle automatically publishing every post in a announcement channel",
+		DefaultMemberPermissions: json.NewNullablePtr(discord.PermissionManageChannels),
 		Contexts: []discord.InteractionContextType{
 			discord.InteractionContextTypeGuild,
 			discord.InteractionContextTypePrivateChannel},

@@ -9,13 +9,15 @@ import (
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
+	"github.com/disgoorg/json"
 	"github.com/sirupsen/logrus"
 )
 
 var cmd_addemoji Command = Command{
 	Definition: discord.SlashCommandCreate{
-		Name:        "add-emoji",
-		Description: "Add an external emoji directly to the server.",
+		Name:                     "add-emoji",
+		Description:              "Add an external emoji directly to the server.",
+		DefaultMemberPermissions: json.NewNullablePtr(discord.PermissionManageGuildExpressions),
 		Options: []discord.ApplicationCommandOption{
 			&discord.ApplicationCommandOptionString{
 				Name:        "emoji",
