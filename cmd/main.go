@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"database/sql"
+
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 )
@@ -20,5 +22,5 @@ type Command struct {
 type Plugin struct {
 	Name     string
 	Commands []Command
-	Register func(e *events.Ready) error
+	Register func(e *events.Ready, db *sql.DB) error
 }

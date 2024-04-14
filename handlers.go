@@ -18,7 +18,7 @@ import (
 	"github.com/vaporvee/acecore/custom"
 )
 
-var commands []cmd.Command = []cmd.Command{cmd_tag, cmd_tag_short, context_tag, cmd_sticky, context_sticky, cmd_ping, cmd_userinfo, cmd_addemoji, cmd_form, cmd_ticket_form, cmd_blockpolls, cmd_autopublish, cmd_autojoinroles}
+var commands []cmd.Command = []cmd.Command{cmd_tag, cmd_tag_short, context_tag, cmd_sticky, context_sticky, cmd_ping, cmd_addemoji, cmd_form, cmd_ticket_form, cmd_blockpolls, cmd_autopublish, cmd_autojoinroles}
 
 func ready(e *events.Ready) {
 	logrus.Info("Starting up...")
@@ -105,7 +105,7 @@ func loadPlugins(directory string, e *events.Ready) error {
 				continue
 			}
 			if plugin.Register != nil {
-				err = plugin.Register(e)
+				err = plugin.Register(e, db)
 				if err != nil {
 					logrus.Errorf("Error running plugin register %s function: %v", plugin.Name, err)
 					continue
