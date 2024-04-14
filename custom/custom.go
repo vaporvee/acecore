@@ -13,7 +13,7 @@ var color map[string]string = map[string]string{
 	"primary": "#211951",
 }
 
-var Gh_url string = "https://github.com/vaporvee/acecore/blob/main/"
+const Gh_url string = "https://github.com/vaporvee/acecore/blob/main/"
 
 func GetColor(s string) int {
 	hexColor := strings.TrimPrefix(color[s], "#")

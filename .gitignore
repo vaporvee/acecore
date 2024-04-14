@@ -7,3 +7,8 @@ acecore
 
 # Logging
 logs/
+
+# Web
+
+web/key.pem
+web/cert.pem

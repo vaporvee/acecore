@@ -19,6 +19,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 	"github.com/vaporvee/acecore/log2webhook"
+	"github.com/vaporvee/acecore/web"
 )
 
 var (
@@ -70,6 +71,7 @@ func main() {
 		logrus.Error(err)
 	}
 	logrus.Infof("Bot is now running as '%s'!", app.Bot.Username)
+	go web.HostRoutes(app.Bot.ID.String())
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
