@@ -26,7 +26,7 @@ func ready(e *events.Ready) {
 	removeOldCommandFromAllGuilds(e.Client())
 	err := loadPlugins("plugins/", e)
 	if err != nil {
-		logrus.Error(err)
+		logrus.Warn(err)
 	}
 	var existingCommandNames []string
 	existingCommands, err := e.Client().Rest().GetGlobalCommands(e.Client().ApplicationID(), false)
@@ -106,10 +106,8 @@ func loadPlugins(directory string, e *events.Ready) error {
 			}
 			if plugin.Register != nil {
 				err = plugin.Register(e)
-				if err == nil {
-					logrus.Infof("Successfully appended plugin %s for registration", plugin.Name)
-				} else {
-					logrus.Errorf("Error registering plugin %s commands: %v", plugin.Name, err)
+				if err != nil {
+					logrus.Errorf("Error running plugin register %s function: %v", plugin.Name, err)
 					continue
 				}
 			}
