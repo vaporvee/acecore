@@ -48,6 +48,6 @@ func HostRoutes(botID string) {
 	}
 	logrus.Info("Starting server for html routes on :443...")
 	if err := server.ListenAndServeTLS("./web/cert.pem", "./web/key.pem"); err != nil {
-		logrus.Warnf("Error starting server: %v\n", err)
+		logrus.Warnf("Couldn't start server for html routes: %v\n", err)
 	}
 }
