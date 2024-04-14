@@ -24,6 +24,10 @@ func ready(e *events.Ready) {
 	logrus.Info("Starting up...")
 	findAndDeleteUnusedMessages(e.Client())
 	removeOldCommandFromAllGuilds(e.Client())
+	err := loadPlugins("plugins/", e)
+	if err != nil {
+		logrus.Error(err)
+	}
 	var existingCommandNames []string
 	existingCommands, err := e.Client().Rest().GetGlobalCommands(e.Client().ApplicationID(), false)
 	if err != nil {
@@ -49,14 +53,10 @@ func ready(e *events.Ready) {
 			logrus.Infof("Added global commands sucessfully!")
 		}
 	}
-	err = loadPlugins("plugins/", e.Client(), &commands)
-	if err != nil {
-		logrus.Error(err)
-	}
 	logrus.Info("Successfully started the Bot!")
 }
 
-func loadPlugins(directory string, client bot.Client, commands *[]struct_cmd.Command) error {
+func loadPlugins(directory string, e *events.Ready) error {
 	files, err := os.ReadDir(directory)
 	if err != nil {
 		return err
@@ -95,11 +95,23 @@ func loadPlugins(directory string, client bot.Client, commands *[]struct_cmd.Com
 			}
 
 			plugin := *pluginPtr
-
-			err = plugin.Register(client, commands)
-			if err != nil {
-				logrus.Errorf("Error registering plugin commands: %v", err)
+			if plugin.Name == "" {
+				logrus.Warn("Plugin is unnamed")
+			}
+			if plugin.Commands != nil {
+				commands = append(commands, plugin.Commands...)
+			} else {
+				logrus.Errorf("Plugin %s has no commands set", plugin.Name)
 				continue
+			}
+			if plugin.Register != nil {
+				err = plugin.Register(e)
+				if err == nil {
+					logrus.Infof("Successfully appended plugin %s for registration", plugin.Name)
+				} else {
+					logrus.Errorf("Error registering plugin %s commands: %v", plugin.Name, err)
+					continue
+				}
 			}
 
 		}

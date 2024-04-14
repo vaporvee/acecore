@@ -1,7 +1,6 @@
 package struct_cmd
 
 import (
-	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 )
@@ -19,5 +18,7 @@ type Command struct {
 }
 
 type Plugin struct {
-	Register func(client bot.Client, commands *[]Command) error
+	Name     string
+	Commands []Command
+	Register func(e *events.Ready) error
 }
