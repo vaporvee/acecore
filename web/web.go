@@ -2,7 +2,6 @@ package web
 
 import (
 	"embed"
-	"io"
 	"log"
 	"net/http"
 	"text/template"
@@ -28,15 +27,13 @@ func handleHTML(w http.ResponseWriter, embed embed.FS, path string) {
 	tmpl.Execute(w, nil)
 }
 
-func recoverFromPanic() {
-	if r := recover(); r != nil {
-		logrus.Errorf("Recovered from panic: %v", r)
-	}
-}
-
 func HostRoutes(botID string) {
-	defer recoverFromPanic()
-
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("Recovered from panic: %v", r)
+			go HostRoutes(botID)
+		}
+	}()
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, custom.Gh_url, http.StatusMovedPermanently)
 	})
@@ -49,11 +46,11 @@ func HostRoutes(botID string) {
 	http.HandleFunc("/tos", func(w http.ResponseWriter, r *http.Request) {
 		handleHTML(w, tosHTML, "./html/tos.html")
 	})
-	var voidWriter io.Writer
+
 	server := &http.Server{
 		Addr:     ":443",
 		Handler:  nil,
-		ErrorLog: log.New(voidWriter, "", 0),
+		ErrorLog: log.New(nil, "", 0),
 	}
 	logrus.Info("Starting server for html routes on :443...")
 	if err := server.ListenAndServeTLS("./web/cert.pem", "./web/key.pem"); err != nil {
