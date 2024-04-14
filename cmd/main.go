@@ -21,6 +21,6 @@ type Command struct {
 
 type Plugin struct {
 	Name     string
-	Commands []Command
 	Register func(e *events.Ready, db *sql.DB) error
+	Commands []Command
 }

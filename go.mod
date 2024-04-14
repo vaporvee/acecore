@@ -10,7 +10,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
 	github.com/sirupsen/logrus v1.9.3
-	github.com/vaporvee/acecore/cmd v0.0.0-20240414202630-d814d39cf135
+	github.com/vaporvee/acecore/cmd v0.0.0-20240414204205-9ac9f89071f6
 )
 
 require (
