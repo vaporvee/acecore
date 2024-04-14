@@ -64,11 +64,12 @@ func webhook(p []byte) {
 	json.Unmarshal(p, &logJson)
 	var color string = "36314"
 	formTitles := map[string]string{
-		"error": "16739179",
-		"debug": "16111426",
+		"error":   "red",
+		"debug":   "yellow",
+		"warning": "orange",
 	}
 	if val, ok := formTitles[logJson.Level]; ok {
-		color = val
+		color = fmt.Sprint(custom.GetColor(val))
 	}
 
 	fileArray := strings.Split(strings.TrimPrefix(logJson.File, RootDir()), ":")
