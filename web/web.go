@@ -2,6 +2,7 @@ package web
 
 import (
 	"embed"
+	"io"
 	"log"
 	"net/http"
 	"text/template"
@@ -47,10 +48,12 @@ func HostRoutes(botID string) {
 		handleHTML(w, tosHTML, "./html/tos.html")
 	})
 
+	var voidWriter io.Writer = io.Discard
+
 	server := &http.Server{
 		Addr:     ":443",
 		Handler:  nil,
-		ErrorLog: log.New(nil, "", 0),
+		ErrorLog: log.New(voidWriter, "", 0),
 	}
 	logrus.Info("Starting server for html routes on :443...")
 	if err := server.ListenAndServeTLS("./web/cert.pem", "./web/key.pem"); err != nil {
