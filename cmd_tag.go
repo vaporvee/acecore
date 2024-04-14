@@ -5,10 +5,11 @@ import (
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/json"
 	"github.com/sirupsen/logrus"
+	"github.com/vaporvee/acecore/struct_cmd"
 )
 
 // TODO: make user installable tag command using userIDs instead of guildIDs
-var cmd_tag Command = Command{
+var cmd_tag struct_cmd.Command = struct_cmd.Command{
 	Definition: discord.SlashCommandCreate{
 		Name:                     "tag",
 		DefaultMemberPermissions: json.NewNullablePtr(discord.PermissionManageGuild),
@@ -82,7 +83,7 @@ var cmd_tag Command = Command{
 	},
 }
 
-var cmd_tag_short Command = Command{
+var cmd_tag_short struct_cmd.Command = struct_cmd.Command{
 	Definition: discord.SlashCommandCreate{
 		Name:        "g",
 		Description: "A short command to get presaved messages.",
@@ -108,7 +109,7 @@ var cmd_tag_short Command = Command{
 	},
 }
 
-var context_tag Command = Command{
+var context_tag struct_cmd.Command = struct_cmd.Command{
 	Definition: discord.MessageCommandCreate{
 		Name:                     "Save as tag",
 		DefaultMemberPermissions: json.NewNullablePtr(discord.PermissionManageGuild),

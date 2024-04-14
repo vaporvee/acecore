@@ -41,10 +41,10 @@ func HostRoutes(botID string) {
 		http.Redirect(w, r, "https://discord.com/oauth2/authorize?client_id="+botID, http.StatusMovedPermanently)
 	})
 	http.HandleFunc("/privacy", func(w http.ResponseWriter, r *http.Request) {
-		handleHTML(w, privacyHTML, "./html/privacy.html")
+		handleHTML(w, privacyHTML, "html/privacy.html")
 	})
 	http.HandleFunc("/tos", func(w http.ResponseWriter, r *http.Request) {
-		handleHTML(w, tosHTML, "./html/tos.html")
+		handleHTML(w, tosHTML, "html/tos.html")
 	})
 
 	server := &http.Server{

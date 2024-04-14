@@ -5,9 +5,10 @@ import (
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/json"
 	"github.com/sirupsen/logrus"
+	"github.com/vaporvee/acecore/struct_cmd"
 )
 
-var cmd_autojoinroles Command = Command{
+var cmd_autojoinroles struct_cmd.Command = struct_cmd.Command{
 	Definition: discord.SlashCommandCreate{
 		Name:                     "autojoinroles",
 		Description:              "Give users a role when they join",

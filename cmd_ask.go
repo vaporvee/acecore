@@ -5,9 +5,10 @@ import (
 	"github.com/disgoorg/disgo/events"
 	"github.com/sirupsen/logrus"
 	"github.com/vaporvee/acecore/custom"
+	"github.com/vaporvee/acecore/struct_cmd"
 )
 
-var cmd_ask = Command{
+var cmd_ask = struct_cmd.Command{
 	Definition: discord.SlashCommandCreate{
 		Name:        "ask",
 		Description: "Ask anything and get a gif as response!",
