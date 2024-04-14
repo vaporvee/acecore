@@ -3,13 +3,15 @@ package main
 import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
+	"github.com/disgoorg/json"
 	"github.com/sirupsen/logrus"
 )
 
 var cmd_autojoinroles Command = Command{
 	Definition: discord.SlashCommandCreate{
-		Name:        "autojoinroles",
-		Description: "Give users a role when they join",
+		Name:                     "autojoinroles",
+		Description:              "Give users a role when they join",
+		DefaultMemberPermissions: json.NewNullablePtr(discord.PermissionManageRoles),
 		Contexts: []discord.InteractionContextType{
 			discord.InteractionContextTypeGuild,
 			discord.InteractionContextTypePrivateChannel},
