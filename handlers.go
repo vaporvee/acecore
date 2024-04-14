@@ -3,6 +3,9 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"plugin"
+	"runtime"
 	"slices"
 	"strings"
 
@@ -12,26 +15,19 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/vaporvee/acecore/custom"
+	"github.com/vaporvee/acecore/struct_cmd"
 )
 
-type Command struct {
-	Definition          discord.ApplicationCommandCreate
-	Interact            func(e *events.ApplicationCommandInteractionCreate)
-	Autocomplete        func(e *events.AutocompleteInteractionCreate)
-	ComponentInteract   func(e *events.ComponentInteractionCreate)
-	ModalSubmit         func(e *events.ModalSubmitInteractionCreate)
-	ComponentIDs        []string
-	ModalIDs            []string
-	DynamicModalIDs     func() []string
-	DynamicComponentIDs func() []string
-}
-
-var commands []Command = []Command{cmd_tag, cmd_tag_short, context_tag, cmd_sticky, context_sticky, cmd_ping, cmd_userinfo, cmd_addemoji, cmd_form, cmd_ask, cmd_cat, cmd_dadjoke, cmd_ticket_form, cmd_blockpolls, cmd_autopublish, cmd_autojoinroles}
+var commands []struct_cmd.Command = []struct_cmd.Command{cmd_tag, cmd_tag_short, context_tag, cmd_sticky, context_sticky, cmd_ping, cmd_userinfo, cmd_addemoji, cmd_form, cmd_ask, cmd_cat, cmd_dadjoke, cmd_ticket_form, cmd_blockpolls, cmd_autopublish, cmd_autojoinroles}
 
 func ready(e *events.Ready) {
 	logrus.Info("Starting up...")
 	findAndDeleteUnusedMessages(e.Client())
 	removeOldCommandFromAllGuilds(e.Client())
+	err := loadPlugins("plugins/", e)
+	if err != nil {
+		logrus.Error(err)
+	}
 	var existingCommandNames []string
 	existingCommands, err := e.Client().Rest().GetGlobalCommands(e.Client().ApplicationID(), false)
 	if err != nil {
@@ -58,6 +54,70 @@ func ready(e *events.Ready) {
 		}
 	}
 	logrus.Info("Successfully started the Bot!")
+}
+
+func loadPlugins(directory string, e *events.Ready) error {
+	files, err := os.ReadDir(directory)
+	if err != nil {
+		return err
+	}
+
+	// Determine the appropriate file extension for dynamic libraries
+	var ext string
+	switch runtime.GOOS {
+	case "windows":
+		ext = ".dll"
+	case "linux":
+		ext = ".so"
+	case "darwin":
+		ext = ".dylib"
+	default:
+		return fmt.Errorf("unsupported operating system: %s", runtime.GOOS)
+	}
+
+	for _, file := range files {
+		if filepath.Ext(file.Name()) == ext {
+			p, err := plugin.Open(filepath.Join(directory, file.Name()))
+			if err != nil {
+				return err
+			}
+
+			symPlugin, err := p.Lookup("Plugin")
+			if err != nil {
+				logrus.Errorf("Error looking up symbol 'Plugin' in %s: %v", file.Name(), err)
+				continue
+			}
+
+			pluginPtr, ok := symPlugin.(**struct_cmd.Plugin)
+			if !ok {
+				logrus.Errorf("Plugin does not match expected type")
+				continue
+			}
+
+			plugin := *pluginPtr
+			if plugin.Name == "" {
+				logrus.Warn("Plugin is unnamed")
+			}
+			if plugin.Commands != nil {
+				commands = append(commands, plugin.Commands...)
+			} else {
+				logrus.Errorf("Plugin %s has no commands set", plugin.Name)
+				continue
+			}
+			if plugin.Register != nil {
+				err = plugin.Register(e)
+				if err == nil {
+					logrus.Infof("Successfully appended plugin %s for registration", plugin.Name)
+				} else {
+					logrus.Errorf("Error registering plugin %s commands: %v", plugin.Name, err)
+					continue
+				}
+			}
+
+		}
+	}
+
+	return nil
 }
 
 func applicationCommandInteractionCreate(e *events.ApplicationCommandInteractionCreate) {

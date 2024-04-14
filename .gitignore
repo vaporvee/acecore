@@ -1,5 +1,4 @@
 .env
-data.json
 
 # Building
 acecore
@@ -9,6 +8,8 @@ acecore
 logs/
 
 # Web
-
 web/key.pem
 web/cert.pem
+
+# Custom plugins
+plugins/

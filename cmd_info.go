@@ -9,6 +9,7 @@ import (
 	"github.com/disgoorg/disgo/events"
 	"github.com/sirupsen/logrus"
 	"github.com/vaporvee/acecore/custom"
+	"github.com/vaporvee/acecore/struct_cmd"
 )
 
 type UserExtend struct {
@@ -39,7 +40,7 @@ var userFlagsString map[discord.UserFlags]string = map[discord.UserFlags]string{
 	discord.UserFlagActiveDeveloper:           "<:Active_Developer:1224708676611215380>[`Active Developer`](https://support-dev.discord.com/hc/en-us/articles/10113997751447?ref=badge)",
 }
 
-var cmd_userinfo Command = Command{
+var cmd_userinfo struct_cmd.Command = struct_cmd.Command{
 	Definition: discord.SlashCommandCreate{
 		Name:        "info",
 		Description: "Gives you information about a user or this bot.",

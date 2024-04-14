@@ -5,9 +5,10 @@ import (
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/json"
 	"github.com/sirupsen/logrus"
+	"github.com/vaporvee/acecore/struct_cmd"
 )
 
-var cmd_blockpolls Command = Command{
+var cmd_blockpolls struct_cmd.Command = struct_cmd.Command{
 	Definition: discord.SlashCommandCreate{
 		Name:                     "block-polls",
 		Description:              "Block polls from beeing posted in this channel.",

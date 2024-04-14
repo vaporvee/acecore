@@ -9,9 +9,10 @@ import (
 	"github.com/disgoorg/disgo/events"
 	"github.com/sirupsen/logrus"
 	"github.com/vaporvee/acecore/custom"
+	"github.com/vaporvee/acecore/struct_cmd"
 )
 
-var cmd_cat = Command{
+var cmd_cat = struct_cmd.Command{
 	Definition: discord.SlashCommandCreate{
 		Name:        "cat",
 		Description: "Random cat pictures",
