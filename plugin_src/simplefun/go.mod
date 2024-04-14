@@ -1,3 +1,0 @@
-module simplefun
-
-go 1.22.1
