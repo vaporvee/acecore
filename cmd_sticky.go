@@ -6,6 +6,7 @@ import (
 	"github.com/disgoorg/json"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/sirupsen/logrus"
+	"github.com/vaporvee/acecore/custom"
 )
 
 var cmd_sticky Command = Command{
@@ -85,7 +86,7 @@ func inputStickyMessage(e *events.ApplicationCommandInteractionCreate) {
 		}
 	} else {
 		message, err := e.Client().Rest().CreateMessage(e.Channel().ID(), discord.MessageCreate{Embeds: []discord.Embed{
-			{Description: messageText, Footer: &discord.EmbedFooter{Text: "📌 Sticky message"}, Color: hexToDecimal(color["primary"])}}})
+			{Description: messageText, Footer: &discord.EmbedFooter{Text: "📌 Sticky message"}, Color: custom.GetColor("primary")}}})
 		if err != nil {
 			logrus.Error(err)
 		}

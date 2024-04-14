@@ -8,6 +8,7 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/sirupsen/logrus"
+	"github.com/vaporvee/acecore/custom"
 )
 
 var cmd_ping Command = Command{
@@ -55,7 +56,7 @@ var cmd_ping Command = Command{
 			SetEmbeds(discord.NewEmbedBuilder().
 				SetTitle(app.Bot.Username + " ping").
 				SetDescription(fmt.Sprintf("# %.2fms", ping.Seconds()*1000)).
-				SetColor(hexToDecimal(color[pingColor])).Build()).SetEphemeral(true).Build())
+				SetColor(custom.GetColor(pingColor)).Build()).SetEphemeral(true).Build())
 		if err != nil {
 			logrus.Error(err)
 		}

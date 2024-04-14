@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/disgoorg/disgo/bot"
@@ -124,15 +123,6 @@ func getHighestRole(guildID string, c bot.Client) (*discord.Role, error) {
 		}
 	}
 	return highestRole, nil
-}
-
-func hexToDecimal(hexColor string) int {
-	hexColor = strings.TrimPrefix(hexColor, "#")
-	decimal, err := strconv.ParseInt(hexColor, 16, 64)
-	if err != nil {
-		return 0
-	}
-	return int(decimal)
 }
 
 func simpleGetFromAPI(key string, url string) interface{} {

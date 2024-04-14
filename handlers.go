@@ -11,6 +11,7 @@ import (
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/sirupsen/logrus"
+	"github.com/vaporvee/acecore/custom"
 )
 
 type Command struct {
@@ -155,7 +156,7 @@ func messageCreate(e *events.MessageCreate) {
 						Footer: &discord.EmbedFooter{
 							Text: "📌 Sticky message",
 						},
-						Color:       hexToDecimal(color["primary"]),
+						Color:       custom.GetColor("primary"),
 						Description: getStickyMessageContent(e.Message.GuildID.String(), e.Message.ChannelID.String()),
 					},
 				},

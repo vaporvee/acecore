@@ -8,6 +8,7 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/sirupsen/logrus"
+	"github.com/vaporvee/acecore/custom"
 )
 
 var cmd_cat = Command{
@@ -28,7 +29,7 @@ var cmd_cat = Command{
 		cat, err := GetCatImageURL()
 		if err == nil {
 			err = e.CreateMessage(discord.NewMessageCreateBuilder().
-				AddEmbeds(discord.NewEmbedBuilder().SetDescription(cat.Fact).SetImage(cat.Image).SetColor(hexToDecimal(color["primary"])).Build()).
+				AddEmbeds(discord.NewEmbedBuilder().SetDescription(cat.Fact).SetImage(cat.Image).SetColor(custom.GetColor("primary")).Build()).
 				Build())
 			if err != nil {
 				logrus.Error(err)

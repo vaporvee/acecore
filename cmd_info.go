@@ -8,6 +8,7 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/sirupsen/logrus"
+	"github.com/vaporvee/acecore/custom"
 )
 
 type UserExtend struct {
@@ -115,7 +116,7 @@ var cmd_userinfo Command = Command{
 			}
 			embedBuilder.SetTitle("User info")
 			embedBuilder.SetDescription(user.Mention())
-			embedBuilder.SetColor(hexToDecimal(color["primary"]))
+			embedBuilder.SetColor(custom.GetColor("primary"))
 			err = e.CreateMessage(discord.NewMessageCreateBuilder().
 				SetEmbeds(embedBuilder.Build()).
 				Build())

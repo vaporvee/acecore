@@ -4,6 +4,7 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/sirupsen/logrus"
+	"github.com/vaporvee/acecore/custom"
 )
 
 var cmd_ask = Command{
@@ -29,7 +30,7 @@ var cmd_ask = Command{
 	},
 	Interact: func(e *events.ApplicationCommandInteractionCreate) {
 		err := e.CreateMessage(discord.NewMessageCreateBuilder().
-			AddEmbeds(discord.NewEmbedBuilder().SetImage(simpleGetFromAPI("image", "https://yesno.wtf/api").(string)).SetColor(hexToDecimal(color["primary"])).Build()).
+			AddEmbeds(discord.NewEmbedBuilder().SetImage(simpleGetFromAPI("image", "https://yesno.wtf/api").(string)).SetColor(custom.GetColor("primary")).Build()).
 			Build())
 		if err != nil {
 			logrus.Error(err)

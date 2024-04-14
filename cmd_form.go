@@ -12,6 +12,7 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"github.com/vaporvee/acecore/custom"
 )
 
 var cmd_form Command = Command{
@@ -141,7 +142,7 @@ var cmd_form Command = Command{
 				exists = getFormManageIdExists(formManageID)
 			}
 			messagebuild := discord.NewMessageCreateBuilder().SetEmbeds(discord.NewEmbedBuilder().
-				SetTitle(title).SetDescription("Press the bottom button to open a form popup.").SetColor(hexToDecimal(color["primary"])).
+				SetTitle(title).SetDescription("Press the bottom button to open a form popup.").SetColor(custom.GetColor("primary")).
 				Build()).SetContainerComponents(discord.ActionRowComponent{
 				discord.NewSuccessButton("Submit", "form:"+formManageID.String()).WithEmoji(discord.ComponentEmoji{
 					Name:     "anim_rocket",
@@ -243,7 +244,7 @@ var cmd_form Command = Command{
 				if result.CommentCategoryID != "" {
 					channel := createFormComment(form_manage_id, e.User().ID, snowflake.MustParse(result.ModeratorID), "answer", discord.NewEmbedBuilder().
 						SetAuthorName(*e.User().GlobalName).SetAuthorIcon(*e.User().AvatarURL()).SetTitle("\""+modal.Title+"\"").SetDescription("This is the submitted result").
-						SetColor(hexToDecimal(color["primary"])).SetFields(fields...).
+						SetColor(custom.GetColor("primary")).SetFields(fields...).
 						Build(), *e.GuildID(), e.Client())
 					err := e.CreateMessage(discord.NewMessageCreateBuilder().SetContent("Created channel " + discord.ChannelMention(channel.ID())).SetEphemeral(true).Build())
 					if err != nil {
@@ -259,7 +260,7 @@ var cmd_form Command = Command{
 					_, err := e.Client().Rest().CreateMessage(snowflake.MustParse(result.ResultChannelID), discord.NewMessageCreateBuilder().
 						SetEmbeds(discord.NewEmbedBuilder().
 							SetAuthorName(*e.User().GlobalName).SetAuthorIcon(*e.User().AvatarURL()).SetTitle("\""+modal.Title+"\"").SetDescription("This is the submitted result").
-							SetColor(hexToDecimal(color["primary"])).SetFields(fields...).
+							SetColor(custom.GetColor("primary")).SetFields(fields...).
 							Build()).
 						SetContainerComponents(discord.NewActionRow(discord.
 							NewButton(discord.ButtonStylePrimary, "Comment", "form:"+form_manage_id+";comment", "").
@@ -289,7 +290,7 @@ var cmd_form Command = Command{
 					_, err := e.Client().Rest().CreateMessage(snowflake.MustParse(result.AcceptChannelID), discord.NewMessageCreateBuilder().
 						SetEmbeds(discord.NewEmbedBuilder().
 							SetAuthorName(*e.User().GlobalName).SetAuthorIcon(*e.User().AvatarURL()).SetTitle("\""+modal.Title+"\"").SetDescription("**This submission needs approval.**").
-							SetColor(hexToDecimal(color["primary"])).SetFields(fields...).
+							SetColor(custom.GetColor("primary")).SetFields(fields...).
 							Build()).
 						SetContainerComponents(discord.NewActionRow(buttons...)).
 						Build())
@@ -370,7 +371,7 @@ var cmd_ticket_form Command = Command{
 			exists = getFormManageIdExists(formManageID)
 		}
 		messagebuild := discord.NewMessageCreateBuilder().SetEmbeds(discord.NewEmbedBuilder().
-			SetTitle(title).SetDescription("Press the bottom button to open a form popup.").SetColor(hexToDecimal(color["primary"])).
+			SetTitle(title).SetDescription("Press the bottom button to open a form popup.").SetColor(custom.GetColor("primary")).
 			Build()).SetContainerComponents(discord.ActionRowComponent{
 			discord.NewSuccessButton("Submit", "form:"+formManageID.String()).WithEmoji(discord.ComponentEmoji{
 				Name:     "anim_rocket",
