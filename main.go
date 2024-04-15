@@ -3,10 +3,14 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"io"
 	"net/url"
 	"os"
 	"os/signal"
+	"path/filepath"
+	"plugin"
+	"runtime"
 	"strconv"
 	"syscall"
 	"time"
@@ -19,12 +23,15 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 	"github.com/vaporvee/acecore/log2webhook"
+	"github.com/vaporvee/acecore/shared"
 	"github.com/vaporvee/acecore/web"
 )
 
 var (
 	db *sql.DB
 )
+
+var listeners []func()
 
 func main() {
 	logrusInitFile()
@@ -35,8 +42,16 @@ func main() {
 	if err != nil {
 		logrus.Fatal(err)
 	}
-	initTables()
-	client, err := disgo.New(os.Getenv("BOT_TOKEN"),
+	err = loadPlugins("plugins/")
+	if err != nil {
+		logrus.Warn(err)
+	}
+	shared.BotConfigs = append(shared.BotConfigs,
+		bot.WithEventListenerFunc(ready),
+		bot.WithEventListenerFunc(applicationCommandInteractionCreate),
+		bot.WithEventListenerFunc(autocompleteInteractionCreate),
+		bot.WithEventListenerFunc(componentInteractionCreate),
+		bot.WithEventListenerFunc(modalSubmitInteractionCreate),
 		bot.WithGatewayConfigOpts(
 			gateway.WithIntents(
 				gateway.IntentGuilds,
@@ -45,15 +60,9 @@ func main() {
 				gateway.IntentGuildMembers,
 				gateway.IntentDirectMessages,
 			),
-		),
-		bot.WithEventListenerFunc(ready),
-		bot.WithEventListenerFunc(applicationCommandInteractionCreate),
-		bot.WithEventListenerFunc(autocompleteInteractionCreate),
-		bot.WithEventListenerFunc(componentInteractionCreate),
-		bot.WithEventListenerFunc(modalSubmitInteractionCreate),
-		bot.WithEventListenerFunc(messageCreate),
-		bot.WithEventListenerFunc(messageDelete),
-		bot.WithEventListenerFunc(guildMemberJoin),
+		))
+	client, err := disgo.New(os.Getenv("BOT_TOKEN"),
+		shared.BotConfigs...,
 	)
 	if err != nil {
 		logrus.Fatal("error creating Discord session,", err)
@@ -101,4 +110,66 @@ func logrusInitFile() {
 
 	mw := io.MultiWriter(os.Stdout, log, &log2webhook.WebhookWriter{})
 	logrus.SetOutput(mw)
+}
+
+func loadPlugins(directory string) error {
+	files, err := os.ReadDir(directory)
+	if err != nil {
+		return err
+	}
+
+	// Determine the appropriate file extension for dynamic libraries
+	var ext string
+	switch runtime.GOOS {
+	case "windows":
+		ext = ".dll"
+	case "linux":
+		ext = ".so"
+	case "darwin":
+		ext = ".dylib"
+	default:
+		return fmt.Errorf("unsupported operating system: %s", runtime.GOOS)
+	}
+
+	for _, file := range files {
+		if filepath.Ext(file.Name()) == ext {
+			p, err := plugin.Open(filepath.Join(directory, file.Name()))
+			if err != nil {
+				return err
+			}
+
+			symPlugin, err := p.Lookup("Plugin")
+			if err != nil {
+				logrus.Errorf("Error looking up symbol 'Plugin' in %s: %v", file.Name(), err)
+				continue
+			}
+
+			pluginPtr, ok := symPlugin.(**shared.Plugin)
+			if !ok {
+				logrus.Errorf("Plugin does not match expected type")
+				continue
+			}
+
+			plugin := *pluginPtr
+			if plugin.Name == "" {
+				logrus.Warn("Plugin is unnamed")
+			}
+			if plugin.Commands != nil {
+				commands = append(commands, plugin.Commands...)
+			} else {
+				logrus.Errorf("Plugin %s has no commands set", plugin.Name)
+				continue
+			}
+			if plugin.Init != nil {
+				err = plugin.Init(db)
+				if err != nil {
+					logrus.Errorf("Error running plugin register %s function: %v", plugin.Name, err)
+					continue
+				}
+			}
+
+		}
+	}
+
+	return nil
 }

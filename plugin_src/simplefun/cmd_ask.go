@@ -4,11 +4,11 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/sirupsen/logrus"
-	"github.com/vaporvee/acecore/cmd"
 	"github.com/vaporvee/acecore/custom"
+	"github.com/vaporvee/acecore/shared"
 )
 
-var cmd_ask = cmd.Command{
+var cmd_ask = shared.Command{
 	Definition: discord.SlashCommandCreate{
 		Name:        "ask",
 		Description: "Ask anything and get a gif as response!",

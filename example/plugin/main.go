@@ -1,23 +1,22 @@
 package main
 
 import (
+	"database/sql"
+
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
-	"github.com/sirupsen/logrus"
-	"github.com/vaporvee/acecore/cmd"
+	"github.com/vaporvee/acecore/shared"
 )
 
-var Plugin = &cmd.Plugin{
+var db *sql.DB
+
+var Plugin = &shared.Plugin{
 	Name: "testplugin",
-	Register: func(e *events.Ready) error {
-		app, err := e.Client().Rest().GetCurrentApplication()
-		if err != nil {
-			return err
-		}
-		logrus.Infof("%s has a working plugin called \"testplugin\"", app.Bot.Username)
+	Init: func(d *sql.DB) error {
+		db = d
 		return nil
 	},
-	Commands: []cmd.Command{
+	Commands: []shared.Command{
 		{
 			Definition: discord.SlashCommandCreate{
 				Name:        "testplugincommand",

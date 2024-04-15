@@ -1,10 +1,40 @@
 package main
 
 import (
-	"github.com/vaporvee/acecore/cmd"
+	"encoding/json"
+	"io"
+	"net/http"
+
+	"github.com/sirupsen/logrus"
+	"github.com/vaporvee/acecore/shared"
 )
 
-var Plugin = &cmd.Plugin{
+var Plugin = &shared.Plugin{
 	Name:     "Simple Fun",
-	Commands: []cmd.Command{cmd_ask, cmd_cat, cmd_dadjoke},
+	Commands: []shared.Command{cmd_ask, cmd_cat, cmd_dadjoke},
+}
+
+func simpleGetFromAPI(key string, url string) interface{} {
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		logrus.Error("Error creating request:", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	resp, err := client.Do(req)
+	if err != nil {
+		logrus.Error("Error making request:", err)
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		logrus.Error("Error reading response body:", err)
+	}
+
+	var result map[string]interface{}
+	err = json.Unmarshal(body, &result)
+	if err != nil {
+		logrus.Error("Error decoding JSON:", err)
+	}
+	return result[key]
 }

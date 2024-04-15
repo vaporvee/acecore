@@ -10,7 +10,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
 	github.com/sirupsen/logrus v1.9.3
-	github.com/vaporvee/acecore/cmd v0.0.0-20240414204205-9ac9f89071f6
+	github.com/vaporvee/acecore/shared v0.0.0-20240414204205-9ac9f89071f6
 )
 
 require (
@@ -20,3 +20,5 @@ require (
 	golang.org/x/net v0.21.0 // indirect
 	golang.org/x/sys v0.17.0 // indirect
 )
+
+replace github.com/vaporvee/acecore/shared => ./shared

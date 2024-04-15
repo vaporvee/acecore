@@ -8,11 +8,11 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/sirupsen/logrus"
-	"github.com/vaporvee/acecore/cmd"
 	"github.com/vaporvee/acecore/custom"
+	"github.com/vaporvee/acecore/shared"
 )
 
-var cmd_cat = cmd.Command{
+var cmd_cat = shared.Command{
 	Definition: discord.SlashCommandCreate{
 		Name:        "cat",
 		Description: "Random cat pictures",

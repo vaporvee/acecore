@@ -3,12 +3,12 @@ package main
 import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
-	"github.com/vaporvee/acecore/cmd"
+	"github.com/vaporvee/acecore/shared"
 )
 
-var Plugin = &cmd.Plugin{
+var Plugin = &shared.Plugin{
 	Name: "Info",
-	Commands: []cmd.Command{
+	Commands: []shared.Command{
 		{
 			Definition: discord.SlashCommandCreate{
 				Name:        "info",
