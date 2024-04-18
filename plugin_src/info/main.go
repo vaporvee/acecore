@@ -12,7 +12,7 @@ var Plugin = &shared.Plugin{
 		{
 			Definition: discord.SlashCommandCreate{
 				Name:        "info",
-				Description: "Gives you information about a user or this bot.",
+				Description: "Gives you information about a user or this app.",
 				Contexts: []discord.InteractionContextType{
 					discord.InteractionContextTypeGuild,
 					discord.InteractionContextTypePrivateChannel,
@@ -35,8 +35,8 @@ var Plugin = &shared.Plugin{
 						},
 					},
 					&discord.ApplicationCommandOptionSubCommand{
-						Name:        "bot-service",
-						Description: "Gives you information about this bot's server service.",
+						Name:        "app-service",
+						Description: "Gives you information about this app's server service.",
 					},
 				},
 			},
@@ -44,7 +44,7 @@ var Plugin = &shared.Plugin{
 				switch *e.SlashCommandInteractionData().SubCommandName {
 				case "user":
 					user(e)
-				case "bot-service":
+				case "app-service":
 
 				}
 

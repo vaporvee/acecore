@@ -45,7 +45,7 @@ var Plugin = &shared.Plugin{
 				Options: []discord.ApplicationCommandOption{
 					discord.ApplicationCommandOptionSubCommand{
 						Name:        "get",
-						Description: "A command to get messages saved to the bot.",
+						Description: "A command to get messages saved to this app.",
 						Options: []discord.ApplicationCommandOption{
 							discord.ApplicationCommandOptionString{
 								Name:         "tag",
@@ -57,11 +57,11 @@ var Plugin = &shared.Plugin{
 					},
 					discord.ApplicationCommandOptionSubCommand{
 						Name:        "add",
-						Description: "A command to add messages saved to the bot.",
+						Description: "A command to add messages saved to this app.",
 					},
 					discord.ApplicationCommandOptionSubCommand{
 						Name:        "remove",
-						Description: "A command to remove messages saved to the bot.",
+						Description: "A command to remove messages saved to this app.",
 						Options: []discord.ApplicationCommandOption{
 							discord.ApplicationCommandOptionString{
 								Name:         "tag",

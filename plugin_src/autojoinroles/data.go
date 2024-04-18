@@ -7,6 +7,9 @@ import (
 func setAutoJoinRole(guildID string, option string, roleID string) bool {
 	var role_exists bool
 	var autojoinroles_exists bool
+	if option == "app" { // stop renaming stuff Discord
+		option = "bot"
+	}
 	err := db.QueryRow("SELECT EXISTS (SELECT  1 FROM autojoinroles WHERE guild_id = $1)", guildID).Scan(&autojoinroles_exists)
 	if err != nil {
 		logrus.Error(err)

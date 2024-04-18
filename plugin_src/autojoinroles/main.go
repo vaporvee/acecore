@@ -47,12 +47,12 @@ var Plugin = &shared.Plugin{
 					discord.ApplicationIntegrationTypeGuildInstall},
 				Options: []discord.ApplicationCommandOption{
 					&discord.ApplicationCommandOptionSubCommand{
-						Name:        "bot",
-						Description: "Give bots a role when they join (Leave empty to remove current)",
+						Name:        "app",
+						Description: "Give apps a role when they join (Leave empty to remove current)",
 						Options: []discord.ApplicationCommandOption{
 							&discord.ApplicationCommandOptionRole{
 								Name:        "role",
-								Description: "The role bots should get when they join the server",
+								Description: "The role apps should get when they join the server",
 							},
 						},
 					},
