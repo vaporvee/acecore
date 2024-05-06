@@ -1,4 +1,4 @@
-![Acecore Logo](https://raw.githubusercontent.com/vaporvee/acecore/main/custom/images/acecore_logo_big.png)
+![acecore_logo](https://github.com/vaporvee/acecore/assets/80621863/6b69cec0-526c-472f-b4af-1914f46c2ca2)
 
 ## Current Features:
 - `/tag` - Custom commands also accessible via `/g`.
@@ -13,7 +13,7 @@
 - `/ask` - Receive a gif response to your query, akin to an 8-ball.
 - `/ping` - Displays the bot's current ping.
 
-![Forms Screenshot](https://raw.githubusercontent.com/vaporvee/acecore/main/custom/images/screenshots/forms.png)
+![forms](https://github.com/vaporvee/acecore/assets/80621863/2c12277e-9d47-4161-86bc-394d1016e743)
 
 ## Planned Features:
 - Fully customizable custom forms
