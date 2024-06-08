@@ -12,7 +12,7 @@
 - `/cat` - Fetches a random cat picture.
 - `/dadjoke` - Retrieves a random dad joke.
 - `/ask` - Receive a gif response to your query, akin to an 8-ball.
-- `/ping` - Displays the bot's current ping.
+- `/ping` - Displays the app's current ping.
 
 ![Forms Screenshot](https://raw.githubusercontent.com/vaporvee/acecore/main/custom/images/screenshots/forms.png)
 

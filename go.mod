@@ -3,7 +3,7 @@ module github.com/vaporvee/acecore
 go 1.22.1
 
 require (
-	github.com/disgoorg/disgo v0.18.2
+	github.com/disgoorg/disgo v0.18.7
 	github.com/disgoorg/json v1.1.0
 	github.com/disgoorg/snowflake/v2 v2.0.1
 	github.com/google/uuid v1.6.0

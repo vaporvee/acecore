@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"plugin"
 	"runtime"
+	"slices"
 	"strconv"
 	"syscall"
 	"time"
@@ -19,6 +20,7 @@ import (
 
 	"github.com/disgoorg/disgo"
 	"github.com/disgoorg/disgo/bot"
+	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/gateway"
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
@@ -31,7 +33,7 @@ var (
 	db *sql.DB
 )
 
-var listeners []func()
+var pluginNames []string
 
 func main() {
 	logrusInitFile()
@@ -47,7 +49,6 @@ func main() {
 		logrus.Warn(err)
 	}
 	shared.BotConfigs = append(shared.BotConfigs,
-		bot.WithEventListenerFunc(ready),
 		bot.WithEventListenerFunc(applicationCommandInteractionCreate),
 		bot.WithEventListenerFunc(autocompleteInteractionCreate),
 		bot.WithEventListenerFunc(componentInteractionCreate),
@@ -80,12 +81,69 @@ func main() {
 		logrus.Error(err)
 	}
 	logrus.Infof("Bot is now running as '%s'!", app.Bot.Username)
+	registerCommands(client)
 	go web.HostRoutes(app.Bot.ID.String())
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
 	logrus.Info("Shutting down...")
+}
+
+func registerCommands(c bot.Client) {
+	logrus.Info("Starting up...")
+	removeOldCommandFromAllGuilds(c)
+	var existingCommandNames []string
+	existingCommands, err := c.Rest().GetGlobalCommands(c.ApplicationID(), false)
+	if err != nil {
+		logrus.Errorf("error fetching existing global commands: %v", err)
+	} else {
+		for _, existingCommand := range existingCommands {
+			existingCommandNames = append(existingCommandNames, existingCommand.Name())
+		}
+	}
+	globalCommands := []discord.ApplicationCommandCreate{}
+	for _, command := range commands {
+		if !slices.Contains(existingCommandNames, command.Definition.CommandName()) || slices.Contains(os.Args, "--update-all") || slices.Contains(os.Args, "--clean") {
+			globalCommands = append(globalCommands, command.Definition)
+			logrus.Infof("Appending command \"%s\"", command.Definition.CommandName())
+		}
+	}
+	if len(globalCommands) > 0 {
+		logrus.Infof("Attempting to add global commands %s", fmt.Sprint(globalCommands))
+		_, err = c.Rest().SetGlobalCommands(c.ApplicationID(), globalCommands)
+		if err != nil {
+			logrus.Errorf("error creating global commands '%s'", err)
+		} else {
+			logrus.Infof("Added global commands sucessfully!")
+		}
+	}
+	logrus.Info("Successfully started the Bot!")
+}
+
+func removeOldCommandFromAllGuilds(c bot.Client) {
+	app, err := c.Rest().GetCurrentApplication()
+	if err != nil {
+		logrus.Error(err)
+	}
+	globalCommands, err := c.Rest().GetGlobalCommands(app.Bot.ID, false)
+	if err != nil {
+		logrus.Errorf("error fetching existing global commands: %v", err)
+		return
+	}
+	var commandNames []string
+	for _, command := range commands {
+		commandNames = append(commandNames, command.Definition.CommandName())
+	}
+	for _, existingCommand := range globalCommands {
+		if !slices.Contains(commandNames, existingCommand.Name()) {
+			logrus.Infof("Deleting command '%s'", existingCommand.Name())
+			err := c.Rest().DeleteGlobalCommand(c.ApplicationID(), existingCommand.ID())
+			if err != nil {
+				logrus.Errorf("error deleting command %s: %v", existingCommand.Name(), err)
+			}
+		}
+	}
 }
 
 func logrusInitFile() {
@@ -153,6 +211,9 @@ func loadPlugins(directory string) error {
 			plugin := *pluginPtr
 			if plugin.Name == "" {
 				logrus.Warn("Plugin is unnamed")
+				pluginNames = append(pluginNames, "UNNAMED PLUGIN")
+			} else {
+				pluginNames = append(pluginNames, plugin.Name)
 			}
 			if plugin.Commands != nil {
 				commands = append(commands, plugin.Commands...)
