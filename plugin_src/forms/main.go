@@ -193,6 +193,10 @@ var Plugin = &shared.Plugin{
 						Build()
 					message, err := e.Client().Rest().CreateMessage(e.Channel().ID(), messagebuild)
 					if err != nil {
+						if strings.Split(err.Error(), ":")[0] == "50001" {
+							e.CreateMessage(discord.NewMessageCreateBuilder().SetContent("🛑 This App doesn't have permission to send a form panel to this channel!").SetEphemeral(true).Build())
+							return
+						}
 						logrus.Error(err)
 					}
 					var category string
@@ -243,6 +247,10 @@ var Plugin = &shared.Plugin{
 							embed := e.Message.Embeds[0]
 							moderator := e.User().ID
 							channel := createFormComment(form_manage_id, snowflake.MustParse(author), moderator, "answer", embed, *e.GuildID(), e.Client())
+							if channel == nil {
+								e.CreateMessage(discord.NewMessageCreateBuilder().SetContent("🛑 This App doesn't have the needed permissions to create a form answer channel!").SetEphemeral(true).Build())
+								return
+							}
 							e.CreateMessage(discord.NewMessageCreateBuilder().SetContent("Created channel " + discord.ChannelMention(channel.ID())).SetEphemeral(true).Build())
 						}
 					} else {
@@ -287,6 +295,10 @@ var Plugin = &shared.Plugin{
 								SetAuthorName(*e.User().GlobalName).SetAuthorIcon(*e.User().AvatarURL()).SetTitle("\""+modal.Title+"\"").SetDescription("This is the submitted result").
 								SetColor(custom.GetColor("primary")).SetFields(fields...).
 								Build(), *e.GuildID(), e.Client())
+							if channel == nil {
+								e.CreateMessage(discord.NewMessageCreateBuilder().SetContent("🛑 This App doesn't have the needed permissions to create a form answer channel!").SetEphemeral(true).Build())
+								return
+							}
 							err := e.CreateMessage(discord.NewMessageCreateBuilder().SetContent("Created channel " + discord.ChannelMention(channel.ID())).SetEphemeral(true).Build())
 							if err != nil {
 								logrus.Error(err)
@@ -308,6 +320,10 @@ var Plugin = &shared.Plugin{
 									WithEmoji(discord.ComponentEmoji{Name: "👥"}))).
 								Build())
 							if err != nil {
+								if strings.Split(err.Error(), ":")[0] == "50001" {
+									e.CreateMessage(discord.NewMessageCreateBuilder().SetContent("🛑 This App doesn't have permission to send the form result to the spcified channel!").SetEphemeral(true).Build())
+									return
+								}
 								logrus.Error(err)
 							} else {
 								err = e.CreateMessage(discord.NewMessageCreateBuilder().SetContent("Submitted!").SetEphemeral(true).Build())
@@ -335,8 +351,11 @@ var Plugin = &shared.Plugin{
 									Build()).
 								SetContainerComponents(discord.NewActionRow(buttons...)).
 								Build())
-
 							if err != nil {
+								if strings.Split(err.Error(), ":")[0] == "50001" {
+									e.CreateMessage(discord.NewMessageCreateBuilder().SetContent("🛑 This App doesn't have permission to send the form result to the spcified accept channel!").SetEphemeral(true).Build())
+									return
+								}
 								logrus.Error(err)
 							} else {
 								err = e.CreateMessage(discord.NewMessageCreateBuilder().SetContent("Submitted!").SetEphemeral(true).Build())
@@ -421,6 +440,10 @@ var Plugin = &shared.Plugin{
 					Build()
 				message, err := e.Client().Rest().CreateMessage(e.Channel().ID(), messagebuild)
 				if err != nil {
+					if strings.Split(err.Error(), ":")[0] == "50001" {
+						e.CreateMessage(discord.NewMessageCreateBuilder().SetContent("🛑 This App doesn't have permission to send a ticket panel to this channel!").SetEphemeral(true).Build())
+						return
+					}
 					logrus.Error(err)
 					return
 				}
