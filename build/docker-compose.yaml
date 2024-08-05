@@ -1,0 +1,39 @@
+version: '3.3'
+
+services:
+  db:
+    image: postgres:13
+    container_name: acecore_db
+    environment:
+      POSTGRES_USER: acecore_prod
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: acecore_prod
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: always
+
+  app:
+    build: .
+    container_name: acecore_app
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN}
+      DB_USER: "acecore_prod"
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_SERVER: "db"
+      DB_PORT: 5432
+      DB_NAME: "acecore_prod"
+      LOG_WEBHOOK: ${LOG_WEBHOOK}
+    ports:
+      - "443:443"
+    depends_on:
+      - db
+    volumes:
+      - ./logs:/app/logs
+      - ./web:/app/web
+      - ./plugins:/app/plugins"
+    restart: always
+
+volumes:
+  db_data:
